@@ -88,9 +88,9 @@ class InformationItem(NamedItem):
 
 
 class PaneItem(NamedItemWithChildren):
-    def __init__(self, bound_to: Pane):
+    def __init__(self, parent, name, bound_to: Pane=None, index=None):
         name = bound_to.name
-        super().__init__(None, "Pane: {0}", bound_to, None)
+        super().__init__(parent, "{0}: {1}".format(bound_to.name, bound_to.p_panename), bound_to, index)
 
 
 """
@@ -262,7 +262,7 @@ class LayoutDataTreeView(QTreeWidget):
         for child in node.children:
             if not isinstance(child, (TextureNames, MAT1, FontNames)):
                 assert not isinstance(child, Node)
-                child_item = NamedItem(parent, child.p_panename, child, None)
+                child_item = PaneItem(parent, child.p_panename, child, None)
                 if child.child is not None:
                     self.set_node_objects(child.child, child_item)
 
@@ -277,7 +277,7 @@ class LayoutDataTreeView(QTreeWidget):
         textures: TextureNames = screen_data.root.textures
         for texture in textures.references:
             texture_item = NamedItem(self.texture_list, texture, texture, None)
-        print(screen_data.root)
+
         self.set_node_objects(screen_data.root, self.layout)
 
         """

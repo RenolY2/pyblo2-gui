@@ -1,12 +1,13 @@
 import json
 from time import time
 from OpenGL.GL import *
-from .vectors import Vector3
+from .vectors import Vector3, Vector4, Matrix4x4
 from struct import unpack
 import os
 from OpenGL.GL import *
 
 from PyQt5 import QtGui
+from lib.blo.readblo2 import Pane
 
 with open("lib/color_coding.json") as f:
     colors = json.load(f)
@@ -1102,3 +1103,158 @@ class CollisionModel(object):
             glCallList(displist)
 
         glUseProgram(0)
+
+
+class BloMaterial(object):
+    def __init__(self):
+        self.program = None
+
+    def create(self, material):
+        vertshader = """
+        #version 330 compatibility
+        layout(location = 0) in vec4 vert;
+        layout(location = 3) in vec3 normal;
+        layout(location = 4) in vec3 color;
+        uniform float interpolate;
+        out vec3 vecNormal;
+        out vec3 vecColor;
+        vec3 selectedcol = vec3(1.0, 0.0, 0.0);
+        vec3 lightvec = normalize(vec3(0.3, 0.0, -1.0));
+
+        void main(void)
+        {
+            vecNormal = normal;
+            vec3 col = (1-interpolate) * color + interpolate*selectedcol;
+            vecColor = col*clamp(1.0-dot(lightvec, normal), 0.3, 1.0);
+            gl_Position = gl_ModelViewProjectionMatrix * vert;
+
+        }
+
+        """
+
+        fragshader = """
+        #version 330
+        in vec3 vecNormal;
+        in vec3 vecColor;
+        out vec4 finalColor;
+
+        void main (void)
+        {   
+            finalColor = vec4(vecColor, 1.0);
+        }"""
+
+        vertexShaderObject = glCreateShader(GL_VERTEX_SHADER)
+        fragmentShaderObject = glCreateShader(GL_FRAGMENT_SHADER)
+        # glShaderSource(vertexShaderObject, 1, vertshader, len(vertshader))
+        # glShaderSource(fragmentShaderObject, 1, fragshader, len(fragshader))
+        glShaderSource(vertexShaderObject, vertshader)
+        glShaderSource(fragmentShaderObject, fragshader)
+
+        _compile_shader_with_error_report(vertexShaderObject)
+        _compile_shader_with_error_report(fragmentShaderObject)
+
+        program = glCreateProgram()
+
+        glAttachShader(program, vertexShaderObject)
+        glAttachShader(program, fragmentShaderObject)
+
+        glLinkProgram(program)
+        self.program = program
+
+
+class PaneRender(object):
+    def __init__(self):
+        pass
+
+    def render_pane(self, pane: Pane, material, is_selected):
+        w, h = pane.p_size_x, pane.p_size_y
+        #glEnable(GL_TEXTURE_2D)
+        #glBindTexture(GL_TEXTURE_2D, self.ID)
+        #glBegin(GL_TRIANGLE_FAN)
+        #glTexCoord2f(0.0, 0.0)
+        glBegin(GL_LINE_LOOP)
+        if is_selected:
+            glColor3f(1.0, 0.0, 0.0)
+        else:
+            glColor3f(0.0, 0.0, 0.0)
+
+        offset_x = 0
+        offset_y = 0
+        if True:#pane.name == "PIC2":
+            if pane.p_anchor == 1:  # Center-Top anchor
+                offset_x = -w/2
+            elif pane.p_anchor == 2:  # Top-Right anchor
+                offset_x = -w
+            elif pane.p_anchor == 3:  # Center-Left anchor
+                offset_y = -h/2
+            elif pane.p_anchor == 4:  # Center anchor
+                offset_x = -w/2
+                offset_y = -h/2
+            elif pane.p_anchor == 5:  # Center-right anchor
+                offset_x = -w
+                offset_y = -h / 2
+            elif pane.p_anchor == 6:  # Bottom-left anchor
+                offset_y = -h
+            elif pane.p_anchor == 7:  # Center-Bottom anchor
+                offset_x = -w/2
+                offset_y = -h
+            elif pane.p_anchor == 8:  # Bottom-right anchor
+                offset_x = -w
+                offset_y = -h
+
+        glVertex3f(0.0+offset_x, 0.0-offset_y, 0)
+        #glTexCoord2f(0.0, 1.0)
+        glVertex3f(0.0+offset_x, -h-offset_y, 0)
+        #glTexCoord2f(1.0, 1.0)
+        glVertex3f(w+offset_x, -h-offset_y, 0)
+        #glTexCoord2f(1.0, 0.0)
+        glVertex3f(w+offset_x, 0-offset_y, 0)
+        glEnd()
+
+    def _get_anchor_offset(self, pane):
+        w, h = pane.p_size_x, pane.p_size_y
+        offset_x = 0.0
+        offset_y = 0.0
+        if pane.p_anchor == 1:  # Center-Top anchor
+            offset_x = -w / 2
+        elif pane.p_anchor == 2:  # Top-Right anchor
+            offset_x = -w
+        elif pane.p_anchor == 3:  # Center-Left anchor
+            offset_y = -h / 2
+        elif pane.p_anchor == 4:  # Center anchor
+            offset_x = -w / 2
+            offset_y = -h / 2
+        elif pane.p_anchor == 5:  # Center-right anchor
+            offset_x = -w
+            offset_y = -h / 2
+        elif pane.p_anchor == 6:  # Bottom-left anchor
+            offset_y = -h
+        elif pane.p_anchor == 7:  # Center-Bottom anchor
+            offset_x = -w / 2
+            offset_y = -h
+        elif pane.p_anchor == 8:  # Bottom-right anchor
+            offset_x = -w
+            offset_y = -h
+
+        return offset_x, offset_y
+
+    def point_lies_in_pane(self, pane, M: Vector3, transform: Matrix4x4):
+        offset_x, offset_y = self._get_anchor_offset(pane)
+        w, h = pane.p_size_x, pane.p_size_y
+        p1 = Vector3(0.0 + offset_x, 0.0 - offset_y, 0)
+        p2 = Vector3(0.0 + offset_x, -h - offset_y, 0)
+        #p3 = Vector3(w + offset_x, -h - offset_y, 0)
+        p4 = Vector3(w + offset_x, 0 - offset_y, 0)
+
+        A = Vector3(*transform.multiply_vec3(p1.x, p1.y, 1))
+        B = Vector3(*transform.multiply_vec3(p2.x, p2.y, 1))
+        #C = transform.multiply_vec3(p3.x, p3.y, 1)
+        D = Vector3(*transform.multiply_vec3(p4.x, p4.y, 1))
+
+        # Shoutouts to https://math.stackexchange.com/questions/190111/how-to-check-if-a-point-is-inside-a-rectangle/190373#190373
+
+        AM = M - A
+        AB = B - A
+        AD = D - A
+
+        return 0 < AM.dot(AB) < AB.dot(AB) and 0 < AM.dot(AD) < AD.dot(AD)

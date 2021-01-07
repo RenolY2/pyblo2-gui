@@ -32,7 +32,7 @@ from gizmo import Gizmo
 from lib.object_models import ObjectModels
 from editor_controls import UserControl
 from lib.libpath import Paths
-from lib.libbol import BOL
+from lib.blo.readblo2 import ScreenBlo
 import numpy
 
 MOUSE_MODE_NONE = 0
@@ -134,15 +134,13 @@ class BolMapViewer(QtWidgets.QOpenGLWidget):
 
         self.click_mode = 0
 
-        self.level_image = None
-
         self.collision = None
 
         self.highlighttriangle = None
 
         self.setMouseTracking(True)
 
-        self.level_file:BOL = None
+        self.layout_file: ScreenBlo = None
         self.waterboxes = []
 
         self.mousemode = MOUSE_MODE_NONE
@@ -231,7 +229,7 @@ class BolMapViewer(QtWidgets.QOpenGLWidget):
         self.rotation_visualizer = glGenLists(1)
         glNewList(self.rotation_visualizer, GL_COMPILE)
         glColor4f(0.0, 0.0, 1.0, 1.0)
-        
+
         glBegin(GL_LINES)
         glVertex3f(0.0, 0.0, 0.0)
         glVertex3f(0.0, 40.0, 0.0)
@@ -475,18 +473,25 @@ class BolMapViewer(QtWidgets.QOpenGLWidget):
 
     @property
     def zoom_factor(self):
-        return self._zoom_factor/10.0
+        return self._zoom_factor/100.0
 
     def zoom(self, fac):
         if self._zoom_factor <= 60:
-            mult = 20.0
-        elif self._zoom_factor >= 600:
-            mult = 100.0
-        else:
             mult = 40.0
+        elif self._zoom_factor >= 600:
+            mult = 200.0
+        else:
+            mult = 80.0
 
-        if 10 < (self._zoom_factor + fac*mult) <= 1500:
-            self._zoom_factor += int(fac*mult)
+        MIN = 1
+        MAX = 1500
+
+        if MIN < (self._zoom_factor + fac*mult) <= MAX:
+            self._zoom_factor += int(fac*mult/10)
+            if self._zoom_factor < MIN:
+                self._zoom_factor = MIN
+            elif self._zoom_factor > MAX:
+                self._zoom_factor = MAX
             #self.update()
             self.do_redraw()
 
@@ -585,12 +590,13 @@ class BolMapViewer(QtWidgets.QOpenGLWidget):
             glClearColor(1.0, 1.0, 1.0, 1.0)
             #
             click_x, click_y, clickwidth, clickheight, shiftpressed, do_gizmo = self.selectionqueue.queue_pop()
+            world_x, world_y = self.mouse_coord_to_world_coord(click_x, click_y)
             click_y = height - click_y
             hit = 0xFF
 
             #print("received request", do_gizmo)
 
-            if clickwidth == 1 and clickheight == 1:
+            """if clickwidth == 1 and clickheight == 1:
                 self.gizmo.render_collision_check(gizmo_scale, is3d=self.mode == MODE_3D)
                 pixels = glReadPixels(click_x, click_y, clickwidth, clickheight, GL_RGB, GL_UNSIGNED_BYTE)
                 #print(pixels)
@@ -598,11 +604,11 @@ class BolMapViewer(QtWidgets.QOpenGLWidget):
                 if do_gizmo and hit != 0xFF:
                     self.gizmo.run_callback(hit)
                     self.gizmo.was_hit_at_all = True
-                #if hit != 0xFF and do_:
+                #if hit != 0xFF and do_:"""
 
             glClearColor(1.0, 1.0, 1.0, 1.0)
 
-            if self.level_file is not None and hit == 0xFF and not do_gizmo:
+            if self.layout_file is not None:# and hit == 0xFF and not do_gizmo:
                 #objects = self.pikmin_generators.generators
                 glDisable(GL_TEXTURE_2D)
                 #for i, pikminobject in enumerate(objects):
@@ -612,7 +618,7 @@ class BolMapViewer(QtWidgets.QOpenGLWidget):
 
                 objlist = []
                 offset = 0
-                if self.minimap is not None and vismenu.minimap.is_selectable() and self.minimap.is_available():
+                """if self.minimap is not None and vismenu.minimap.is_selectable() and self.minimap.is_available():
                     objlist.append((self.minimap, self.minimap.corner1, self.minimap.corner2, None))
                     self.models.render_generic_position_colored_id(self.minimap.corner1, id + (offset) * 4)
                     self.models.render_generic_position_colored_id(self.minimap.corner2, id + (offset) * 4 + 1)
@@ -656,10 +662,10 @@ class BolMapViewer(QtWidgets.QOpenGLWidget):
                         objlist.append((obj, obj.position, None, obj.rotation))
                         self.models.render_generic_position_rotation_colored_id(obj.position, obj.rotation,
                                                                                 id + (offset + i) * 4 + 2)
-
+                """
                 assert len(objlist)*4 < id
                 print("We queued up", len(objlist))
-                pixels = glReadPixels(click_x, click_y, clickwidth, clickheight, GL_RGB, GL_UNSIGNED_BYTE)
+                """pixels = glReadPixels(click_x, click_y, clickwidth, clickheight, GL_RGB, GL_UNSIGNED_BYTE)
                 #print(pixels, click_x, click_y, clickwidth, clickheight)
                 selected = {}
                 selected_positions = []
@@ -695,28 +701,32 @@ class BolMapViewer(QtWidgets.QOpenGLWidget):
 
                                 elif selected[entry[0]] == 2:
                                     selected[entry[0]] = 3
-                                    selected_positions.append(entry[1])
+                                    selected_positions.append(entry[1])"""
 
                 #print("select time taken", default_timer() - start)
                 #print("result:", selected)
+
+                selected = self.models.collision_detect_node(self.layout_file.root, Vector3(world_x, world_y, 1))
+                print(selected)
+
                 selected = [x for x in selected.keys()]
                 if not shiftpressed:
                     self.selected = selected
-                    self.selected_positions = selected_positions
-                    self.selected_rotations = selected_rotations
+                    #self.selected_positions = selected_positions
+                    #self.selected_rotations = selected_rotations
                     self.select_update.emit()
 
                 else:
                     for obj in selected:
                         if obj not in self.selected:
                             self.selected.append(obj)
-                    for pos in selected_positions:
+                    """for pos in selected_positions:
                         if pos not in self.selected_positions:
                             self.selected_positions.append(pos)
 
                     for rot in selected_rotations:
                         if rot not in self.selected_rotations:
-                            self.selected_rotations.append(rot)
+                            self.selected_rotations.append(rot)"""
 
                     self.select_update.emit()
 
@@ -731,7 +741,7 @@ class BolMapViewer(QtWidgets.QOpenGLWidget):
         #glClearColor(1.0, 1.0, 1.0, 0.0)
         glClearColor(*self.backgroundcolor)
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-        glEnable(GL_DEPTH_TEST)
+        glDisable(GL_DEPTH_TEST)
         glDisable(GL_TEXTURE_2D)
         glColor4f(1.0, 1.0, 1.0, 1.0)
         if self.main_model is not None:
@@ -745,13 +755,11 @@ class BolMapViewer(QtWidgets.QOpenGLWidget):
 
         glDisable(GL_TEXTURE_2D)
         glColor4f(1.0, 1.0, 1.0, 1.0)
-        self.grid.render()
+        #self.grid.render()
         if self.mode == MODE_TOPDOWN:
             glClear(GL_DEPTH_BUFFER_BIT)
 
-            if self.minimap is not None and vismenu.minimap.is_visible() and self.minimap.is_available():
-                self.minimap.render()
-                glClear(GL_DEPTH_BUFFER_BIT)
+
         #else:
         #    if self.minimap is not None and vismenu.minimap.is_visible():
         #        self.minimap.render()
@@ -760,17 +768,20 @@ class BolMapViewer(QtWidgets.QOpenGLWidget):
         glEnable(GL_ALPHA_TEST)
         glAlphaFunc(GL_GEQUAL, 0.5)
 
-        if self.level_file is not None:
+        if self.layout_file is not None:
             selected = self.selected
             positions = self.selected_positions
 
-            select_optimize = {x:True for x in selected}
+            select_optimize = {x: True for x in selected}
             #objects = self.pikmin_generators.generators
 
             #for pikminobject in objects:
             #    self.models.render_object(pikminobject, pikminobject in selected)
 
             vismenu = self.visibility_menu
+
+            self.models.render_hierarchy(self.layout_file, select_optimize)
+
             if vismenu.itemroutes.is_visible():
                 for route in self.level_file.routes:
                     for point in route.points:
@@ -1132,33 +1143,25 @@ class FilterViewMenu(QMenu):
         self.hide_all.triggered.connect(self.handle_hide_all)
         self.addAction(self.hide_all)
 
-        self.enemyroute = ObjectViewSelectionToggle("Enemy Routes", self)
-        self.itemroutes = ObjectViewSelectionToggle("Object Routes", self)
-        self.checkpoints = ObjectViewSelectionToggle("Checkpoints", self)
-        self.objects = ObjectViewSelectionToggle("Objects", self)
-        self.areas = ObjectViewSelectionToggle("Areas", self)
-        self.cameras = ObjectViewSelectionToggle("Cameras", self)
-        self.respawnpoints = ObjectViewSelectionToggle("Respawn Points", self)
-        self.kartstartpoints = ObjectViewSelectionToggle("Kart Start Points", self)
-        self.minimap = ObjectViewSelectionToggle("Minimap", self)
-        for action in (self.enemyroute, self.itemroutes, self.checkpoints, self.objects,
-                       self.areas, self.cameras, self.respawnpoints, self.kartstartpoints,
-                       self.minimap):
+        self.panes = ObjectViewSelectionToggle("Panes", self)
+        self.pictures = ObjectViewSelectionToggle("Pictures", self)
+        self.windows = ObjectViewSelectionToggle("Windows", self)
+        self.textboxes = ObjectViewSelectionToggle("Textboxes", self)
+
+        self.all_toggles = (self.panes, self.pictures, self.windows, self.textboxes)
+
+        for action in self.all_toggles:
             action.action_view_toggle.triggered.connect(self.emit_update)
             action.action_select_toggle.triggered.connect(self.emit_update)
 
     def handle_show_all(self):
-        for action in (self.enemyroute, self.itemroutes, self.checkpoints, self.objects,
-                       self.areas, self.cameras, self.respawnpoints, self.kartstartpoints,
-                       self.minimap):
+        for action in self.all_toggles:
             action.action_view_toggle.setChecked(True)
             action.action_select_toggle.setChecked(True)
         self.filter_update.emit()
 
     def handle_hide_all(self):
-        for action in (self.enemyroute, self.itemroutes, self.checkpoints, self.objects,
-                       self.areas, self.cameras, self.respawnpoints, self.kartstartpoints,
-                       self.minimap):
+        for action in self.all_toggles:
             action.action_view_toggle.setChecked(False)
             action.action_select_toggle.setChecked(False)
         self.filter_update.emit()

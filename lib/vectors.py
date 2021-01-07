@@ -1,4 +1,4 @@
-from math import sqrt
+from math import sqrt, sin, cos, radians
 from io import StringIO
 from numpy import array
 
@@ -270,6 +270,7 @@ class Line(object):
         else:
             return False
 
+
 class Matrix4x4(object):
     def __init__(self,
                  val1A, val1B, val1C, val1D,
@@ -298,6 +299,14 @@ class Matrix4x4(object):
         self.d4 = val4D
 
     @classmethod
+    def from_j2d_srt(cls, offset_x, offset_y, scale_x, scale_y, rotation):
+        matrix = cls(scale_x*cos(rotation), scale_y*-sin(rotation), offset_x, 0,
+                     scale_x*sin(rotation), scale_y*cos(rotation), offset_y, 0,
+                     0, 0, 1, 0,
+                     0, 0, 0, 0)
+        return matrix
+
+    @classmethod
     def from_opengl_matrix(cls, row1, row2, row3, row4):
         return cls(row1[0], row1[1], row1[2], row1[3],
                    row2[0], row2[1], row2[2], row2[3],
@@ -318,6 +327,36 @@ class Matrix4x4(object):
         neww = self.a4 * x + self.b4 * y + self.c4 * z + self.d4 * w
         #print("MATRIX MULTIPLICATION OUTPUT", newx, newy, newz, neww)
         return newx, newy, newz, neww
+
+    def multiply_vec3(self, x, y, z):
+        newx, newy, newz, neww = self.multiply_vec4(x, y, z, 0)
+        return newx, newy, newz
+
+    def inplace_multiply_mat4(self, othermat):
+        col1 = self.multiply_vec4(othermat.a1, othermat.a2, othermat.a3, othermat.a4)
+        col2 = self.multiply_vec4(othermat.b1, othermat.b2, othermat.b3, othermat.b4)
+        col3 = self.multiply_vec4(othermat.c1, othermat.c2, othermat.c3, othermat.c4)
+        col4 = self.multiply_vec4(othermat.d1, othermat.d2, othermat.d3, othermat.d4)
+
+        self.a1, self.a2, self.a3, self.a4 = col1
+        self.b1, self.b2, self.b3, self.b4 = col2
+        self.c1, self.c2, self.c3, self.c4 = col3
+        self.d1, self.d2, self.d3, self.d4 = col4
+
+    def multiply_mat4(self, othermat):
+        col1 = self.multiply_vec4(othermat.a1, othermat.a2, othermat.a3, othermat.a4)
+        col2 = self.multiply_vec4(othermat.b1, othermat.b2, othermat.b3, othermat.b4)
+        col3 = self.multiply_vec4(othermat.c1, othermat.c2, othermat.c3, othermat.c4)
+        col4 = self.multiply_vec4(othermat.d1, othermat.d2, othermat.d3, othermat.d4)
+
+        mtx = Matrix4x4(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+
+        mtx.a1, mtx.a2, mtx.a3, mtx.a4 = col1
+        mtx.b1, mtx.b2, mtx.b3, mtx.b4 = col2
+        mtx.c1, mtx.c2, mtx.c3, mtx.c4 = col3
+        mtx.d1, mtx.d2, mtx.d3, mtx.d4 = col4
+
+        return mtx
 
     def __str__(self):
         out = StringIO()

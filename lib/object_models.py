@@ -3,7 +3,9 @@ import json
 from OpenGL.GL import *
 from .model_rendering import (GenericObject, Model, TexturedModel,
                               GenericFlyer, GenericCrystallWall, GenericLongLegs, GenericChappy, GenericSnakecrow,
-                              GenericSwimmer, Cube)
+                              GenericSwimmer, Cube, PaneRender)
+from lib.blo.readblo2 import ScreenBlo, Pane, Window, Textbox, Picture
+from lib.vectors import Matrix4x4
 
 with open("lib/color_coding.json", "r") as f:
     colors = json.load(f)
@@ -30,6 +32,7 @@ class ObjectModels(object):
         self.startpoints = GenericObject(colors["StartPoints"])
         #self.purplecube = Cube((0.7, 0.7, 1.0, 1.0))
 
+        self.pane_render = PaneRender()
 
         genericmodels = {
             "Chappy": self.generic_chappy,
@@ -181,6 +184,47 @@ class ObjectModels(object):
         self.cube.render_coloredid(id)
 
         glPopMatrix()
+
+    def render_pane(self, pane, material, selected):
+        self.pane_render.render_pane(pane, material, pane in selected)
+
+    def render_node(self, node, materials, selected, highlight_pass):
+        for child in node.children:
+            if isinstance(child, Pane):
+                glPushMatrix()
+                glTranslatef(child.p_offset_x, -child.p_offset_y, 0)
+                if highlight_pass and child in selected:
+                    self.render_pane(child, materials, selected)
+                elif not highlight_pass:
+                    self.render_pane(child, materials, selected)
+
+                if child.child is not None:
+                    self.render_node(child.child, materials, selected, highlight_pass)
+                glPopMatrix()
+
+    def render_hierarchy(self, screen: ScreenBlo, selected):
+        self.render_node(screen.root, None, selected, highlight_pass=False)
+        self.render_node(screen.root, None, selected, highlight_pass=True)
+
+    def collision_detect_node(self, node, point, transform: Matrix4x4 = None):
+        results = []
+
+        for child in node.children:
+            if isinstance(child, Pane):
+                matrix = Matrix4x4.from_j2d_srt(child.p_offset_x, child.p_offset_y,
+                                                child.p_size_x, child.p_size_y,
+                                                child.p_rotation)
+                if transform is not None:
+                    matrix = transform.multiply_mat4(matrix)
+
+                if self.pane_render.point_lies_in_pane(child, point, matrix):
+                    results.append(child)
+
+                if child.child is not None:
+                    more_results = self.collision_detect_node(child.child, point, matrix)
+                    results.extend(more_results)
+
+        return results
 
     def render_generic_position_rotation_colored_id(self, position, rotation, id):
         glPushMatrix()

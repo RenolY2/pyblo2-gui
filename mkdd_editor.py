@@ -174,7 +174,7 @@ class LayoutEditor(QMainWindow):
             self.level_view.do_redraw()
 
     def tree_select_arrowkey(self):
-        current = self.leveldatatreeview.selectedItems()
+        current = self.layoutdatatreeview.selectedItems()
         if len(current) == 1:
             self.tree_select_object(current[0])
 
@@ -188,6 +188,13 @@ class LayoutEditor(QMainWindow):
         self.level_view.selected = []
         self.level_view.selected_positions = []
         self.level_view.selected_rotations = []
+
+        if isinstance(item, (tree_view.PaneItem, )):
+            self.level_view.selected = [item.bound_to]
+
+        self.level_view.do_redraw()
+        self.level_view.select_update.emit()
+        return
 
         if isinstance(item, (tree_view.CameraEntry, tree_view.RespawnEntry, tree_view.AreaEntry, tree_view.ObjectEntry,
                              tree_view.KartpointEntry, tree_view.EnemyRoutePoint, tree_view.ObjectRoutePoint)):
@@ -209,7 +216,7 @@ class LayoutEditor(QMainWindow):
         elif isinstance(item, (tree_view.LightParamEntry, tree_view.MGEntry)):
             self.level_view.selected = [item.bound_to]
 
-        self.level_view.gizmo.move_to_average(self.level_view.selected_positions)
+        #self.level_view.gizmo.move_to_average(self.level_view.selected_positions)
         self.level_view.do_redraw()
         self.level_view.select_update.emit()
 
@@ -776,8 +783,8 @@ class LayoutEditor(QMainWindow):
             self.setup_collision(verts, faces, arcfilepath, alternative_mesh=model)
 
     def setup_blo_file(self, blo_file:ScreenBlo, filepath):
-        self.level_file = blo_file
-        self.level_view.level_file = self.level_file
+        self.layout_file = blo_file
+        self.level_view.layout_file = self.layout_file
         # self.pikmin_gen_view.update()
         self.level_view.do_redraw()
 

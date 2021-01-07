@@ -170,6 +170,14 @@ class Pane(object):
         self.name = "PAN2"
         self.p_name = "PAN2"
         self.child = None
+        self.p_anchor = None
+        self.p_size_x = None
+        self.p_size_y = None
+        self.p_scale_x = None
+        self.p_scale_y = None
+        self.p_offset_x = None
+        self.p_offset_y = None
+        self.p_rotation = None
 
     @classmethod
     def from_file(cls, f):
@@ -183,9 +191,9 @@ class Pane(object):
         unk = read_uint16(f)
         assert unk == 0x40
 
-        pane.p_unk1 = read_uint16(f) # 0xA
-        pane.p_enabled = read_uint8(f) # 0xC
-        pane.p_anchor = read_uint8(f) # 0xD
+        pane.p_unk1 = read_uint16(f)  # 0xA
+        pane.p_enabled = read_uint8(f)  # 0xC
+        pane.p_anchor = read_uint8(f)  # 0xD
         
         re = f.read(2)
         assert re == b"RE"
