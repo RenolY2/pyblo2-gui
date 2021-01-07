@@ -1,5 +1,6 @@
 import os
 import json
+from math import radians
 from OpenGL.GL import *
 from .model_rendering import (GenericObject, Model, TexturedModel,
                               GenericFlyer, GenericCrystallWall, GenericLongLegs, GenericChappy, GenericSnakecrow,
@@ -212,17 +213,18 @@ class ObjectModels(object):
         for child in node.children:
             if isinstance(child, Pane):
                 matrix = Matrix4x4.from_j2d_srt(child.p_offset_x, child.p_offset_y,
-                                                child.p_size_x, child.p_size_y,
-                                                child.p_rotation)
+                                                child.p_scale_x, child.p_scale_y,
+                                                radians(child.p_rotation))
                 if transform is not None:
                     matrix = transform.multiply_mat4(matrix)
-
-                if self.pane_render.point_lies_in_pane(child, point, matrix):
-                    results.append(child)
+                #print("Matrix for", child.p_panename, matrix)
 
                 if child.child is not None:
                     more_results = self.collision_detect_node(child.child, point, matrix)
                     results.extend(more_results)
+
+                if self.pane_render.point_lies_in_pane(child, point, matrix):
+                    results.append(child)
 
         return results
 
@@ -234,7 +236,6 @@ class ObjectModels(object):
         self.generic.render_coloredid(id)
 
         glPopMatrix()
-
 
     def render_line(self, pos1, pos2):
         pass

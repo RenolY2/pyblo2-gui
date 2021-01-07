@@ -223,6 +223,8 @@ class BolMapViewer(QtWidgets.QOpenGLWidget):
         self.arrow = None
         self.minimap = Minimap(Vector3(-1000.0, 0.0, -1000.0), Vector3(1000.0, 0.0, 1000.0), 0,
                                None)
+        self.last_selected = None
+        self.last_selected_candidates = None
 
     @catch_exception_with_dialog
     def initializeGL(self):
@@ -705,11 +707,28 @@ class BolMapViewer(QtWidgets.QOpenGLWidget):
 
                 #print("select time taken", default_timer() - start)
                 #print("result:", selected)
+                selected_candidates = self.models.collision_detect_node(self.layout_file.root, Vector3(world_x, world_y, 1))
+                if not selected_candidates:
+                    self.last_selected = None
+                    self.last_selected_candidates = selected_candidates
 
-                selected = self.models.collision_detect_node(self.layout_file.root, Vector3(world_x, world_y, 1))
-                print(selected)
-
-                selected = [x for x in selected.keys()]
+                elif self.last_selected_candidates != selected_candidates:
+                    self.last_selected = selected_candidates[0]
+                    self.last_selected_candidates = selected_candidates
+                else:
+                    if self.last_selected is None or self.last_selected not in selected_candidates:
+                        self.last_selected = selected_candidates[0]
+                    else:
+                        pos = selected_candidates.index(self.last_selected)
+                        if pos+1 < len(selected_candidates):
+                            self.last_selected = selected_candidates[0]
+                        else:
+                            self.last_selected = selected_candidates[0]
+                if self.last_selected is None:
+                    selected = []
+                else:
+                    selected = [self.last_selected]
+                #selected = [x for x in selected.keys()]
                 if not shiftpressed:
                     self.selected = selected
                     #self.selected_positions = selected_positions
@@ -781,7 +800,7 @@ class BolMapViewer(QtWidgets.QOpenGLWidget):
             vismenu = self.visibility_menu
 
             self.models.render_hierarchy(self.layout_file, select_optimize)
-
+            #self.models.collision_detect_node(self.layout_file.root, Vector3(0, -0, 1))
             if vismenu.itemroutes.is_visible():
                 for route in self.level_file.routes:
                     for point in route.points:

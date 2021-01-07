@@ -1243,18 +1243,30 @@ class PaneRender(object):
         w, h = pane.p_size_x, pane.p_size_y
         p1 = Vector3(0.0 + offset_x, 0.0 - offset_y, 0)
         p2 = Vector3(0.0 + offset_x, -h - offset_y, 0)
-        #p3 = Vector3(w + offset_x, -h - offset_y, 0)
+        p3 = Vector3(w + offset_x, -h - offset_y, 0)
         p4 = Vector3(w + offset_x, 0 - offset_y, 0)
 
         A = Vector3(*transform.multiply_vec3(p1.x, p1.y, 1))
         B = Vector3(*transform.multiply_vec3(p2.x, p2.y, 1))
-        #C = transform.multiply_vec3(p3.x, p3.y, 1)
+        C = Vector3(*transform.multiply_vec3(p3.x, p3.y, 1))
         D = Vector3(*transform.multiply_vec3(p4.x, p4.y, 1))
+
+        glColor3f(1.0, 0.0, 0.0)
+        glBegin(GL_LINE_LOOP)
+        glVertex3f(A.x, A.y, A.z)
+        glVertex3f(B.x, B.y, B.z)
+        glVertex3f(C.x, C.y, C.z)
+        glVertex3f(D.x, D.y, D.z)
+        glEnd()
+
 
         # Shoutouts to https://math.stackexchange.com/questions/190111/how-to-check-if-a-point-is-inside-a-rectangle/190373#190373
 
         AM = M - A
         AB = B - A
         AD = D - A
-
+        AM.z = AB.z = AD.z = 0.0
+        print(M, A, B, C, D)
+        print(AM, AB, AD)
+        print(AM.dot(AB), AB.dot(AB), AM.dot(AD), AD.dot(AD))
         return 0 < AM.dot(AB) < AB.dot(AB) and 0 < AM.dot(AD) < AD.dot(AD)

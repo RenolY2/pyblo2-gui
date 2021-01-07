@@ -301,7 +301,7 @@ class Matrix4x4(object):
     @classmethod
     def from_j2d_srt(cls, offset_x, offset_y, scale_x, scale_y, rotation):
         matrix = cls(scale_x*cos(rotation), scale_y*-sin(rotation), offset_x, 0,
-                     scale_x*sin(rotation), scale_y*cos(rotation), offset_y, 0,
+                     scale_x*sin(rotation), scale_y*cos(rotation), -offset_y, 0,
                      0, 0, 1, 0,
                      0, 0, 0, 0)
         return matrix
