@@ -266,6 +266,23 @@ class LayoutDataTreeView(QTreeWidget):
                 if child.child is not None:
                     self.set_node_objects(child.child, child_item)
 
+    def get_item_for_obj(self, obj, root:PaneItem=None):
+        if self.layout.childCount() == 0:
+            return None
+
+        if root is None:
+            return self.get_item_for_obj(obj, self.layout.child(0))
+        else:
+            if root.bound_to == obj:
+                return root
+            else:
+                for i in range(root.childCount()):
+                    child = root.child(i)
+                    result = self.get_item_for_obj(obj, child)
+                    if result is not None:
+                        return result
+        return None
+
     def set_objects(self, screen_data: ScreenBlo):
         self.reset()
 

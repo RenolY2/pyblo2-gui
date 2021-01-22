@@ -721,9 +721,10 @@ class BolMapViewer(QtWidgets.QOpenGLWidget):
                     else:
                         pos = selected_candidates.index(self.last_selected)
                         if pos+1 < len(selected_candidates):
-                            self.last_selected = selected_candidates[0]
+                            self.last_selected = selected_candidates[pos+1]
                         else:
                             self.last_selected = selected_candidates[0]
+
                 if self.last_selected is None:
                     selected = []
                 else:

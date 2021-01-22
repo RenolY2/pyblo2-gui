@@ -38,7 +38,7 @@ from lib.dolreader import DolFile, read_float, write_float, read_load_immediate_
 from widgets.file_select import FileSelect
 from PyQt5.QtWidgets import QTreeWidgetItem
 from lib.bmd_render import clear_temp_folder, load_textured_bmd
-from lib.blo.readblo2 import ScreenBlo
+from lib.blo.readblo2 import ScreenBlo, Pane
 
 EDITOR_NAME = "BLO Layout Editor"
 
@@ -1394,47 +1394,22 @@ class LayoutEditor(QMainWindow):
         self.level_view.do_redraw()
 
     def select_from_3d_to_treeview(self):
-        if self.level_file is not None:
+        print("selected")
+        if self.screen_file is not None:
             selected = self.level_view.selected
+
             if len(selected) == 1:
                 currentobj = selected[0]
                 item = None
-                if isinstance(currentobj, libbol.EnemyPoint):
-                    for i in range(self.leveldatatreeview.enemyroutes.childCount()):
-                        child = self.leveldatatreeview.enemyroutes.child(i)
-                        item = get_treeitem(child, currentobj)
-                        if item is not None:
-                            break
+                print("selected", currentobj)
+                if isinstance(currentobj, Pane):
+                    print("ooooh")
+                    item = self.layoutdatatreeview.get_item_for_obj(currentobj)
+                    print("result", item)
 
-                    """elif isinstance(currentobj, libbol.Checkpoint):
-                    for i in range(self.leveldatatreeview.checkpointgroups.childCount()):
-                        child = self.leveldatatreeview.checkpointgroups.child(i)
-                        item = get_treeitem(child, currentobj)
-                        if item is not None:
-                            break"""
-
-                elif isinstance(currentobj, libbol.RoutePoint):
-                    for i in range(self.leveldatatreeview.objectroutes.childCount()):
-                        child = self.leveldatatreeview.objectroutes.child(i)
-                        item = get_treeitem(child, currentobj)
-                        if item is not None:
-                            break
-
-                elif isinstance(currentobj, libbol.MapObject):
-                    item = get_treeitem(self.leveldatatreeview.objects, currentobj)
-                elif isinstance(currentobj, libbol.Camera):
-                    item = get_treeitem(self.leveldatatreeview.cameras, currentobj)
-                elif isinstance(currentobj, libbol.Area):
-                    item = get_treeitem(self.leveldatatreeview.areas, currentobj)
-                elif isinstance(currentobj, libbol.JugemPoint):
-                    item = get_treeitem(self.leveldatatreeview.respawnpoints, currentobj)
-                elif isinstance(currentobj, libbol.KartStartPoint):
-                    item = get_treeitem(self.leveldatatreeview.kartpoints, currentobj)
-
-                #assert item is not None
                 if item is not None:
                     #self._dontselectfromtree = True
-                    self.leveldatatreeview.setCurrentItem(item)
+                    self.layoutdatatreeview.setCurrentItem(item)
 
     @catch_exception
     def action_update_info(self):
