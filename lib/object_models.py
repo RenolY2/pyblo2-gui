@@ -7,6 +7,7 @@ from .model_rendering import (GenericObject, Model, TexturedModel,
                               GenericSwimmer, Cube, PaneRender)
 from lib.blo.readblo2 import ScreenBlo, Pane, Window, Textbox, Picture
 from lib.vectors import Matrix4x4
+import mkdd_widgets
 
 with open("lib/color_coding.json", "r") as f:
     colors = json.load(f)
@@ -189,25 +190,37 @@ class ObjectModels(object):
     def render_pane(self, pane, material, selected):
         self.pane_render.render_pane(pane, material, pane in selected)
 
-    def render_node(self, node, materials, selected, highlight_pass):
+    def render_node(self, node, materials, selected, vismenu, highlight_pass):
         for child in node.children:
             if isinstance(child, Pane):
                 glPushMatrix()
+
+
                 glTranslatef(child.p_offset_x, -child.p_offset_y, 0)
+                glRotatef(child.p_rotation, 0, 0, 1)
+                glScalef(child.p_scale_x, child.p_scale_y, 1.0)
+
                 if highlight_pass and child in selected:
                     self.render_pane(child, materials, selected)
                 elif not highlight_pass:
-                    self.render_pane(child, materials, selected)
+                    if (
+                            (child.name == "PAN2" and vismenu.panes.is_visible()) or
+                            (child.name == "PIC2" and vismenu.pictures.is_visible()) or
+                            (child.name == "TBX2" and vismenu.textboxes.is_visible()) or
+                            (child.name == "WIN2" and vismenu.windows.is_visible())
+                    ):
+                        self.render_pane(child, materials, selected)
 
                 if child.child is not None:
-                    self.render_node(child.child, materials, selected, highlight_pass)
+                    self.render_node(child.child, materials, selected, vismenu, highlight_pass)
+
                 glPopMatrix()
 
-    def render_hierarchy(self, screen: ScreenBlo, selected):
-        self.render_node(screen.root, None, selected, highlight_pass=False)
-        self.render_node(screen.root, None, selected, highlight_pass=True)
+    def render_hierarchy(self, screen: ScreenBlo, selected, vismenu):
+        self.render_node(screen.root, None, selected, vismenu, highlight_pass=False)
+        self.render_node(screen.root, None, selected, vismenu, highlight_pass=True)
 
-    def collision_detect_node(self, node, point, transform: Matrix4x4 = None):
+    def collision_detect_node(self, node, point, vismenu, transform: Matrix4x4 = None):
         results = []
 
         for child in node.children:
@@ -220,11 +233,17 @@ class ObjectModels(object):
                 #print("Matrix for", child.p_panename, matrix)
 
                 if child.child is not None:
-                    more_results = self.collision_detect_node(child.child, point, matrix)
+                    more_results = self.collision_detect_node(child.child, point, vismenu, matrix)
                     results.extend(more_results)
 
-                if self.pane_render.point_lies_in_pane(child, point, matrix):
-                    results.append(child)
+                if (
+                        (child.name == "PAN2" and vismenu.panes.is_selectable()) or
+                        (child.name == "PIC2" and vismenu.pictures.is_selectable()) or
+                        (child.name == "TBX2" and vismenu.textboxes.is_selectable()) or
+                        (child.name == "WIN2" and vismenu.windows.is_selectable())
+                ):
+                    if self.pane_render.point_lies_in_pane(child, point, matrix):
+                        results.append(child)
 
         return results
 
