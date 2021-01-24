@@ -90,7 +90,12 @@ class InformationItem(NamedItem):
 class PaneItem(NamedItemWithChildren):
     def __init__(self, parent, name, bound_to: Pane=None, index=None):
         name = bound_to.name
+        bound_to.widget = self
         super().__init__(parent, "{0}: {1}".format(bound_to.name, bound_to.p_panename), bound_to, index)
+
+    def update_name(self):
+        self.setText(0, "{0}: {1}".format(self.bound_to.name, self.bound_to.p_panename))
+
 
 
 """

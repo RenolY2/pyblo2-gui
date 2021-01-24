@@ -589,6 +589,7 @@ class BolMapViewer(QtWidgets.QOpenGLWidget):
         #print(self.gizmo.position, campos)
         vismenu: FilterViewMenu = self.visibility_menu
         while len(self.selectionqueue) > 0:
+            print(len(self.selectionqueue))
             glClearColor(1.0, 1.0, 1.0, 1.0)
             #
             click_x, click_y, clickwidth, clickheight, shiftpressed, do_gizmo = self.selectionqueue.queue_pop()
@@ -615,11 +616,6 @@ class BolMapViewer(QtWidgets.QOpenGLWidget):
                 glDisable(GL_TEXTURE_2D)
                 #for i, pikminobject in enumerate(objects):
                 #    self.models.render_object_coloredid(pikminobject, i)
-
-                id = 0x100000
-
-                objlist = []
-                offset = 0
                 """if self.minimap is not None and vismenu.minimap.is_selectable() and self.minimap.is_available():
                     objlist.append((self.minimap, self.minimap.corner1, self.minimap.corner2, None))
                     self.models.render_generic_position_colored_id(self.minimap.corner1, id + (offset) * 4)
@@ -665,8 +661,7 @@ class BolMapViewer(QtWidgets.QOpenGLWidget):
                         self.models.render_generic_position_rotation_colored_id(obj.position, obj.rotation,
                                                                                 id + (offset + i) * 4 + 2)
                 """
-                assert len(objlist)*4 < id
-                print("We queued up", len(objlist))
+
                 """pixels = glReadPixels(click_x, click_y, clickwidth, clickheight, GL_RGB, GL_UNSIGNED_BYTE)
                 #print(pixels, click_x, click_y, clickwidth, clickheight)
                 selected = {}
@@ -808,21 +803,6 @@ class BolMapViewer(QtWidgets.QOpenGLWidget):
         glDisable(GL_TEXTURE_2D)
         glColor4f(0.0, 1.0, 0.0, 1.0)
         rendered = {}
-        for p1i, p2i in self.paths.unique_paths:
-            p1 = self.paths.waypoints[p1i]
-            p2 = self.paths.waypoints[p2i]
-
-            glBegin(GL_LINES)
-            glVertex3f(p1.position.x, -p1.position.z, p1.position.y+5)
-            glVertex3f(p2.position.x, -p2.position.z, p2.position.y+5)
-            glEnd()
-
-            if p1i not in rendered:
-                self.models.draw_sphere(p1.position, p1.radius/2)
-                rendered[p1i] = True
-            if p2i not in rendered:
-                self.models.draw_sphere(p2.position, p2.radius/2)
-                rendered[p2i] = True
         glColor4f(0.0, 1.0, 1.0, 1.0)
         """for points in self.paths.wide_paths:
             glBegin(GL_LINE_LOOP)

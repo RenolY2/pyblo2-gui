@@ -1413,10 +1413,10 @@ class LayoutEditor(QMainWindow):
 
     @catch_exception
     def action_update_info(self):
-        if self.level_file is not None:
+        if self.layout_file is not None:
             selected = self.level_view.selected
             if len(selected) == 1:
-                currentobj = selected[0]
+                """
                 if isinstance(currentobj, Route):
                     objects = []
                     index = self.level_file.routes.index(currentobj)
@@ -1428,8 +1428,9 @@ class LayoutEditor(QMainWindow):
                             objects.append("Camera {0}".format(i))
 
                     self.pik_control.set_info(currentobj, self.update_3d, objects)
-                else:
-                    self.pik_control.set_info(currentobj, self.update_3d)
+                else:"""
+                currentobj = selected[0]
+                self.pik_control.set_info(currentobj, self.update_3d)
 
                 self.pik_control.update_info()
             else:

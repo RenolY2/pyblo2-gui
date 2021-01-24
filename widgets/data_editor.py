@@ -11,6 +11,7 @@ from lib.libbol import (EnemyPoint, EnemyPointGroup, CheckpointGroup, Checkpoint
 from lib.vectors import Vector3
 from lib.model_rendering import Minimap
 from PyQt5.QtCore import pyqtSignal
+from lib.blo import readblo2
 
 
 def load_parameter_names(objectname):
@@ -387,7 +388,9 @@ MAX_UNSIGNED_INT = 2**32 - 1
 
 
 def choose_data_editor(obj):
-    if isinstance(obj, EnemyPoint):
+    if isinstance(obj, readblo2.Pane):
+        return PaneEdit
+    elif isinstance(obj, EnemyPoint):
         return EnemyPointEdit
     elif isinstance(obj, EnemyPointGroup):
         return EnemyPointGroupEdit
@@ -419,6 +422,25 @@ def choose_data_editor(obj):
         return MinimapEdit
     else:
         return None
+
+
+class PaneEdit(DataEditor):
+    def setup_widgets(self):
+        #readblo2.Pane.p_
+        self.name = self.add_text_input("Name", "p_panename", maxlength=8)
+        self.name.textChanged.connect(self.update_name)
+
+    def update_data(self):
+        self.bound_to: readblo2.Pane
+
+        self.name.setText(self.bound_to.p_panename)
+
+    def update_name(self):#
+        print("updating name")
+        if self.bound_to.widget is None:
+            return
+        print("updating")
+        self.bound_to.widget.update_name()
 
 
 class EnemyPointGroupEdit(DataEditor):

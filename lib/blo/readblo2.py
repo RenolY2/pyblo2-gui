@@ -178,6 +178,8 @@ class Pane(object):
         self.p_offset_x = None
         self.p_offset_y = None
         self.p_rotation = None
+        self.p_panename = None
+        self.p_secondaryname = None
 
     @classmethod
     def from_file(cls, f):
@@ -197,7 +199,8 @@ class Pane(object):
         
         re = f.read(2)
         assert re == b"RE"
-        pane.p_panename = f.read(0x8+0x8).decode("ascii")
+        pane.p_panename = f.read(0x8).decode("ascii")
+        pane.p_secondaryname = f.read(0x8).decode("ascii")
         #unknown = f.read(0x8)
         #assert unknown == b"\x00"*8
         pane.p_size_x = read_float(f)

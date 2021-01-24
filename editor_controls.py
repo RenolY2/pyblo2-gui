@@ -120,7 +120,7 @@ class TopdownSelect(ClickDragAction):
 
         editor.selectionbox_start = (selectstartx, selectstartz)
 
-        if editor.level_file is not None:
+        if editor.layout_file is not None:
             editor.selectionqueue.queue_selection(x, y, 1, 1,
                                            editor.shift_is_pressed)
             editor.do_redraw(force=True)
@@ -139,8 +139,8 @@ class TopdownSelect(ClickDragAction):
         startz = min(selectstartz, selectendz)
         endz = max(selectstartz, selectendz)
 
-        editor.selectionqueue.queue_selection(int(startx), int(endz), int(endx - startx) + 1, int(endz - startz) + 1,
-                                       editor.shift_is_pressed)
+        #editor.selectionqueue.queue_selection(int(startx), int(endz), int(endx - startx) + 1, int(endz - startz) + 1,
+        #                               editor.shift_is_pressed)
 
         editor.do_redraw(force=True)
 
@@ -151,8 +151,8 @@ class TopdownSelect(ClickDragAction):
 class Gizmo2DMoveX(ClickDragAction):
     def just_clicked(self, editor, buttons, event):
         super().just_clicked(editor, buttons, event)
-        editor.selectionqueue.queue_selection(event.x(), event.y(), 1, 1,
-                                              editor.shift_is_pressed, do_gizmo=True)
+        #editor.selectionqueue.queue_selection(event.x(), event.y(), 1, 1,
+        #                                      editor.shift_is_pressed, do_gizmo=True)
         editor.do_redraw(force=True)
 
     def move(self, editor, buttons, event):

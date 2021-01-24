@@ -1266,7 +1266,7 @@ class PaneRender(object):
         AB = B - A
         AD = D - A
         AM.z = AB.z = AD.z = 0.0
-        print(M, A, B, C, D)
-        print(AM, AB, AD)
-        print(AM.dot(AB), AB.dot(AB), AM.dot(AD), AD.dot(AD))
+        #print(M, A, B, C, D)
+        #print(AM, AB, AD)
+        #print(AM.dot(AB), AB.dot(AB), AM.dot(AD), AD.dot(AD))
         return 0 < AM.dot(AB) < AB.dot(AB) and 0 < AM.dot(AD) < AD.dot(AD)
