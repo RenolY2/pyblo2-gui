@@ -195,7 +195,6 @@ class ObjectModels(object):
             if isinstance(child, Pane):
                 glPushMatrix()
 
-
                 glTranslatef(child.p_offset_x, -child.p_offset_y, 0)
                 glRotatef(child.p_rotation, 0, 0, 1)
                 glScalef(child.p_scale_x, child.p_scale_y, 1.0)
@@ -204,10 +203,10 @@ class ObjectModels(object):
                     self.render_pane(child, materials, selected)
                 elif not highlight_pass:
                     if (
-                            (child.name == "PAN2" and vismenu.panes.is_visible()) or
+                            ((child.name == "PAN2" and vismenu.panes.is_visible()) or
                             (child.name == "PIC2" and vismenu.pictures.is_visible()) or
                             (child.name == "TBX2" and vismenu.textboxes.is_visible()) or
-                            (child.name == "WIN2" and vismenu.windows.is_visible())
+                            (child.name == "WIN2" and vismenu.windows.is_visible())) and not child.hide
                     ):
                         self.render_pane(child, materials, selected)
 
@@ -237,10 +236,10 @@ class ObjectModels(object):
                     results.extend(more_results)
 
                 if (
-                        (child.name == "PAN2" and vismenu.panes.is_selectable()) or
+                        ((child.name == "PAN2" and vismenu.panes.is_selectable()) or
                         (child.name == "PIC2" and vismenu.pictures.is_selectable()) or
                         (child.name == "TBX2" and vismenu.textboxes.is_selectable()) or
-                        (child.name == "WIN2" and vismenu.windows.is_selectable())
+                        (child.name == "WIN2" and vismenu.windows.is_selectable())) and not child.hide
                 ):
                     if self.pane_render.point_lies_in_pane(child, point, matrix):
                         results.append(child)

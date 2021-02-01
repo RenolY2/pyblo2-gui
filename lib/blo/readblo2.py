@@ -167,6 +167,8 @@ class Item(object):
 
 class Pane(object):
     def __init__(self):
+        self.hide = False  # Not a blo feature, hides element in editor only
+
         self.name = "PAN2"
         self.p_name = "PAN2"
         self.child = None
