@@ -64,6 +64,8 @@ class DataEditor(QWidget):
 
         self.description = self.add_label("Object")
 
+        self.field_updaters = []
+
         self.setup_widgets()
 
     def catch_text_update(self):
@@ -73,7 +75,9 @@ class DataEditor(QWidget):
         pass
 
     def update_data(self):
-        pass
+        print("doing updates")
+        for update_field in self.field_updaters:
+            update_field(self)
 
     def create_label(self, text):
         label = QLabel(self)
@@ -102,7 +106,7 @@ class DataEditor(QWidget):
             layout.addWidget(widget)
         return layout
 
-    def add_checkbox(self, text, attribute, off_value, on_value):
+    def add_checkbox(self, attribute, text, off_value, on_value):
         checkbox = QCheckBox(self)
         layout = self.create_labeled_widget(self, text, checkbox)
 
@@ -117,7 +121,7 @@ class DataEditor(QWidget):
 
         return checkbox
 
-    def add_integer_input(self, text, attribute, min_val, max_val):
+    def add_integer_input(self, attribute, text, min_val, max_val):
         line_edit = QLineEdit(self)
         layout = self.create_labeled_widget(self, text, line_edit)
 
@@ -136,7 +140,7 @@ class DataEditor(QWidget):
         print("created for", text, attribute)
         return line_edit
 
-    def add_integer_input_index(self, text, attribute, index, min_val, max_val):
+    def add_integer_input_index(self, attribute, text, index, min_val, max_val):
         line_edit = QLineEdit(self)
         layout = self.create_labeled_widget(self, text, line_edit)
 
@@ -154,7 +158,7 @@ class DataEditor(QWidget):
 
         return label, line_edit
 
-    def add_decimal_input(self, text, attribute, min_val, max_val):
+    def add_decimal_input(self, attribute, text, min_val, max_val):
         line_edit = QLineEdit(self)
         layout = self.create_labeled_widget(self, text, line_edit)
 
@@ -172,15 +176,16 @@ class DataEditor(QWidget):
 
         return line_edit
 
-    def add_text_input(self, text, attribute, maxlength):
+    def add_text_input(self, attribute, text, maxlength, pad=" "):
         line_edit = QLineEdit(self)
         layout = self.create_labeled_widget(self, text, line_edit)
 
         line_edit.setMaxLength(maxlength)
 
         def input_edited():
+            print("edited AAAAaaa", line_edit.text())
             text = line_edit.text()
-            text = text.rjust(maxlength)
+            text = text.rjust(maxlength, pad)
             setattr(self.bound_to, attribute, text)
 
         line_edit.editingFinished.connect(input_edited)
@@ -188,7 +193,7 @@ class DataEditor(QWidget):
 
         return line_edit
 
-    def add_dropdown_input(self, text, attribute, keyval_dict):
+    def add_dropdown_input(self, attribute, text, keyval_dict):
         combobox = QComboBox(self)
         for val in keyval_dict:
             combobox.addItem(val)
@@ -205,7 +210,7 @@ class DataEditor(QWidget):
 
         return combobox
 
-    def add_multiple_integer_input(self, text, attribute, subattributes, min_val, max_val):
+    def add_multiple_integer_input(self, attribute, subattributes, text, min_val, max_val):
         line_edits = []
         for subattr in subattributes:
             line_edit = QLineEdit(self)
@@ -226,7 +231,7 @@ class DataEditor(QWidget):
 
         return line_edits
 
-    def add_multiple_decimal_input(self, text, attribute, subattributes, min_val, max_val):
+    def add_multiple_decimal_input(self, attribute, subattributes, text, min_val, max_val):
         line_edits = []
         for subattr in subattributes:
             line_edit = QLineEdit(self)
@@ -242,7 +247,7 @@ class DataEditor(QWidget):
 
         return line_edits
 
-    def add_multiple_integer_input_list(self, text, attribute, min_val, max_val):
+    def add_multiple_integer_input_list(self, attribute, text, min_val, max_val):
         line_edits = []
         fieldlist = getattr(self.bound_to, attribute)
         for i in range(len(fieldlist)):
@@ -346,6 +351,63 @@ class DataEditor(QWidget):
     def set_value(self, field, val):
         field.setText(str(val))
 
+    def add_updater(self, func, attr, *args, **kwargs):
+        preprocess_func = None
+        if "preprocess_func" in kwargs:
+            preprocess_func = kwargs["preprocess_func"]
+            del kwargs["preprocess_func"]
+
+        print(args, kwargs)
+        widget = func(attr, *args, **kwargs)
+
+        if preprocess_func is None:
+            def update_text(editor: DataEditor):
+                widget.setText(str(getattr(editor.bound_to, attr)))
+        else:
+            def update_text(editor: DataEditor):
+                widget.setText(str(preprocess_func(getattr(editor.bound_to, attr))))
+
+        self.field_updaters.append(update_text)
+        return widget
+
+    def add_combobox_updater(self, func, attr, *args, **kwargs):
+        preprocess_func = None
+        if "preprocess_func" in kwargs:
+            preprocess_func = kwargs["preprocess_func"]
+            del kwargs["preprocess_func"]
+
+        print(args, kwargs)
+        widget = func(attr, *args, **kwargs)
+
+        if preprocess_func is None:
+            def update_text(editor: DataEditor):
+                widget.setCurrentIndex(getattr(editor.bound_to, attr))
+        else:
+            def update_text(editor: DataEditor):
+                widget.setCurrentIndex(preprocess_func(getattr(editor.bound_to, attr)))
+
+        self.field_updaters.append(update_text)
+        return widget
+
+    def add_checkbox_updater(self, func, attr, *args, **kwargs):
+        preprocess_func = None
+        if "preprocess_func" in kwargs:
+            preprocess_func = kwargs["preprocess_func"]
+            del kwargs["preprocess_func"]
+
+        print(args, kwargs)
+        widget = func(attr, *args, **kwargs)
+
+        if preprocess_func is None:
+            def update_text(editor: DataEditor):
+                widget.setChecked(getattr(editor.bound_to, attr) != 0)
+        else:
+            def update_text(editor: DataEditor):
+                widget.setChecked(preprocess_func(getattr(editor.bound_to, attr)))
+
+        self.field_updaters.append(update_text)
+        return widget
+
 
 def create_setter_list(lineedit, bound_to, attribute, index):
     def input_edited():
@@ -423,23 +485,76 @@ def choose_data_editor(obj):
     else:
         return None
 
+        self.p_anchor = None
+        self.p_size_x = None
+        self.p_size_y = None
+        self.p_scale_x = None
+        self.p_scale_y = None
+        self.p_offset_x = None
+        self.p_offset_y = None
+        self.p_rotation = None
+        self.p_panename = None
+        self.p_secondaryname = None
+
+
+anchor_dropdown = OrderedDict()
+anchor_dropdown["Top-Left"] = 0
+anchor_dropdown["Center-Top"] = 1
+anchor_dropdown["Top-Right"] = 2
+anchor_dropdown["Center-Left"] = 3
+anchor_dropdown["Center"] = 4
+anchor_dropdown["Center-Right"] = 5
+anchor_dropdown["Bottom-Left"] = 6
+anchor_dropdown["Center-Bottom"] = 7
+anchor_dropdown["Bottom-Right"] = 8
+
 
 class PaneEdit(DataEditor):
     def setup_widgets(self):
-        #readblo2.Pane.p_
-        self.name = self.add_text_input("Name", "p_panename", maxlength=8)
-        self.name.textChanged.connect(self.update_name)
+        readblo2.Pane
+        self.name = self.add_updater(self.add_text_input,
+                                     "p_panename", "Name", maxlength=8, pad="\x00",
+                                     preprocess_func=lambda x: x.lstrip("\x00"))
+        self.name.editingFinished.connect(self.update_name)
+        self.secondaryname = self.add_updater(self.add_text_input,
+                                              "p_secondaryname", "Secondary Name", maxlength=8, pad="\x00",
+                                              preprocess_func=lambda x: x.lstrip("\x00"))
+        self.hide = self.add_checkbox_updater(self.add_checkbox, "hide", "Hide (Editor only)", 0, 1)
+        self.hide.stateChanged.connect(self.catch_text_update)
+        self.hide.stateChanged.connect(self.update_name)
+        self.anchor = self.add_combobox_updater(self.add_dropdown_input,
+                                       "p_anchor", "Anchor", keyval_dict=anchor_dropdown)
+
+        self.anchor.currentIndexChanged.connect(self.catch_text_update)
+        self.offset_x = self.add_updater(self.add_decimal_input, "p_offset_x", "X Offset", -inf, +inf)
+        self.offset_y = self.add_updater(self.add_decimal_input, "p_offset_y", "Y Offset", -inf, +inf)
+        self.size_x = self.add_updater(self.add_decimal_input, "p_size_x", "X Size", -inf, +inf)
+        self.size_y = self.add_updater(self.add_decimal_input, "p_size_y", "Y Size", -inf, +inf)
+        self.scale_x = self.add_updater(self.add_decimal_input, "p_scale_x", "X Scale", -inf, +inf)
+        self.scale_y = self.add_updater(self.add_decimal_input, "p_scale_y", "Y Scale", -inf, +inf)
+
+        self.rotation = self.add_updater(self.add_decimal_input, "p_rotation", "Rotation", -inf, +inf)
 
     def update_data(self):
+        super().update_data()
+        print("update 2")
         self.bound_to: readblo2.Pane
+        bound_to = self.bound_to
 
-        self.name.setText(self.bound_to.p_panename)
+        #self.name.setText(bound_to.p_panename.lstrip("\x00"))
+        """self.secondaryname.setText(bound_to.p_secondaryname.lstrip("\x00"))
+        self.anchor.setCurrentIndex(bound_to.p_anchor)
+        self.offset_x.setText(str(bound_to.p_offset_x))
+        self.offset_y.setText(str(bound_to.p_offset_y))
+        self.size_x.setText(str(bound_to.p_size_x))
+        self.size_y.setText(str(bound_to.p_size_y))
+        self.scale_x.setText(str(bound_to.p_scale_x))
+        self.scale_y.setText(str(bound_to.p_scale_y))
+        self.rotation.setText(str(bound_to.p_rotation))"""
 
-    def update_name(self):#
-        print("updating name")
+    def update_name(self):
         if self.bound_to.widget is None:
             return
-        print("updating")
         self.bound_to.widget.update_name()
 
 
