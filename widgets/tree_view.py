@@ -92,9 +92,14 @@ class PaneItem(NamedItemWithChildren):
         name = bound_to.name
         bound_to.widget = self
         super().__init__(parent, "{0}: {1}".format(bound_to.name, bound_to.p_panename), bound_to, index)
+        self.update_name()
 
     def update_name(self):
-        self.setText(0, "{0}: {1}".format(self.bound_to.name, self.bound_to.p_panename))
+        print("updating name", self.bound_to.p_panename)
+        name = "{0}: {1}".format(self.bound_to.name, self.bound_to.p_panename)
+        if self.bound_to.hide:
+            name += " (H)"
+        self.setText(0, name)
 
 
 
