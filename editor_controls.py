@@ -94,7 +94,7 @@ class TopdownScroll(ClickDragAction):
         x, y = event.x(), event.y()
         d_x, d_y = event.x() - self.first_click.x, event.y() - self.first_click.y
 
-        if editor.zoom_factor > 1.0:
+        if editor.zoom_factor > 1.0 or True:
             adjusted_dx = d_x * editor.zoom_factor  # (1.0 + (self.zoom_factor - 1.0))
             adjusted_dz = d_y * editor.zoom_factor  # (1.0 + (self.zoom_factor - 1.0))
         else:
@@ -116,14 +116,15 @@ class TopdownSelect(ClickDragAction):
         super().just_clicked(editor, buttons, event)
         x, y = self.first_click.x, self.first_click.y
 
-        selectstartx, selectstartz = editor.mouse_coord_to_world_coord(x, y)
+        selectstartx, selectstarty = editor.mouse_coord_to_world_coord(x, y)
 
-        editor.selectionbox_start = (selectstartx, selectstartz)
+        if editor.box_manipulator.in_corner(selectstartx, selectstarty, editor.zoom_factor) is None:
+            editor.selectionbox_start = (selectstartx, selectstarty)
 
-        if editor.layout_file is not None:
-            editor.selectionqueue.queue_selection(x, y, 1, 1,
-                                           editor.shift_is_pressed)
-            editor.do_redraw(force=True)
+            if editor.layout_file is not None:
+                editor.selectionqueue.queue_selection(x, y, 1, 1,
+                                               editor.shift_is_pressed)
+                editor.do_redraw(force=True)
 
     def move(self, editor, buttons, event):
         selectendx, selectendz = editor.mouse_coord_to_world_coord(event.x(), event.y())
@@ -231,6 +232,72 @@ class AddObjectTopDown(ClickAction):
         destx, destz = editor.mouse_coord_to_world_coord(mouse_x, mouse_z)
 
         editor.create_waypoint.emit(destx, -destz)
+
+
+class BoxManipulatorHandler(ClickDragAction):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.handle = None
+
+    def condition(self, editor, buttons, event):
+        return editor.box_manipulator.visible and editor.mousemode == MOUSE_MODE_NONE
+
+    def just_clicked(self, editor, buttons, event):
+        super().just_clicked(editor, buttons, event)
+        x, y = self.first_click.x, self.first_click.y
+        print("Ohayooooo")
+        selectstartx, selectstarty = editor.mouse_coord_to_world_coord(event.x(), event.y())
+
+        hit = editor.box_manipulator.in_corner(selectstartx, selectstarty, editor.zoom_factor)
+        editor.box_manipulator.select(hit)
+        self.handle = hit
+        editor.do_redraw(force=True)
+        """
+        editor.selectionbox_start = (selectstartx, selectstartz)
+
+        if editor.layout_file is not None:
+            editor.selectionqueue.queue_selection(x, y, 1, 1,
+                                           editor.shift_is_pressed)
+            editor.do_redraw(force=True)"""
+
+    def move(self, editor, buttons, event):
+        if self.handle is not None:
+            startx, starty = editor.mouse_coord_to_world_coord(self.first_click.x, self.first_click.y)
+            currx, curry = editor.mouse_coord_to_world_coord(event.x(), event.y())
+
+            diffx = currx-startx
+            diffy = curry-starty
+
+            pane = editor.selected[0]
+            sidex, sidey = editor.box_manipulator.get_sides(self.handle)
+            pane.resize(diffx*abs(sidex), (-diffy)*abs(sidey), sidex, sidey)
+
+            self.first_click.x = event.x()
+            self.first_click.y = event.y()
+
+            editor.do_redraw(force=True)
+            """selectendx, selectendz = editor.mouse_coord_to_world_coord(event.x(), event.y())
+            editor.selectionbox_end = (selectendx, selectendz)
+            editor.do_redraw()"""
+
+    def just_released(self, editor, buttons, event):
+        self.handle = None
+        pass
+        """selectstartx, selectstartz = self.first_click.x, self.first_click.y
+        selectendx, selectendz = event.x(), event.y()
+
+        startx = min(selectstartx, selectendx)
+        endx = max(selectstartx, selectendx)
+        startz = min(selectstartz, selectendz)
+        endz = max(selectstartz, selectendz)
+
+        #editor.selectionqueue.queue_selection(int(startx), int(endz), int(endx - startx) + 1, int(endz - startz) + 1,
+        #                               editor.shift_is_pressed)
+
+        editor.do_redraw(force=True)
+
+        editor.selectionbox_start = editor.selectionbox_end = None
+        editor.do_redraw()"""
 
 
 class RotateCamera3D(ClickDragAction):
@@ -515,8 +582,9 @@ class UserControl(object):
         self.add_action(Gizmo2DMoveXZ("Gizmo2DMoveXZ", "Left"))
         self.add_action(Gizmo2DRotateY("Gizmo2DRotateY", "Left"))
         self.add_action(AddObjectTopDown("AddObject2D", "Left"))
+        self.add_action(BoxManipulatorHandler("BoxManipulatorHandler", "Left"))
 
-        self.add_action3d(RotateCamera3D("RotateCamera", "Right"))
+        """self.add_action3d(RotateCamera3D("RotateCamera", "Right"))
         self.add_action3d(AddObject3D("AddObject3D", "Left"))
         self.add_action3d(Gizmo3DMoveX("Gizmo3DMoveX", "Left"))
         self.add_action3d(Gizmo3DMoveY("Gizmo3DMoveY", "Left"))
@@ -524,7 +592,7 @@ class UserControl(object):
         self.add_action3d(Gizmo3DRotateX("Gizmo3DRotateX", "Left"))
         self.add_action3d(Gizmo3DRotateY("Gizmo3DRotateY", "Left"))
         self.add_action3d(Gizmo3DRotateZ("Gizmo3DRotateZ", "Left"))
-        self.add_action3d(Select3D("Select3D", "Left"))
+        self.add_action3d(Select3D("Select3D", "Left"))"""
 
         self.last_position_update = 0.0
 

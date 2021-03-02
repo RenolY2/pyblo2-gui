@@ -357,7 +357,7 @@ class DataEditor(QWidget):
             preprocess_func = kwargs["preprocess_func"]
             del kwargs["preprocess_func"]
 
-        print(args, kwargs)
+        #print(args, kwargs)
         widget = func(attr, *args, **kwargs)
 
         if preprocess_func is None:
@@ -376,7 +376,7 @@ class DataEditor(QWidget):
             preprocess_func = kwargs["preprocess_func"]
             del kwargs["preprocess_func"]
 
-        print(args, kwargs)
+        #print(args, kwargs)
         widget = func(attr, *args, **kwargs)
 
         if preprocess_func is None:
@@ -395,7 +395,7 @@ class DataEditor(QWidget):
             preprocess_func = kwargs["preprocess_func"]
             del kwargs["preprocess_func"]
 
-        print(args, kwargs)
+        #print(args, kwargs)
         widget = func(attr, *args, **kwargs)
 
         if preprocess_func is None:

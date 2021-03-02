@@ -332,6 +332,10 @@ class Matrix4x4(object):
         newx, newy, newz, neww = self.multiply_vec4(x, y, z, 0)
         return newx, newy, newz
 
+    def multiply_return_vec3(self, vec):
+        newx, newy, newz, neww = self.multiply_vec4(vec.x, vec.y, vec.z, 0)
+        return Vector3(newx, newy, newz)
+
     def inplace_multiply_mat4(self, othermat):
         col1 = self.multiply_vec4(othermat.a1, othermat.a2, othermat.a3, othermat.a4)
         col2 = self.multiply_vec4(othermat.b1, othermat.b2, othermat.b3, othermat.b4)

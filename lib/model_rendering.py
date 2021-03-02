@@ -1178,29 +1178,7 @@ class PaneRender(object):
         else:
             glColor3f(0.0, 0.0, 0.0)
 
-        offset_x = 0
-        offset_y = 0
-        if True:#pane.name == "PIC2":
-            if pane.p_anchor == 1:  # Center-Top anchor
-                offset_x = -w/2
-            elif pane.p_anchor == 2:  # Top-Right anchor
-                offset_x = -w
-            elif pane.p_anchor == 3:  # Center-Left anchor
-                offset_y = -h/2
-            elif pane.p_anchor == 4:  # Center anchor
-                offset_x = -w/2
-                offset_y = -h/2
-            elif pane.p_anchor == 5:  # Center-right anchor
-                offset_x = -w
-                offset_y = -h / 2
-            elif pane.p_anchor == 6:  # Bottom-left anchor
-                offset_y = -h
-            elif pane.p_anchor == 7:  # Center-Bottom anchor
-                offset_x = -w/2
-                offset_y = -h
-            elif pane.p_anchor == 8:  # Bottom-right anchor
-                offset_x = -w
-                offset_y = -h
+        offset_x, offset_y = PaneRender.get_anchor_offset(pane)
 
         glVertex3f(0.0+offset_x, 0.0-offset_y, 0)
         #glTexCoord2f(0.0, 1.0)
@@ -1211,7 +1189,8 @@ class PaneRender(object):
         glVertex3f(w+offset_x, 0-offset_y, 0)
         glEnd()
 
-    def _get_anchor_offset(self, pane):
+    @staticmethod
+    def get_anchor_offset(pane):
         w, h = pane.p_size_x, pane.p_size_y
         offset_x = 0.0
         offset_y = 0.0
@@ -1239,7 +1218,7 @@ class PaneRender(object):
         return offset_x, offset_y
 
     def point_lies_in_pane(self, pane, M: Vector3, transform: Matrix4x4):
-        offset_x, offset_y = self._get_anchor_offset(pane)
+        offset_x, offset_y = PaneRender.get_anchor_offset(pane)
         w, h = pane.p_size_x, pane.p_size_y
         p1 = Vector3(0.0 + offset_x, 0.0 - offset_y, 0)
         p2 = Vector3(0.0 + offset_x, -h - offset_y, 0)

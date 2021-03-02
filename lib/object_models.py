@@ -57,6 +57,9 @@ class ObjectModels(object):
         with open("resources/unitcylinder.obj", "r") as f:
             self.cylinder = Model.from_obj(f, rotate=True)
 
+        with open("resources/unitcircle.obj", "r") as f:
+            self.circle = Model.from_obj(f, rotate=True)
+
         with open("resources/unitcube_wireframe.obj", "r") as f:
             self.wireframe_cube = Model.from_obj(f, rotate=True)
 
@@ -215,12 +218,9 @@ class ObjectModels(object):
 
                 glPopMatrix()
 
-    def render_hierarchy(self, screen: ScreenBlo, selected, vismenu):
-        self.render_node(screen.root, None, selected, vismenu, highlight_pass=False)
-        self.render_node(screen.root, None, selected, vismenu, highlight_pass=True)
-
-    def collision_detect_node(self, node, point, vismenu, transform: Matrix4x4 = None):
-        results = []
+    def precompute_transforms(self, node, transform=None, transforms=None):
+        if transforms is None:
+            transforms = {}
 
         for child in node.children:
             if isinstance(child, Pane):
@@ -229,19 +229,44 @@ class ObjectModels(object):
                                                 radians(child.p_rotation))
                 if transform is not None:
                     matrix = transform.multiply_mat4(matrix)
+                # print("Matrix for", child.p_panename, matrix)
+
+                transforms[child] = matrix
+
+                if child.child is not None:
+                    self.precompute_transforms(child.child, matrix, transforms)
+
+        return transforms
+
+    def render_hierarchy(self, screen: ScreenBlo, selected, vismenu):
+        self.render_node(screen.root, None, selected, vismenu, highlight_pass=False)
+        self.render_node(screen.root, None, selected, vismenu, highlight_pass=True)
+
+    def collision_detect_node(self, node, point, vismenu, transforms):#transform: Matrix4x4 = None):
+        results = []
+
+        for child in node.children:
+            if isinstance(child, Pane):
+                #matrix = Matrix4x4.from_j2d_srt(child.p_offset_x, child.p_offset_y,
+                #                                child.p_scale_x, child.p_scale_y,
+                #                                radians(child.p_rotation))
+                #if transform is not None:
+                #    matrix = transform.multiply_mat4(matrix)
                 #print("Matrix for", child.p_panename, matrix)
 
                 if child.child is not None:
-                    more_results = self.collision_detect_node(child.child, point, vismenu, matrix)
+                    more_results = self.collision_detect_node(child.child, point, vismenu, transforms)
                     results.extend(more_results)
 
                 if (
-                        ((child.name == "PAN2" and vismenu.panes.is_selectable()) or
-                        (child.name == "PIC2" and vismenu.pictures.is_selectable()) or
-                        (child.name == "TBX2" and vismenu.textboxes.is_selectable()) or
-                        (child.name == "WIN2" and vismenu.windows.is_selectable())) and not child.hide
+                        (
+                            (child.name == "PAN2" and vismenu.panes.is_selectable()) or
+                            (child.name == "PIC2" and vismenu.pictures.is_selectable()) or
+                            (child.name == "TBX2" and vismenu.textboxes.is_selectable()) or
+                            (child.name == "WIN2" and vismenu.windows.is_selectable())
+                        ) and not child.hide
                 ):
-                    if self.pane_render.point_lies_in_pane(child, point, matrix):
+                    if self.pane_render.point_lies_in_pane(child, point, transforms[child]):
                         results.append(child)
 
         return results

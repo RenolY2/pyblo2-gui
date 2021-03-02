@@ -286,6 +286,107 @@ class Pane(object):
 
         return pane
 
+    def get_anchor_offset(self):
+        w, h = self.p_size_x, self.p_size_y
+        offset_x = 0.0
+        offset_y = 0.0
+        if self.p_anchor == 1:  # Center-Top anchor
+            offset_x = -w / 2
+        elif self.p_anchor == 2:  # Top-Right anchor
+            offset_x = -w
+        elif self.p_anchor == 3:  # Center-Left anchor
+            offset_y = -h / 2
+        elif self.p_anchor == 4:  # Center anchor
+            offset_x = -w / 2
+            offset_y = -h / 2
+        elif self.p_anchor == 5:  # Center-right anchor
+            offset_x = -w
+            offset_y = -h / 2
+        elif self.p_anchor == 6:  # Bottom-left anchor
+            offset_y = -h
+        elif self.p_anchor == 7:  # Center-Bottom anchor
+            offset_x = -w / 2
+            offset_y = -h
+        elif self.p_anchor == 8:  # Bottom-right anchor
+            offset_x = -w
+            offset_y = -h
+
+        return offset_x, offset_y
+
+    def _get_middle(self):
+        middle_x = self.p_offset_x + self.p_size_x / 2.0
+        middle_y = self.p_offset_y + self.p_size_y / 2.0
+
+        if self.p_anchor == 1:
+            middle_x = self.p_offset_x
+            middle_y = self.p_offset_y + self.p_size_y/2.0
+        elif self.p_anchor == 2:
+            middle_x = self.p_offset_x - self.p_size_x / 2.0
+            middle_y = self.p_offset_y + self.p_size_y / 2.0
+        elif self.p_anchor == 3:
+            middle_x = self.p_offset_x + self.p_size_x / 2.0
+            middle_y = self.p_offset_y
+        elif self.p_anchor == 4:
+            middle_x = self.p_offset_x
+            middle_y = self.p_offset_y
+        elif self.p_anchor == 5:
+            middle_x = self.p_offset_x - self.p_size_x / 2.0
+            middle_y = self.p_offset_y
+        elif self.p_anchor == 6:
+            middle_x = self.p_offset_x + self.p_size_x / 2.0
+            middle_y = self.p_offset_y - self.p_size_y / 2.0
+        elif self.p_anchor == 7:
+            middle_x = self.p_offset_x
+            middle_y = self.p_offset_y - self.p_size_y / 2.0
+        elif self.p_anchor == 8:
+            middle_x = self.p_offset_x - self.p_size_x / 2.0
+            middle_y = self.p_offset_y - self.p_size_y / 2.0
+
+        return middle_x, middle_y
+
+    def _set_middle(self, middle_x, middle_y):
+        self.p_offset_x = middle_x - self.p_size_x / 2.0
+        self.p_offset_y = middle_y - self.p_size_y / 2.0
+
+        if self.p_anchor == 1:
+            self.p_offset_x = middle_x
+            self.p_offset_y = middle_y - self.p_size_y/2.0
+        elif self.p_anchor == 2:
+            self.p_offset_x = middle_x + self.p_size_x / 2.0
+            self.p_offset_y = middle_y - self.p_size_y / 2.0
+        elif self.p_anchor == 3:
+            self.p_offset_x = middle_x - self.p_size_x / 2.0
+            self.p_offset_y = middle_y
+        elif self.p_anchor == 4:
+            self.p_offset_x = middle_x
+            self.p_offset_y = middle_y
+        elif self.p_anchor == 5:
+            self.p_offset_x = middle_x + self.p_size_x / 2.0
+            self.p_offset_y = middle_y
+        elif self.p_anchor == 6:
+            self.p_offset_x = middle_x - self.p_size_x / 2.0
+            self.p_offset_y = middle_y + self.p_size_y / 2.0
+        elif self.p_anchor == 7:
+            self.p_offset_x = middle_x
+            self.p_offset_y = middle_y + self.p_size_y / 2.0
+        elif self.p_anchor == 8:
+            self.p_offset_x = middle_x + self.p_size_x / 2.0
+            self.p_offset_y = middle_y + self.p_size_y / 2.0
+
+    def resize(self, diff_x, diff_y, side_x, side_y):
+        middle_x, middle_y = self._get_middle()
+
+        middle_x = middle_x + diff_x/2.0
+        middle_y = middle_y + diff_y/2.0
+        #self.p_offset_x += diff_x#/2.0
+        #self.p_offset_y += diff_y#/2.0
+        # side_x = 1 for "right resize", side_x = -1 for "left resize"
+        # side_y = 1 for "up resize", side_y = -1 for "bottom resize" (in coordinate system where +y is up and -y is down)
+        self.p_size_x += diff_x * side_x
+        self.p_size_y += diff_y * side_y
+
+        self._set_middle(middle_x, middle_y)
+
 
 # Draw a window: 4 corner elements + side and one filling material
 class Window(Pane):
@@ -806,7 +907,21 @@ class ScreenBlo(object):
         return blo
 
 
-if __name__ == "__main__":  
+if __name__ == "__main__":
+    pane = Pane()
+    pane.p_offset_x = 0
+    pane.p_offset_y = 0
+    pane.p_size_x = 150
+    pane.p_size_y = 100
+
+    for i in range(9):
+        pane.p_anchor = 1
+        x, y = pane._get_middle()
+        pane._set_middle(x, y)
+
+        print(pane.p_offset_x, pane.p_offset_y)
+
+    """
     import json 
     import sys
     inputfile = sys.argv[1]
@@ -831,7 +946,7 @@ if __name__ == "__main__":
             blo = ScreenBlo.deserialize(json.load(f))
 
         with open(outfile, "wb") as f:
-            blo.write(f)
+            blo.write(f)"""
 
 
     """inputfile = "cave_pikmin.blo"

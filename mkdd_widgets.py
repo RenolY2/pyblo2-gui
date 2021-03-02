@@ -3,8 +3,9 @@ import os
 from time import sleep
 from timeit import default_timer
 from io import StringIO
-from math import sin, cos, atan2, radians, degrees, pi, tan
+from math import sin, cos, atan2, radians, degrees, pi, tan, ceil
 import json
+import numpy
 
 from OpenGL.GL import *
 from OpenGL.GLU import *
@@ -33,7 +34,7 @@ from lib.object_models import ObjectModels
 from editor_controls import UserControl
 from lib.libpath import Paths
 from lib.blo.readblo2 import ScreenBlo
-import numpy
+from lib.control.box_manipulator import BoxManipulator
 
 MOUSE_MODE_NONE = 0
 MOUSE_MODE_MOVEWP = 1
@@ -225,6 +226,7 @@ class BolMapViewer(QtWidgets.QOpenGLWidget):
                                None)
         self.last_selected = None
         self.last_selected_candidates = None
+        self.box_manipulator = BoxManipulator(self.models.circle)
 
     @catch_exception_with_dialog
     def initializeGL(self):
@@ -483,13 +485,20 @@ class BolMapViewer(QtWidgets.QOpenGLWidget):
         elif self._zoom_factor >= 600:
             mult = 200.0
         else:
-            mult = 80.0
+            mult = 100.0
 
         MIN = 1
         MAX = 1500
 
-        if MIN < (self._zoom_factor + fac*mult) <= MAX:
-            self._zoom_factor += int(fac*mult/10)
+        print(self.zoom_factor, self._zoom_factor)
+
+        if True:#MIN < (self._zoom_factor + fac*mult) <= MAX:
+            if fac > 0:
+                change = max(fac*mult/10, 1)
+            else:
+                change = min(fac*mult/10, 1)
+            self._zoom_factor += change
+
             if self._zoom_factor < MIN:
                 self._zoom_factor = MIN
             elif self._zoom_factor > MAX:
@@ -531,6 +540,7 @@ class BolMapViewer(QtWidgets.QOpenGLWidget):
         #glClearColor(*self.backgroundcolor)
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
         width, height = self.canvas_width, self.canvas_height
+        glLineWidth(1.0)
 
         if self.mode == MODE_TOPDOWN:
             glMatrixMode(GL_PROJECTION)
@@ -588,6 +598,10 @@ class BolMapViewer(QtWidgets.QOpenGLWidget):
 
         #print(self.gizmo.position, campos)
         vismenu: FilterViewMenu = self.visibility_menu
+
+        if self.layout_file is not None:
+            element_transforms = self.models.precompute_transforms(self.layout_file.root)
+
         while len(self.selectionqueue) > 0:
             print(len(self.selectionqueue))
             glClearColor(1.0, 1.0, 1.0, 1.0)
@@ -702,7 +716,11 @@ class BolMapViewer(QtWidgets.QOpenGLWidget):
 
                 #print("select time taken", default_timer() - start)
                 #print("result:", selected)
-                selected_candidates = self.models.collision_detect_node(self.layout_file.root, Vector3(world_x, world_y, 1), self.visibility_menu)
+                selected_candidates = self.models.collision_detect_node(
+                    self.layout_file.root, Vector3(world_x, world_y, 1),
+                    self.visibility_menu,
+                    element_transforms)
+
                 if not selected_candidates:
                     self.last_selected = None
                     self.last_selected_candidates = selected_candidates
@@ -799,8 +817,17 @@ class BolMapViewer(QtWidgets.QOpenGLWidget):
 
             #glDisable(GL_TEXTURE_2D)
 
+
+
         glColor3f(0.0, 0.0, 0.0)
         glDisable(GL_TEXTURE_2D)
+        if len(self.selected) == 1:
+            element = self.selected[0]
+            self.box_manipulator.set_visible(True)
+            self.box_manipulator.render(element_transforms[element], element, self.zoom_factor)
+        else:
+            self.box_manipulator.set_visible(False)
+
         glColor4f(0.0, 1.0, 0.0, 1.0)
         rendered = {}
         glColor4f(0.0, 1.0, 1.0, 1.0)
