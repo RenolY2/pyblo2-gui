@@ -1,4 +1,4 @@
-from math import pi, tan, atan2, degrees
+from math import pi, tan, atan2, degrees, sin, cos, radians
 from timeit import default_timer
 import abc
 
@@ -264,17 +264,53 @@ class BoxManipulatorHandler(ClickDragAction):
         if self.handle is not None:
             startx, starty = editor.mouse_coord_to_world_coord(self.first_click.x, self.first_click.y)
             currx, curry = editor.mouse_coord_to_world_coord(event.x(), event.y())
+            diff = Vector3(currx-startx, curry-starty, 0)
+            #transformed_diff = editor.box_manipulator.transform(diff)
+            inverse = editor.box_manipulator._transform.inverted()
 
-            diffx = currx-startx
-            diffy = curry-starty
+            vec_horizontal, vec_vertical = editor.box_manipulator.get_corner_normals(self.handle)
+            # diffx *= abs(sidex)
+            # diffy *= abs(sidey)
+
+            # diffxbox = diff.x*abs(sidex)#transformed_diff.x*abs(sidex)
+            # diffybox = diff.y*abs(sidey)#transformed_diff.y*abs(sidey)
+
+            diffx = diff.x #* abs(sidex)
+            diffy = -diff.y #* abs(sidey)
+            #print(diff, diffx, diffy)
+
+            diff_box_space = inverse.multiply_return_vec3(diff)
+            diff_box_change = vec_horizontal*diff_box_space.x + vec_vertical*diff_box_space.y
+            #diff2 = diff_box_space
+            #print(diff, diff2)
+            #diff = diff2
 
             pane = editor.selected[0]
-            sidex, sidey = editor.box_manipulator.get_sides(self.handle)
-            pane.resize(diffx*abs(sidex), (-diffy)*abs(sidey), sidex, sidey)
+
+            """if pane.parent is not None:
+                parent_transform = editor.transforms[pane.parent]
+                inverse_parent = parent_transform.inverted()
+
+                diff = inverse_parent.multiply_return_vec3(diff)
+
+                print("transformed", diff)"""
+
+            #rot = -radians(pane.p_rotation)
+            #diffx = transformed_diff.x*cos(rot) - transformed_diff.y*sin(rot)
+            #diffy = transformed_diff.x*sin(rot) + transformed_diff.y*cos(rot)
+            #print("diff", diffx, diffy)
+            #diffx = currx-startx
+            #diffy = curry-starty
+
+
+            #pane.resize(diff.x*abs(sidex), -diff.y*abs(sidey), diff_box_space.x*abs(sidex), -diff_box_space.y*abs(sidey), sidex, sidey)
+            print(diffx, diffy, diff_box_change)
+            pane.resize(diffx, diffy, diff_box_change.x,
+                        -diff_box_change.y)
 
             self.first_click.x = event.x()
             self.first_click.y = event.y()
-
+            editor.main_program.pik_control.update_info()
             editor.do_redraw(force=True)
             """selectendx, selectendz = editor.mouse_coord_to_world_coord(event.x(), event.y())
             editor.selectionbox_end = (selectendx, selectendz)

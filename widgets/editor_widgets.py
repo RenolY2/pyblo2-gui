@@ -385,6 +385,7 @@ class AddPikObjectWindow(QMdiSubWindow):
             self.position_edit.setDisabled(True)
             self.group_edit.setDisabled(True)
 
+
 class SpawnpointEditor(QMdiSubWindow):
     triggered = pyqtSignal(object)
     closing = pyqtSignal()

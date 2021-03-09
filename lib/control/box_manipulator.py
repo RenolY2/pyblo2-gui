@@ -27,7 +27,7 @@ class BoxManipulator(object):
         self._middle_right = Vector3(0, 0, 0)
         self._middle_top = Vector3(0, 0, 0)
         self._middle_bottom = Vector3(0, 0, 0)
-
+        self._transform = None
 
         self.corner = corner_model
         self._selected_corner = None
@@ -53,6 +53,9 @@ class BoxManipulator(object):
         self.corner.render()
         glPopMatrix()
 
+    def transform(self, vec):
+        return self._transform.multiply_return_vec3(vec)
+
     def _set_corners(self, transform, pane):
         offset_x, offset_y = PaneRender.get_anchor_offset(pane)
         w, h = pane.p_size_x, pane.p_size_y
@@ -71,6 +74,8 @@ class BoxManipulator(object):
         self._middle_right = (self._bottom_right+self._top_right)*0.5
         self._middle_top = (self._top_right+self._top_left)*0.5
         self._middle_bottom = (self._bottom_left+self._bottom_right)*0.5
+
+        self._transform = transform
 
     def render(self, transform, pane, zoom):
         self._set_corners(transform, pane)
@@ -112,23 +117,23 @@ class BoxManipulator(object):
         return None
 
     @staticmethod
-    def get_sides(corner):
+    def get_corner_normals(corner):
         if corner == BoxManipulator.BL:
-            return -1, -1
+            return Vector3(-1, 0, 0), Vector3(0, -1, 0)
         elif corner == BoxManipulator.ML:
-            return -1, 0
+            return Vector3(-1, 0, 0), Vector3(0, 0, 0)
         elif corner == BoxManipulator.TL:
-            return -1, 1
+            return Vector3(-1, 0, 0), Vector3(0, 1, 0)
         elif corner == BoxManipulator.MB:
-            return 0, -1
+            return Vector3(0, 0, 0), Vector3(0, -1, 0)
         elif corner == BoxManipulator.MT:
-            return 0, 1
+            return Vector3(0, 0, 0), Vector3(0, 1, 0)
         elif corner == BoxManipulator.BR:
-            return 1, -1
+            return Vector3(1, 0, 0), Vector3(0, -1, 0)
         elif corner == BoxManipulator.MR:
-            return 1, 0
+            return Vector3(1, 0, 0), Vector3(0, 0, 0)
         elif corner == BoxManipulator.TR:
-            return 1, 1
+            return Vector3(1, 0, 0), Vector3(0, 1, 0)
 
         return None
 

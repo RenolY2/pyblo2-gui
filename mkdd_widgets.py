@@ -228,6 +228,8 @@ class BolMapViewer(QtWidgets.QOpenGLWidget):
         self.last_selected_candidates = None
         self.box_manipulator = BoxManipulator(self.models.circle)
 
+        self.transforms = {}
+
     @catch_exception_with_dialog
     def initializeGL(self):
         self.rotation_visualizer = glGenLists(1)
@@ -580,8 +582,8 @@ class BolMapViewer(QtWidgets.QOpenGLWidget):
 
             #print(self.camera_direction)
 
-        self.modelviewmatrix = numpy.transpose(numpy.reshape(glGetFloatv(GL_MODELVIEW_MATRIX), (4,4)))
-        self.projectionmatrix = numpy.transpose(numpy.reshape(glGetFloatv(GL_PROJECTION_MATRIX), (4,4)))
+        self.modelviewmatrix = numpy.transpose(numpy.reshape(glGetFloatv(GL_MODELVIEW_MATRIX), (4, 4)))
+        self.projectionmatrix = numpy.transpose(numpy.reshape(glGetFloatv(GL_PROJECTION_MATRIX), (4, 4)))
         self.mvp_mat = numpy.dot(self.projectionmatrix, self.modelviewmatrix)
         self.modelviewmatrix_inv = numpy.linalg.inv(self.modelviewmatrix)
 
@@ -599,8 +601,11 @@ class BolMapViewer(QtWidgets.QOpenGLWidget):
         #print(self.gizmo.position, campos)
         vismenu: FilterViewMenu = self.visibility_menu
 
+        #del self.transforms
         if self.layout_file is not None:
             element_transforms = self.models.precompute_transforms(self.layout_file.root)
+
+            self.transforms = element_transforms
 
         while len(self.selectionqueue) > 0:
             print(len(self.selectionqueue))
@@ -873,7 +878,7 @@ class BolMapViewer(QtWidgets.QOpenGLWidget):
         glEnable(GL_DEPTH_TEST)
         glFinish()
         now = default_timer() - start
-        print("Frame time:", now, 1/now, "fps")
+        #print("Frame time:", now, 1/now, "fps")
 
     @catch_exception
     def mousePressEvent(self, event):

@@ -68,7 +68,7 @@ class LayoutEditor(QMainWindow):
         self.level_view.screen_file = self.screen_file
         self.level_view.set_editorconfig(self.configuration["editor"])
         self.level_view.visibility_menu = self.visibility_menu
-
+        self.level_view.main_program = self
         self.pathsconfig = self.configuration["default paths"]
         self.editorconfig = self.configuration["editor"]
         self.current_gen_path = None

@@ -32,6 +32,9 @@ class Node(object):
 
                 childnode = Node.from_file(f, node.materials, node.textures)
                 last.child = childnode
+                for child in childnode.children:
+                    child.parent = last
+
                 #node.children.append(childnode)
                 last = None
             elif next == b"END1" or next == b"EXT1":
@@ -172,6 +175,7 @@ class Pane(object):
         self.name = "PAN2"
         self.p_name = "PAN2"
         self.child = None
+        self.parent = None
         self.p_anchor = None
         self.p_size_x = None
         self.p_size_y = None
@@ -313,10 +317,7 @@ class Pane(object):
 
         return offset_x, offset_y
 
-    def _get_middle(self):
-        middle_x = self.p_offset_x + self.p_size_x / 2.0
-        middle_y = self.p_offset_y + self.p_size_y / 2.0
-
+    def _get_middle_panespace(self):
         if self.p_anchor == 1:
             middle_x = self.p_offset_x
             middle_y = self.p_offset_y + self.p_size_y/2.0
@@ -341,13 +342,16 @@ class Pane(object):
         elif self.p_anchor == 8:
             middle_x = self.p_offset_x - self.p_size_x / 2.0
             middle_y = self.p_offset_y - self.p_size_y / 2.0
+        else:
+            middle_x = self.p_offset_x + self.p_size_x / 2.0
+            middle_y = self.p_offset_y + self.p_size_y / 2.0
 
         return middle_x, middle_y
 
-    def _set_middle(self, middle_x, middle_y):
-        self.p_offset_x = middle_x - self.p_size_x / 2.0
-        self.p_offset_y = middle_y - self.p_size_y / 2.0
+    def _get_middle(self):
+        middle_x, middle_y = self._get_middle_panespace()
 
+    def _set_middle(self, middle_x, middle_y):
         if self.p_anchor == 1:
             self.p_offset_x = middle_x
             self.p_offset_y = middle_y - self.p_size_y/2.0
@@ -372,18 +376,23 @@ class Pane(object):
         elif self.p_anchor == 8:
             self.p_offset_x = middle_x + self.p_size_x / 2.0
             self.p_offset_y = middle_y + self.p_size_y / 2.0
+        else:
+            print(middle_x, middle_y)
+            self.p_offset_x = middle_x - self.p_size_x / 2.0
+            self.p_offset_y = middle_y - self.p_size_y / 2.0
 
-    def resize(self, diff_x, diff_y, side_x, side_y):
+    def resize(self, diff_x, diff_y, diff_x_box, diff_y_box):
         middle_x, middle_y = self._get_middle()
 
-        middle_x = middle_x + diff_x/2.0
-        middle_y = middle_y + diff_y/2.0
+        #middle_x = middle_x + diff_x/2.0
+        #middle_y = middle_y + diff_y/2.0
+
         #self.p_offset_x += diff_x#/2.0
         #self.p_offset_y += diff_y#/2.0
         # side_x = 1 for "right resize", side_x = -1 for "left resize"
         # side_y = 1 for "up resize", side_y = -1 for "bottom resize" (in coordinate system where +y is up and -y is down)
-        self.p_size_x += diff_x * side_x
-        self.p_size_y += diff_y * side_y
+        self.p_size_x += diff_x_box
+        self.p_size_y += diff_y_box
 
         self._set_middle(middle_x, middle_y)
 

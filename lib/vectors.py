@@ -1,6 +1,7 @@
 from math import sqrt, sin, cos, radians
 from io import StringIO
 from numpy import array
+import numpy
 
 
 class Vector3(object):
@@ -303,7 +304,7 @@ class Matrix4x4(object):
         matrix = cls(scale_x*cos(rotation), scale_y*-sin(rotation), offset_x, 0,
                      scale_x*sin(rotation), scale_y*cos(rotation), -offset_y, 0,
                      0, 0, 1, 0,
-                     0, 0, 0, 0)
+                     0, 0, 0, 1)
         return matrix
 
     @classmethod
@@ -361,6 +362,24 @@ class Matrix4x4(object):
         mtx.d1, mtx.d2, mtx.d3, mtx.d4 = col4
 
         return mtx
+
+    def as_array(self):
+        return [self.a1, self.b1, self.c1, self.d1,
+                self.a2, self.b2, self.c2, self.d2,
+                self.a3, self.b3, self.c3, self.d3,
+                self.a4, self.b4, self.c4, self.d4]
+
+    def as_array3x3(self):
+        return [self.a1, self.b1, self.c1,
+                self.a2, self.b2, self.c2,
+                self.a3, self.b3, self.c3]
+
+    def inverted(self):
+        mtx = numpy.linalg.inv(numpy.reshape(self.as_array(), (4, 4)))
+        return Matrix4x4(mtx[0][0], mtx[0][1], mtx[0][2], mtx[0][3],
+                         mtx[1][0], mtx[1][1], mtx[1][2], mtx[1][3],
+                         mtx[2][0], mtx[2][1], mtx[2][2], mtx[2][3],
+                         mtx[3][0], mtx[3][1], mtx[3][2], mtx[3][3])
 
     def __str__(self):
         out = StringIO()

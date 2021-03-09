@@ -75,7 +75,6 @@ class DataEditor(QWidget):
         pass
 
     def update_data(self):
-        print("doing updates")
         for update_field in self.field_updaters:
             update_field(self)
 
@@ -537,7 +536,6 @@ class PaneEdit(DataEditor):
 
     def update_data(self):
         super().update_data()
-        print("update 2")
         self.bound_to: readblo2.Pane
         bound_to = self.bound_to
 
