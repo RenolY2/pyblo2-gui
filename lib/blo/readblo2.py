@@ -1,3 +1,4 @@
+from math import radians, sin, cos
 from .binary_io import *
 from binascii import hexlify, unhexlify
 from .mat1.mat1 import MAT1
@@ -319,40 +320,52 @@ class Pane(object):
 
     def _get_middle_panespace(self):
         if self.p_anchor == 1:
-            middle_x = self.p_offset_x
-            middle_y = self.p_offset_y + self.p_size_y/2.0
+            middle_x = 0
+            middle_y = +self.p_size_y/2.0
         elif self.p_anchor == 2:
-            middle_x = self.p_offset_x - self.p_size_x / 2.0
-            middle_y = self.p_offset_y + self.p_size_y / 2.0
+            middle_x = -self.p_size_x / 2.0
+            middle_y = +self.p_size_y / 2.0
         elif self.p_anchor == 3:
-            middle_x = self.p_offset_x + self.p_size_x / 2.0
-            middle_y = self.p_offset_y
+            middle_x = +self.p_size_x / 2.0
+            middle_y = 0
         elif self.p_anchor == 4:
-            middle_x = self.p_offset_x
-            middle_y = self.p_offset_y
+            middle_x = 0
+            middle_y = 0
         elif self.p_anchor == 5:
-            middle_x = self.p_offset_x - self.p_size_x / 2.0
-            middle_y = self.p_offset_y
+            middle_x = 0-self.p_size_x / 2.0
+            middle_y = 0
         elif self.p_anchor == 6:
-            middle_x = self.p_offset_x + self.p_size_x / 2.0
-            middle_y = self.p_offset_y - self.p_size_y / 2.0
+            middle_x = +self.p_size_x / 2.0
+            middle_y = -self.p_size_y / 2.0
         elif self.p_anchor == 7:
-            middle_x = self.p_offset_x
-            middle_y = self.p_offset_y - self.p_size_y / 2.0
+            middle_x = 0
+            middle_y = -self.p_size_y / 2.0
         elif self.p_anchor == 8:
-            middle_x = self.p_offset_x - self.p_size_x / 2.0
-            middle_y = self.p_offset_y - self.p_size_y / 2.0
+            middle_x = -self.p_size_x / 2.0
+            middle_y = -self.p_size_y / 2.0
         else:
-            middle_x = self.p_offset_x + self.p_size_x / 2.0
-            middle_y = self.p_offset_y + self.p_size_y / 2.0
+            middle_x = +self.p_size_x / 2.0
+            middle_y = +self.p_size_y / 2.0
 
         return middle_x, middle_y
 
     def _get_middle(self):
         middle_x, middle_y = self._get_middle_panespace()
+        alpha = radians(-self.p_rotation)
+        new_middle_x = middle_x*cos(alpha) - middle_y*sin(alpha)
+        new_middle_y = middle_x*sin(alpha) + middle_y*cos(alpha)
+
+        return new_middle_x+self.p_offset_x, new_middle_y+self.p_offset_y
 
     def _set_middle(self, middle_x, middle_y):
-        if self.p_anchor == 1:
+        offsetx, offsety = self._get_middle_panespace()
+        alpha = radians(-self.p_rotation)
+        new_offset_x = offsetx * cos(alpha) - offsety * sin(alpha)
+        new_offset_y = offsetx * sin(alpha) + offsety * cos(alpha)
+        self.p_offset_x = middle_x - new_offset_x
+        self.p_offset_y = middle_y - new_offset_y
+
+        """if self.p_anchor == 1:
             self.p_offset_x = middle_x
             self.p_offset_y = middle_y - self.p_size_y/2.0
         elif self.p_anchor == 2:
@@ -379,13 +392,13 @@ class Pane(object):
         else:
             print(middle_x, middle_y)
             self.p_offset_x = middle_x - self.p_size_x / 2.0
-            self.p_offset_y = middle_y - self.p_size_y / 2.0
+            self.p_offset_y = middle_y - self.p_size_y / 2.0"""
 
     def resize(self, diff_x, diff_y, diff_x_box, diff_y_box):
         middle_x, middle_y = self._get_middle()
 
-        #middle_x = middle_x + diff_x/2.0
-        #middle_y = middle_y + diff_y/2.0
+        middle_x = middle_x + diff_x/2.0
+        middle_y = middle_y + diff_y/2.0
 
         #self.p_offset_x += diff_x#/2.0
         #self.p_offset_y += diff_y#/2.0
