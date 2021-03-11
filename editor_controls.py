@@ -234,6 +234,12 @@ class AddObjectTopDown(ClickAction):
         editor.create_waypoint.emit(destx, -destz)
 
 
+def rotate(vec, rot):
+    x = vec.x * cos(rot) - vec.y * sin(rot)
+    y = vec.x * sin(rot) + vec.y * cos(rot)
+    return x,y
+
+
 class BoxManipulatorHandler(ClickDragAction):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -288,6 +294,10 @@ class BoxManipulatorHandler(ClickDragAction):
             vec_horizontal_abs = vec_horizontal.abs()
             vec_vertical_abs = vec_vertical.abs()
 
+            restrictx, restricty = editor.box_manipulator.do_restrict(self.handle)
+            diff_new = Vector3(diff_box_space.x*restrictx, diff_box_space.y*restricty, 0)
+            diff = editor.box_manipulator._transform.multiply_return_vec3(diff_new)
+
             if pane.parent is not None:
                 parent_transform = editor.transforms[pane.parent]
                 inverse_parent = parent_transform.inverted()
@@ -298,11 +308,18 @@ class BoxManipulatorHandler(ClickDragAction):
                 diff = inverse_parent.multiply_return_vec3(diff)
 
                 print("transformed", diff)
+
+
             #vec_horizontal.x = abs(vec_horizontal.x)
             #vec_horizontal.y = abs(vec_horizontal.y)
             #vec_vertical.x = abs(vec_vertical.x)
             #vec_vertical.y = abs(vec_vertical.y)
-            diff_change = diff#vec_horizontal_abs*diff.x + vec_vertical_abs*diff.y
+            #alpha = radians(pane.p_rotation)
+            #vec_vertical_abs.x, vec_vertical_abs.y = rotate(vec_vertical_abs, radians(pane.p_rotation))
+            #vec_horizontal_abs.x, vec_horizontal_abs.y = rotate(vec_horizontal_abs, radians(pane.p_rotation))
+
+            #diff_change = vec_horizontal_abs*diff.x + vec_vertical_abs*diff.y
+            diff_change = diff
 
             """alpha = radians(pane.p_rotation)
             diff_change_x = diff_change.x * cos(alpha) - diff_change.y * sin(alpha)

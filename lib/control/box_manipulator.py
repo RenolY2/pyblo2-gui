@@ -162,6 +162,24 @@ class BoxManipulator(object):
 
         return None
 
+    @staticmethod
+    def do_restrict(corner):
+        if corner == BoxManipulator.BL:
+            return 1, 1
+        elif corner == BoxManipulator.ML:
+            return 1, 0
+        elif corner == BoxManipulator.TL:
+            return 1, 1
+        elif corner == BoxManipulator.MB:
+            return 0, 1
+        elif corner == BoxManipulator.MT:
+            return 0, 1
+        elif corner == BoxManipulator.BR:
+            return 1, 1
+        elif corner == BoxManipulator.MR:
+            return 1, 0
+        elif corner == BoxManipulator.TR:
+            return 1, 1
 
-
+        return None
 
