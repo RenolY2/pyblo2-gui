@@ -16,6 +16,9 @@ class Vector3(object):
     def norm(self):
         return sqrt(self.x**2 + self.y**2 + self.z**2)
 
+    def abs(self):
+        return Vector3(abs(self.x), abs(self.y), abs(self.z))
+
     def normalize(self):
         norm = self.norm()
         self.x /= norm

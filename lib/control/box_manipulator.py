@@ -1,4 +1,4 @@
-from OpenGL.GL import glTranslatef, glPushMatrix, glPopMatrix, glColor3f, glScalef
+from OpenGL.GL import *  #glTranslatef, glPushMatrix, glPopMatrix, glColor3f, glScalef,
 from lib.model_rendering import PaneRender
 from lib.vectors import Vector3
 
@@ -53,6 +53,18 @@ class BoxManipulator(object):
         self.corner.render()
         glPopMatrix()
 
+    def _draw_vector(self, origin, direction, zoom, is_selected):
+        if is_selected:
+            glColor3f(1.0, 0.0, 0.0)
+        else:
+            glColor3f(0.0, 1.0, 0.0)
+        length = 50
+        glBegin(GL_LINES)
+        glVertex3f(origin.x, origin.y, origin.z)
+        glVertex3f(origin.x+zoom*length*direction.x, (origin.y-zoom*length*direction.y), origin.z+zoom*length*direction.z)
+
+        glEnd()
+
     def transform(self, vec):
         return self._transform.multiply_return_vec3(vec)
 
@@ -89,8 +101,21 @@ class BoxManipulator(object):
         self._draw_corner(self._middle_left, zoom, self._selected_corner == self.ML)
         self._draw_corner(self._middle_top, zoom, self._selected_corner == self.MT)
 
-        x, y = pane._get_middle()
-        self._draw_corner(transform.multiply_return_vec3(Vector3(x-pane.p_offset_x, -y+pane.p_offset_y, 1)), zoom, False)
+        #x, y = pane._get_middle()
+        #self._draw_corner(transform.multiply_return_vec3(Vector3(x-pane.p_offset_x, -y+pane.p_offset_y, 1)), zoom, False)
+
+        for corner, val in ((self._bottom_left, self.BL),
+                            (self._bottom_right, self.BR),
+                            (self._top_left, self.TL),
+                            (self._top_right, self.TR),
+                            (self._middle_left, self.ML),
+                            (self._middle_right, self.MR),
+                            (self._middle_top, self.MT),
+                            (self._middle_bottom, self.MB)
+                            ):
+            dir1, dir2 = self.get_corner_normals(val)
+            self._draw_vector(corner, dir1, zoom, self._selected_corner == val)
+            self._draw_vector(corner, dir2, zoom, self._selected_corner == val)
 
         #self._draw_corner(Vector3(x, -y, 1), zoom, False)
 

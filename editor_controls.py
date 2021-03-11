@@ -275,8 +275,7 @@ class BoxManipulatorHandler(ClickDragAction):
             # diffxbox = diff.x*abs(sidex)#transformed_diff.x*abs(sidex)
             # diffybox = diff.y*abs(sidey)#transformed_diff.y*abs(sidey)
 
-            diffx = diff.x #* abs(sidex)
-            diffy = -diff.y #* abs(sidey)
+
             #print(diff, diffx, diffy)
 
             diff_box_space = inverse.multiply_return_vec3(diff)
@@ -286,15 +285,30 @@ class BoxManipulatorHandler(ClickDragAction):
             #diff = diff2
 
             pane = editor.selected[0]
+            vec_horizontal_abs = vec_horizontal.abs()
+            vec_vertical_abs = vec_vertical.abs()
 
-            """if pane.parent is not None:
+            if pane.parent is not None:
                 parent_transform = editor.transforms[pane.parent]
                 inverse_parent = parent_transform.inverted()
 
+                #vec_horizontal_abs = inverse_parent.multiply_return_vec3(vec_horizontal_abs)
+                #vec_vertical_abs = inverse_parent.multiply_return_vec3(vec_vertical_abs)
+
                 diff = inverse_parent.multiply_return_vec3(diff)
 
-                print("transformed", diff)"""
+                print("transformed", diff)
+            #vec_horizontal.x = abs(vec_horizontal.x)
+            #vec_horizontal.y = abs(vec_horizontal.y)
+            #vec_vertical.x = abs(vec_vertical.x)
+            #vec_vertical.y = abs(vec_vertical.y)
+            diff_change = diff#vec_horizontal_abs*diff.x + vec_vertical_abs*diff.y
 
+            """alpha = radians(pane.p_rotation)
+            diff_change_x = diff_change.x * cos(alpha) - diff_change.y * sin(alpha)
+            diff_change_y = diff_change.x * sin(alpha) + diff_change.y * cos(alpha)
+            diff_change.x = diff_change_x
+            diff_change.y = diff_change_y"""
             #rot = -radians(pane.p_rotation)
             #diffx = transformed_diff.x*cos(rot) - transformed_diff.y*sin(rot)
             #diffy = transformed_diff.x*sin(rot) + transformed_diff.y*cos(rot)
@@ -304,9 +318,9 @@ class BoxManipulatorHandler(ClickDragAction):
 
 
             #pane.resize(diff.x*abs(sidex), -diff.y*abs(sidey), diff_box_space.x*abs(sidex), -diff_box_space.y*abs(sidey), sidex, sidey)
-            print(diffx, diffy, diff_box_change)
-            pane.resize(diffx, diffy, diff_box_change.x,
-                        -diff_box_change.y)
+            #print(diffx, diffy, diff_box_change)
+
+            pane.resize(diff_change.x, -diff_change.y, diff_box_change.x, -diff_box_change.y)
 
             self.first_click.x = event.x()
             self.first_click.y = event.y()
