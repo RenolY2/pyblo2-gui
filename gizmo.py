@@ -1,7 +1,7 @@
 from OpenGL.GL import *
 
 from lib.model_rendering import Model
-from lib.vectors import Vector3, Plane
+from lib.vectors import Vector3, Plane, Line, Triangle
 from widgets.editor_widgets import catch_exception
 
 id_to_meshname = {
@@ -22,6 +22,65 @@ X_COLOR = (1.0, 0.1, 0.1, 1.0)
 Y_COLOR = (0.0, 1.0, 0.0, 1.0)
 Z_COLOR = (0.0, 0.0, 1.0, 1.0)
 MIDDLE = (0.5, 0.5, 0.5, 1.0)
+
+
+class ClickableWidget(object):
+    def __init__(self, model: Model):
+        self._model = model
+        self.visible = False
+        self.position = Vector3(0, 0, 0)
+        self._scale = 1.0
+        self._base_scale = 100
+
+    def render(self, scale):
+        glPushMatrix()
+        self._scale = scale
+        glTranslatef(self.position.x, self.position.y, self.position.z)
+        glScalef(scale*self._base_scale, scale*self._base_scale, scale*self._base_scale)
+
+        self._render_widget()
+        glPopMatrix()
+
+    def _render_widget(self):
+        self._model.render()
+
+    def check_collision_2d(self, posx, posy):
+        s = self._base_scale*self._scale
+        offset = Vector3(self.position.x*s, self.position.y*s, self.position.z*s)
+
+        local_x = (posx - self.position.x)
+        local_y = (posy - self.position.y)
+        print(local_x, local_y)
+        ray = Line(Vector3(local_x/s, local_y/s, 10), Vector3(0, 0, -1))
+        closest = None
+        clicked = None
+
+        for name, mesh in self._model.named_meshes.items():
+            for triangle in mesh.triangles:
+                result = ray.collide(triangle)
+                if result is not False:
+                    point, d = result
+
+                    if closest is None or d < closest:
+                        closest = d
+                        clicked = name
+
+        return clicked
+
+
+class Gizmo2D(ClickableWidget):
+    def __init__(self):
+        with open("resources/gizmo_2d.obj", "r") as f:
+            super().__init__(Model.from_obj(f, rotate=True))
+        self._base_scale = 50
+
+    def _render_widget(self):
+        glColor3f(0.0, 0.0, 1.0)
+        self._model.named_meshes["rotation"].render()
+        glColor3f(0.7, 0.7, 0.7)
+        self._model.named_meshes["move_inner"].render()
+        glColor3f(0.0, 0.0, 0.0)
+        self._model.named_meshes["move_outer"].render()
 
 
 class Gizmo(Model):

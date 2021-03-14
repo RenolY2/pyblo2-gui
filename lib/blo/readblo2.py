@@ -365,35 +365,6 @@ class Pane(object):
         self.p_offset_x = middle_x - new_offset_x
         self.p_offset_y = middle_y - new_offset_y
 
-        """if self.p_anchor == 1:
-            self.p_offset_x = middle_x
-            self.p_offset_y = middle_y - self.p_size_y/2.0
-        elif self.p_anchor == 2:
-            self.p_offset_x = middle_x + self.p_size_x / 2.0
-            self.p_offset_y = middle_y - self.p_size_y / 2.0
-        elif self.p_anchor == 3:
-            self.p_offset_x = middle_x - self.p_size_x / 2.0
-            self.p_offset_y = middle_y
-        elif self.p_anchor == 4:
-            self.p_offset_x = middle_x
-            self.p_offset_y = middle_y
-        elif self.p_anchor == 5:
-            self.p_offset_x = middle_x + self.p_size_x / 2.0
-            self.p_offset_y = middle_y
-        elif self.p_anchor == 6:
-            self.p_offset_x = middle_x - self.p_size_x / 2.0
-            self.p_offset_y = middle_y + self.p_size_y / 2.0
-        elif self.p_anchor == 7:
-            self.p_offset_x = middle_x
-            self.p_offset_y = middle_y + self.p_size_y / 2.0
-        elif self.p_anchor == 8:
-            self.p_offset_x = middle_x + self.p_size_x / 2.0
-            self.p_offset_y = middle_y + self.p_size_y / 2.0
-        else:
-            print(middle_x, middle_y)
-            self.p_offset_x = middle_x - self.p_size_x / 2.0
-            self.p_offset_y = middle_y - self.p_size_y / 2.0"""
-
     def resize(self, diff_x, diff_y, diff_x_box, diff_y_box):
         middle_x, middle_y = self._get_middle()
 

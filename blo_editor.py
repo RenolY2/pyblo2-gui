@@ -24,10 +24,10 @@ from widgets.tree_view import LayoutDataTreeView
 import widgets.tree_view as tree_view
 from configuration import read_config, make_default_config, save_cfg
 
-import mkdd_widgets # as mkddwidgets
+import blo_editor_widgets # as mkddwidgets
 from widgets.side_widget import PikminSideWidget
 from widgets.editor_widgets import open_error_dialog, catch_exception_with_dialog
-from mkdd_widgets import BolMapViewer, MODE_TOPDOWN
+from blo_editor_widgets import BolMapViewer, MODE_TOPDOWN
 from lib.libbol import BOL, MGEntry, Route, get_full_name
 import lib.libbol as libbol
 from lib.rarc import Archive
@@ -284,7 +284,7 @@ class LayoutEditor(QMainWindow):
         self.file_menu.addAction(self.save_file_action)
         self.file_menu.addAction(self.save_file_as_action)
 
-        self.visibility_menu = mkdd_widgets.FilterViewMenu(self)
+        self.visibility_menu = blo_editor_widgets.FilterViewMenu(self)
         self.visibility_menu.filter_update.connect(self.update_render)
 
 
@@ -638,7 +638,7 @@ class LayoutEditor(QMainWindow):
 
     def action_open_rotationedit_window(self):
         if self.edit_spawn_window is None:
-            self.edit_spawn_window = mkdd_widgets.SpawnpointEditor()
+            self.edit_spawn_window = blo_editor_widgets.SpawnpointEditor()
             self.edit_spawn_window.position.setText("{0}, {1}, {2}".format(
                 self.pikmin_gen_file.startpos_x, self.pikmin_gen_file.startpos_y, self.pikmin_gen_file.startpos_z
             ))
@@ -980,8 +980,8 @@ class LayoutEditor(QMainWindow):
 
             self.add_object_window.show()
 
-        elif self.level_view.mousemode == mkdd_widgets.MOUSE_MODE_ADDWP:
-            self.level_view.set_mouse_mode(mkdd_widgets.MOUSE_MODE_NONE)
+        elif self.level_view.mousemode == blo_editor_widgets.MOUSE_MODE_ADDWP:
+            self.level_view.set_mouse_mode(blo_editor_widgets.MOUSE_MODE_NONE)
             self.pik_control.button_add_object.setChecked(False)
 
     def shortcut_open_add_item_window(self):
@@ -1030,7 +1030,7 @@ class LayoutEditor(QMainWindow):
                 self.addobjectwindow_last_selected_category = self.add_object_window.category_menu.currentIndex()
                 self.pik_control.button_add_object.setChecked(True)
                 #self.pik_control.button_move_object.setChecked(False)
-                self.level_view.set_mouse_mode(mkdd_widgets.MOUSE_MODE_ADDWP)
+                self.level_view.set_mouse_mode(blo_editor_widgets.MOUSE_MODE_ADDWP)
                 self.add_object_window.destroy()
                 self.add_object_window = None
                 #self.pikmin_gen_view.setContextMenuPolicy(Qt.DefaultContextMenu)
@@ -1041,7 +1041,7 @@ class LayoutEditor(QMainWindow):
         print("Hmmm")
         self.add_object_window = None
         self.pik_control.button_add_object.setChecked(False)
-        self.level_view.set_mouse_mode(mkdd_widgets.MOUSE_MODE_NONE)
+        self.level_view.set_mouse_mode(blo_editor_widgets.MOUSE_MODE_NONE)
 
     @catch_exception
     def action_add_object(self, x, z):
@@ -1169,7 +1169,7 @@ class LayoutEditor(QMainWindow):
     def keyPressEvent(self, event: QtGui.QKeyEvent):
 
         if event.key() == Qt.Key_Escape:
-            self.level_view.set_mouse_mode(mkdd_widgets.MOUSE_MODE_NONE)
+            self.level_view.set_mouse_mode(blo_editor_widgets.MOUSE_MODE_NONE)
             self.pik_control.button_add_object.setChecked(False)
             #self.pik_control.button_move_object.setChecked(False)
             if self.add_object_window is not None:
@@ -1390,7 +1390,6 @@ class LayoutEditor(QMainWindow):
         self.set_has_unsaved_changes(True)
 
     def update_3d(self):
-        self.level_view.gizmo.move_to_average(self.level_view.selected_positions)
         self.level_view.do_redraw()
 
     def select_from_3d_to_treeview(self):

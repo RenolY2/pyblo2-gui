@@ -29,12 +29,12 @@ from opengltext import draw_collision
 from lib.vectors import Matrix4x4, Vector3, Line, Plane, Triangle
 import pikmingen
 from lib.model_rendering import TexturedPlane, Model, Grid, GenericObject, Material, Minimap
-from gizmo import Gizmo
 from lib.object_models import ObjectModels
 from editor_controls import UserControl
 from lib.libpath import Paths
 from lib.blo.readblo2 import ScreenBlo
 from lib.control.box_manipulator import BoxManipulator
+from gizmo import Gizmo2D
 
 MOUSE_MODE_NONE = 0
 MOUSE_MODE_MOVEWP = 1
@@ -211,8 +211,8 @@ class BolMapViewer(QtWidgets.QOpenGLWidget):
         self.usercontrol = UserControl(self)
 
         # Initialize some models
-        with open("resources/gizmo.obj", "r") as f:
-            self.gizmo = Gizmo.from_obj(f, rotate=True)
+        #with open("resources/gizmo.obj", "r") as f:
+        #    self.gizmo = Gizmo.from_obj(f, rotate=True)
 
         #self.generic_object = GenericObject()
         self.models = ObjectModels()
@@ -227,7 +227,7 @@ class BolMapViewer(QtWidgets.QOpenGLWidget):
         self.last_selected = None
         self.last_selected_candidates = None
         self.box_manipulator = BoxManipulator(self.models.circle)
-
+        self.gizmo2d = Gizmo2D()
         self.transforms = {}
 
     @catch_exception_with_dialog
@@ -768,13 +768,6 @@ class BolMapViewer(QtWidgets.QOpenGLWidget):
 
                     self.select_update.emit()
 
-                self.gizmo.move_to_average(self.selected_positions)
-                if len(selected) == 0:
-                    #print("Select did register")
-                    self.gizmo.hidden = True
-                if self.mode == MODE_3D: # In case of 3D mode we need to update scale due to changed gizmo position
-                    gizmo_scale = (self.gizmo.position - campos).norm() / 130.0
-                #print("total time taken", default_timer() - start)
         #print("gizmo status", self.gizmo.was_hit_at_all)
         #glClearColor(1.0, 1.0, 1.0, 0.0)
         glClearColor(*self.backgroundcolor)
@@ -830,8 +823,15 @@ class BolMapViewer(QtWidgets.QOpenGLWidget):
             element = self.selected[0]
             self.box_manipulator.set_visible(True)
             self.box_manipulator.render(element_transforms[element], element, self.zoom_factor)
+            self.gizmo2d.visible = True
+
+            offsetx, offsety = element.get_anchor_offset()
+
+            self.gizmo2d.position = element_transforms[element].multiply_return_vec3(Vector3(0, 0, 1))
+
         else:
             self.box_manipulator.set_visible(False)
+            self.gizmo2d.visible = False
 
         glColor4f(0.0, 1.0, 0.0, 1.0)
         rendered = {}
@@ -843,7 +843,8 @@ class BolMapViewer(QtWidgets.QOpenGLWidget):
 
             glEnd()"""
 
-        self.gizmo.render_scaled(gizmo_scale, is3d=self.mode == MODE_3D)
+        #self.gizmo.render_scaled(gizmo_scale, is3d=self.mode == MODE_3D)
+        self.gizmo2d.render(self.zoom_factor)
         glDisable(GL_DEPTH_TEST)
         if self.selectionbox_start is not None and self.selectionbox_end is not None:
             #print("drawing box")

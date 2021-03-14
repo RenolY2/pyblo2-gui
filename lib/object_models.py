@@ -7,7 +7,7 @@ from .model_rendering import (GenericObject, Model, TexturedModel,
                               GenericSwimmer, Cube, PaneRender)
 from lib.blo.readblo2 import ScreenBlo, Pane, Window, Textbox, Picture
 from lib.vectors import Matrix4x4
-import mkdd_widgets
+import blo_editor_widgets
 
 with open("lib/color_coding.json", "r") as f:
     colors = json.load(f)

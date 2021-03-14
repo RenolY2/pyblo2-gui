@@ -110,7 +110,7 @@ class TopdownScroll(ClickDragAction):
 
 class TopdownSelect(ClickDragAction):
     def condition(self, editor, buttons, event):
-        return (editor.gizmo.was_hit_at_all is not True) and editor.mousemode == MOUSE_MODE_NONE
+        return editor.mousemode == MOUSE_MODE_NONE  # (editor.gizmo.was_hit_at_all is not True) and
 
     def just_clicked(self, editor, buttons, event):
         super().just_clicked(editor, buttons, event)
@@ -118,7 +118,8 @@ class TopdownSelect(ClickDragAction):
 
         selectstartx, selectstarty = editor.mouse_coord_to_world_coord(x, y)
 
-        if editor.box_manipulator.in_corner(selectstartx, selectstarty, editor.zoom_factor) is None:
+        if (editor.box_manipulator.in_corner(selectstartx, selectstarty, editor.zoom_factor) is None and
+            editor.gizmo2d.check_collision_2d(selectstartx, selectstarty) is None):
             editor.selectionbox_start = (selectstartx, selectstarty)
 
             if editor.layout_file is not None:
@@ -171,15 +172,83 @@ class Gizmo2DMoveX(ClickDragAction):
         editor.gizmo.move_to_average(editor.selected_positions)
 
 
-class Gizmo2DMoveXZ(Gizmo2DMoveX):
+class Gizmo2DActions(ClickDragAction):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.element_hit = None
+        self.accumulate_rotation = 0
+        self.shift_pressed = False
+
+    def just_clicked(self, editor, buttons, event):
+        super().just_clicked(editor, buttons, event)
+        #editor.selectionqueue.queue_selection(event.x(), event.y(), 1, 1,
+        #                                      editor.shift_is_pressed, do_gizmo=True)
+        x, y = editor.mouse_coord_to_world_coord(event.x(), event.y())
+        self.element_hit = editor.gizmo2d.check_collision_2d(x, y)
+        editor.do_redraw(force=True)
+
     def move(self, editor, buttons, event):
-        if editor.gizmo.was_hit["middle"]:
+        startx, starty = editor.mouse_coord_to_world_coord(self.first_click.x, self.first_click.y)
+        currx, curry = editor.mouse_coord_to_world_coord(event.x(), event.y())
+        self.first_click.x = event.x()
+        self.first_click.y = event.y()
+
+
+
+        if len(editor.selected) == 0:
+            return
+
+        pane = editor.selected[0]
+
+        if not self.shift_pressed and editor.shift_is_pressed:
+            self.shift_pressed = True
+            self.accumulate_rotation = pane.p_rotation
+        elif self.shift_pressed and not editor.shift_is_pressed:
+            self.shift_pressed = False
+
+
+        if self.element_hit in ("move_inner", "move_outer"):
+            diff = Vector3(currx - startx, curry - starty, 0)
+
+            if pane.parent is not None:
+                parent_transform = editor.transforms[pane.parent]
+                inverse_parent = parent_transform.inverted()
+
+                diff = inverse_parent.multiply_return_vec3(diff)
+
+            print(diff)
+            pane.p_offset_x += diff.x
+            pane.p_offset_y += -diff.y
+        elif self.element_hit == "rotation":
+
+            angle_start = atan2(starty - editor.gizmo2d.position.y, startx - editor.gizmo2d.position.x)
+
+            x, y = editor.mouse_coord_to_world_coord(event.x(), event.y())
+            angle = atan2(curry - editor.gizmo2d.position.y, currx - editor.gizmo2d.position.x)
+            delta = -(angle_start - angle)
+            if not editor.shift_is_pressed:
+                pane.p_rotation += degrees(delta)
+            else:
+                self.accumulate_rotation += degrees(delta)
+
+                pane.p_rotation = round(self.accumulate_rotation/5)*5
+
+
+        """if editor.gizmo.was_hit["gizmo_x"]:
             editor.gizmo.hidden = True
-            #editor.gizmo.set_render_axis(AXIS_X)
+            editor.gizmo.set_render_axis(AXIS_X)
             delta_x = event.x() - self.first_click.x
-            delta_z = event.y() - self.first_click.y
             self.first_click = Vector2(event.x(), event.y())
-            editor.move_points.emit(delta_x*editor.zoom_factor, 0, delta_z*editor.zoom_factor)
+            editor.move_points.emit(delta_x*editor.zoom_factor, 0, 0)"""
+        editor.main_program.pik_control.update_info()
+        editor.do_redraw(force=True)
+
+    def just_released(self, editor, buttons, event):
+        super().just_released(editor, buttons, event)
+        self.element_hit = None
+        #editor.gizmo.hidden = False
+        #editor.gizmo.reset_axis()
+        #editor.gizmo.move_to_average(editor.selected_positions)
 
 
 class Gizmo2DMoveZ(Gizmo2DMoveX):
@@ -253,11 +322,11 @@ class BoxManipulatorHandler(ClickDragAction):
         x, y = self.first_click.x, self.first_click.y
         print("Ohayooooo")
         selectstartx, selectstarty = editor.mouse_coord_to_world_coord(event.x(), event.y())
-
-        hit = editor.box_manipulator.in_corner(selectstartx, selectstarty, editor.zoom_factor)
-        editor.box_manipulator.select(hit)
-        self.handle = hit
-        editor.do_redraw(force=True)
+        if editor.gizmo2d.check_collision_2d(selectstartx, selectstarty) is None:
+            hit = editor.box_manipulator.in_corner(selectstartx, selectstarty, editor.zoom_factor)
+            editor.box_manipulator.select(hit)
+            self.handle = hit
+            editor.do_redraw(force=True)
         """
         editor.selectionbox_start = (selectstartx, selectstartz)
 
@@ -644,10 +713,10 @@ class UserControl(object):
 
         self.add_action(TopdownScroll("2DScroll", "Middle"))
         self.add_action(TopdownSelect("2DSelect", "Left"))
-        self.add_action(Gizmo2DMoveX("Gizmo2DMoveX", "Left"))
-        self.add_action(Gizmo2DMoveZ("Gizmo2DMoveZ", "Left"))
-        self.add_action(Gizmo2DMoveXZ("Gizmo2DMoveXZ", "Left"))
-        self.add_action(Gizmo2DRotateY("Gizmo2DRotateY", "Left"))
+        #self.add_action(Gizmo2DMoveX("Gizmo2DMoveX", "Left"))
+        #self.add_action(Gizmo2DMoveZ("Gizmo2DMoveZ", "Left"))
+        self.add_action(Gizmo2DActions("Gizmo2DActions", "Left"))
+        #self.add_action(Gizmo2DRotateY("Gizmo2DRotateY", "Left"))
         self.add_action(AddObjectTopDown("AddObject2D", "Left"))
         self.add_action(BoxManipulatorHandler("BoxManipulatorHandler", "Left"))
 
@@ -685,7 +754,7 @@ class UserControl(object):
             self.handle_release_3d(event)
 
         editor.selectionqueue.clear()
-        editor.gizmo.reset_hit_status()
+        #editor.gizmo.reset_hit_status()
         #print("Gizmo hit status was reset!!!!", editor.gizmo.was_hit_at_all)
         editor.do_redraw()
 

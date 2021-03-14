@@ -1,7 +1,7 @@
 import json
 from time import time
 from OpenGL.GL import *
-from .vectors import Vector3, Vector4, Matrix4x4
+from .vectors import Vector3, Vector4, Matrix4x4, Triangle
 from struct import unpack
 import os
 from OpenGL.GL import *
@@ -48,20 +48,22 @@ class Mesh(object):
         displist = glGenLists(1)
         glNewList(displist, GL_COMPILE)
         glBegin(GL_TRIANGLES)
-        for v1, v2, v3 in self.triangles:
-            v1i, v1coord = v1
-            v2i, v2coord = v2
-            v3i, v3coord = v3
-            glVertex3f(*self.vertices[v1i])
-            glVertex3f(*self.vertices[v2i])
-            glVertex3f(*self.vertices[v3i])
+        for triangle in self.triangles:
+            #v1i, v1coord = v1
+            #v2i, v2coord = v2
+            #v3i, v3coord = v3
+            v1, v2, v3 = triangle.origin, triangle.p2, triangle.p3
+            glVertex3f(v1.x, v1.y, v1.z)
+            glVertex3f(v2.x, v2.y, v2.z)
+            glVertex3f(v3.x, v3.y, v3.z)
         glEnd()
         glBegin(GL_LINES)
         for v1, v2 in self.lines:
-            v1i = v1
-            v2i = v2
-            glVertex3f(*self.vertices[v1i])
-            glVertex3f(*self.vertices[v2i])
+            #v1i = v1
+            #v2i = v2
+            glVertex3f(v1.x, v1.y, v1.z)
+            glVertex3f(v2.x, v2.y, v2.z)
+
         glEnd()
         glEndList()
         self._displist = displist
@@ -214,12 +216,15 @@ class Model(object):
                     args.remove("")
                 x, y, z = map(float, args[1:4])
                 if not rotate:
-                    vertices.append((x*scale, y*scale, z*scale))
+                    vertices.append(Vector3(x*scale, y*scale, z*scale))
                 else:
-                    vertices.append((x * scale, z * scale, y * scale, ))
+                    vertices.append(Vector3(x * scale, z * scale, y * scale))
 
             elif cmd == "l":
-                curr_mesh.lines.append((int(args[1])-1, int(args[2])-1))
+                v1 = curr_mesh.vertices[int(args[1])-1]
+                v2 = curr_mesh.vertices[int(args[2])-1]
+                #curr_mesh.lines.append((int(args[1])-1, int(args[2])-1))
+                curr_mesh.lines.append((v1, v2))
             elif cmd == "f":
                 if curr_mesh is None:
                     curr_mesh = Mesh("")
@@ -229,13 +234,26 @@ class Model(object):
                 # no triangulation yet.
                 if len(args) == 5:
                     #raise RuntimeError("Model needs to be triangulated! Only faces with 3 vertices are supported.")
-                    v1, v2, v3, v4 = map(read_vertex, args[1:5])
-                    curr_mesh.triangles.append(((v1[0] - 1, None), (v3[0] - 1, None), (v2[0] - 1, None)))
-                    curr_mesh.triangles.append(((v3[0] - 1, None), (v1[0] - 1, None), (v4[0] - 1, None)))
+                    v1i, v2i, v3i, v4i = map(read_vertex, args[1:5])
+                    v1 = curr_mesh.vertices[v1i[0]-1]
+                    v2 = curr_mesh.vertices[v2i[0]-1]
+                    v3 = curr_mesh.vertices[v3i[0]-1]
+                    v4 = curr_mesh.vertices[v4i[0]-1]
+                    #curr_mesh.triangles.append(((v1[0] - 1, None), (v3[0] - 1, None), (v2[0] - 1, None)))
+                    #curr_mesh.triangles.append(((v3[0] - 1, None), (v1[0] - 1, None), (v4[0] - 1, None)))
+                    curr_mesh.triangles.append(Triangle(v1, v2, v3))
+                    curr_mesh.triangles.append(Triangle(v3, v1, v4))
 
                 elif len(args) == 4:
-                    v1, v2, v3 = map(read_vertex, args[1:4])
-                    curr_mesh.triangles.append(((v1[0]-1, None), (v3[0]-1, None), (v2[0]-1, None)))
+                    #v1, v2, v3 = map(read_vertex, args[1:4])
+                    #curr_mesh.triangles.append(((v1[0]-1, None), (v3[0]-1, None), (v2[0]-1, None)))
+                    v1i, v2i, v3i = map(read_vertex, args[1:4])
+                    v1 = curr_mesh.vertices[v1i[0] - 1]
+                    v2 = curr_mesh.vertices[v2i[0] - 1]
+                    v3 = curr_mesh.vertices[v3i[0] - 1]
+                    # curr_mesh.triangles.append(((v1[0] - 1, None), (v3[0] - 1, None), (v2[0] - 1, None)))
+                    # curr_mesh.triangles.append(((v3[0] - 1, None), (v1[0] - 1, None), (v4[0] - 1, None)))
+                    curr_mesh.triangles.append(Triangle(v1, v2, v3))
         model.add_mesh(curr_mesh)
         return model
         #elif cmd == "vn":
@@ -1249,3 +1267,4 @@ class PaneRender(object):
         #print(AM, AB, AD)
         #print(AM.dot(AB), AB.dot(AB), AM.dot(AD), AD.dot(AD))
         return 0 < AM.dot(AB) < AB.dot(AB) and 0 < AM.dot(AD) < AD.dot(AD)
+
