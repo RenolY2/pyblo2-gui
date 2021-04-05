@@ -652,7 +652,7 @@ class LayoutEditor(QMainWindow):
         filepath, choosentype = QFileDialog.getOpenFileName(
             self, "Open File",
             self.pathsconfig["bol"],
-            "BLO files (*.blo);;Archived files (*.arc);;All files (*)")
+            "BLO files (*.blo);;Archived files (*.arc);;BLO JSON (*.json);;All files (*)")
 
         if filepath:
             print("Resetting editor")
@@ -697,6 +697,20 @@ class LayoutEditor(QMainWindow):
                         traceback.print_exc()
                         open_error_dialog(str(error), self)
 
+            elif filepath.lower().endswith(".json"):
+                with open(filepath, "r") as f:
+                    try:
+                        json_data = json.load(f)
+                        blo_file = ScreenBlo.deserialize(json_data)
+
+                        self.setup_blo_file(blo_file, filepath)
+                        self.layoutdatatreeview.set_objects(blo_file)
+                        self.current_gen_path = filepath
+
+                    except Exception as error:
+                        print("Error appeared while loading:", error)
+                        traceback.print_exc()
+                        open_error_dialog(str(error), self)
             else:
                 with open(filepath, "rb") as f:
                     try:
@@ -814,11 +828,17 @@ class LayoutEditor(QMainWindow):
                 self.statusbar.showMessage("Saved to {0}".format(self.current_gen_path))
 
             else:
-                with open(self.current_gen_path, "wb") as f:
-                    self.layout_file.write(f)
-                    self.set_has_unsaved_changes(False)
+                if self.current_gen_path.lower().endswith(".json"):
+                    json_data = json.dump(self.layout_file.serialize())
 
-                    self.statusbar.showMessage("Saved to {0}".format(self.current_gen_path))
+                    with open(self.current_gen_path, "w") as f:
+                        f.write(json_data)
+                else:
+                    with open(self.current_gen_path, "wb") as f:
+                        self.layout_file.write(f)
+                self.set_has_unsaved_changes(False)
+
+                self.statusbar.showMessage("Saved to {0}".format(self.current_gen_path))
         else:
             self.button_save_level_as()
 
@@ -827,7 +847,7 @@ class LayoutEditor(QMainWindow):
         filepath, choosentype = QFileDialog.getSaveFileName(
             self, "Save File",
             self.pathsconfig["bol"],
-            "Binary Layout (*.blo);;Archived files (*.arc);;All files (*)")
+            "Binary Layout (*.blo);;Archived files (*.arc);;BLO JSON(*.json);;All files (*)")
         if filepath:
             if choosentype == "Archived files (*.arc)" or filepath.endswith(".arc"):
                 if self.loaded_archive is None or self.loaded_archive_file is None:
@@ -847,14 +867,21 @@ class LayoutEditor(QMainWindow):
                 self.set_has_unsaved_changes(False)
                 self.statusbar.showMessage("Saved to {0}".format(filepath))
             else:
-                with open(filepath, "wb") as f:
-                    self.layout_file.write(f)
+                if filepath.lower().endswith(".json"):
+                    json_data = json.dumps(self.layout_file.serialize(), indent=4, ensure_ascii=False)
+
+                    with open(filepath, "w") as f:
+                        f.write(json_data)
+                else:
+                    with open(filepath, "wb") as f:
+                        self.layout_file.write(f)
 
                     self.set_has_unsaved_changes(False)
 
             self.current_gen_path = filepath
             self.pathsconfig["bol"] = filepath
             save_cfg(self.configuration)
+            self.set_base_window_title(filepath)
             self.statusbar.showMessage("Saved to {0}".format(filepath))
 
     def button_load_collision(self):

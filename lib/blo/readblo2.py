@@ -112,23 +112,28 @@ class Node(object):
                 result.append(child.postprocess_serialize(self.textures))
             else:
                 result.append(child.serialize())
+                if hasattr(child, "child") and child.child is not None:
+                    result.append(child.child.serialize())
         
         return result 
     
     @classmethod 
-    def deserialize(cls, obj, textures=None):
+    def deserialize(cls, obj, materials=None, textures=None):
         node = cls()
         node.textures = textures
+        node.materials = materials
 
         last = None
 
         for item in obj:
+            add_item = True
             if isinstance(item, list):
-                bloitem = Node.deserialize(item, node.textures)
+                bloitem = Node.deserialize(item, node.materials, node.textures)
                 last.child = bloitem
                 for child in bloitem.children:
                     child.parent = last
                 last = None
+                add_item = False
             elif item["type"] == "TEX1":
                 bloitem = TextureNames.deserialize(item)
                 node.textures = bloitem
@@ -148,9 +153,11 @@ class Node(object):
                 last = bloitem
             elif item["type"] == "MAT1":
                 bloitem = MAT1.preprocess_deserialize(item, node.textures)
+                node.materials = bloitem
             else:
                 raise RuntimeError("Unknown item {0}".format(item["type"]))
-            node.children.append(bloitem)
+            if add_item:
+                node.children.append(bloitem)
         
         return node 
     
@@ -280,11 +287,10 @@ class Pane(object):
         result["p_type"] = self.p_name
 
         for key, val in self.__dict__.items():
-            if key != "name" and key != "p_name":
+            if key != "name" and key != "p_name" and key != "child" and key != "parent" and key != "widget":
                 if isinstance(val, bytes):
                     raise RuntimeError("hhhe")
-                result[key] = val 
-                
+                result[key] = val
         return result
 
     def assign_value(self, src, field):
