@@ -265,7 +265,7 @@ class LayoutEditor(QMainWindow):
         self.file_menu.setTitle("File")
 
         save_file_shortcut = QtWidgets.QShortcut(Qt.CTRL + Qt.Key_S, self.file_menu)
-        save_file_shortcut.activated.connect(self.button_save_level)
+        save_file_shortcut.activated.connect(self.button_save_file)
         #QtWidgets.QShortcut(Qt.CTRL + Qt.Key_O, self.file_menu).activated.connect(self.button_load_level)
         #QtWidgets.QShortcut(Qt.CTRL + Qt.Key_Alt + Qt.Key_S, self.file_menu).activated.connect(self.button_save_level_as)
 
@@ -276,9 +276,9 @@ class LayoutEditor(QMainWindow):
         self.file_load_action.setShortcut("Ctrl+O")
         self.save_file_as_action.setShortcut("Ctrl+Alt+S")
 
-        self.file_load_action.triggered.connect(self.button_load_level)
-        self.save_file_action.triggered.connect(self.button_save_level)
-        self.save_file_as_action.triggered.connect(self.button_save_level_as)
+        self.file_load_action.triggered.connect(self.button_load_file)
+        self.save_file_action.triggered.connect(self.button_save_file)
+        self.save_file_as_action.triggered.connect(self.button_save_file_as)
 
         self.file_menu.addAction(self.file_load_action)
         self.file_menu.addAction(self.save_file_action)
@@ -648,7 +648,7 @@ class LayoutEditor(QMainWindow):
             self.edit_spawn_window.show()
 
     #@catch_exception
-    def button_load_level(self):
+    def button_load_file(self):
         filepath, choosentype = QFileDialog.getOpenFileName(
             self, "Open File",
             self.pathsconfig["bol"],
@@ -797,7 +797,7 @@ class LayoutEditor(QMainWindow):
         self.current_gen_path = filepath
 
     @catch_exception_with_dialog
-    def button_save_level(self, *args, **kwargs):
+    def button_save_file(self, *args, **kwargs):
         if self.current_gen_path is not None:
             if self.loaded_archive is not None:
                 assert self.loaded_archive_file is not None
@@ -815,7 +815,7 @@ class LayoutEditor(QMainWindow):
 
             else:
                 with open(self.current_gen_path, "wb") as f:
-                    self.level_file.write(f)
+                    self.layout_file.write(f)
                     self.set_has_unsaved_changes(False)
 
                     self.statusbar.showMessage("Saved to {0}".format(self.current_gen_path))
@@ -823,11 +823,11 @@ class LayoutEditor(QMainWindow):
             self.button_save_level_as()
 
     @catch_exception_with_dialog
-    def button_save_level_as(self, *args, **kwargs):
+    def button_save_file_as(self, *args, **kwargs):
         filepath, choosentype = QFileDialog.getSaveFileName(
             self, "Save File",
             self.pathsconfig["bol"],
-            "MKDD Track Data (*.bol);;Archived files (*.arc);;All files (*)")
+            "Binary Layout (*.blo);;Archived files (*.arc);;All files (*)")
         if filepath:
             if choosentype == "Archived files (*.arc)" or filepath.endswith(".arc"):
                 if self.loaded_archive is None or self.loaded_archive_file is None:
@@ -848,7 +848,7 @@ class LayoutEditor(QMainWindow):
                 self.statusbar.showMessage("Saved to {0}".format(filepath))
             else:
                 with open(filepath, "wb") as f:
-                    self.level_file.write(f)
+                    self.layout_file.write(f)
 
                     self.set_has_unsaved_changes(False)
 
