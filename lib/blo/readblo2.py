@@ -84,7 +84,7 @@ class Node(object):
     def write(self, f):
         count = 0
         for child in self.children:
-            if isinstance(child, Node):
+            """if isinstance(child, Node):
                 f.write(b"BGN1")
                 write_uint32(f, 8)
                 count += child.write(f) + 2
@@ -92,7 +92,16 @@ class Node(object):
                 write_uint32(f, 8)
             else:
                 count += 1
-                child.write(f)
+                child.write(f)"""
+
+            count += 1
+            child.write(f)
+            if hasattr(child, "child") and child.child is not None:
+                f.write(b"BGN1")
+                write_uint32(f, 8)
+                count += child.child.write(f) + 2
+                f.write(b"END1")
+                write_uint32(f, 8)
 
         return count
 
@@ -111,9 +120,15 @@ class Node(object):
         node = cls()
         node.textures = textures
 
+        last = None
+
         for item in obj:
             if isinstance(item, list):
                 bloitem = Node.deserialize(item, node.textures)
+                last.child = bloitem
+                for child in bloitem.children:
+                    child.parent = last
+                last = None
             elif item["type"] == "TEX1":
                 bloitem = TextureNames.deserialize(item)
                 node.textures = bloitem
@@ -121,12 +136,16 @@ class Node(object):
                 bloitem = FontNames.deserialize(item)
             elif item["type"] == "PAN2":
                 bloitem = Pane.deserialize(item)
+                last = bloitem
             elif item["type"] == "WIN2":
                 bloitem = Window.deserialize(item)
+                last = bloitem
             elif item["type"] == "TBX2":
                 bloitem = Textbox.deserialize(item)
+                last = bloitem
             elif item["type"] == "PIC2":
                 bloitem = Picture.deserialize(item)
+                last = bloitem
             elif item["type"] == "MAT1":
                 bloitem = MAT1.preprocess_deserialize(item, node.textures)
             else:
@@ -233,12 +252,12 @@ class Pane(object):
         write_uint32(f, 0x48)
         write_uint16(f, 0x40)
 
-
         write_uint16(f, self.p_unk1)
         write_uint8(f, self.p_enabled)
         write_uint8(f, self.p_anchor)
         f.write(b"RE")
         f.write(bytes(self.p_panename, encoding="ascii"))
+        f.write(bytes(self.p_secondaryname, encoding="ascii"))
 
         write_float(f, self.p_size_x)
         write_float(f, self.p_size_y)
@@ -280,6 +299,7 @@ class Pane(object):
         pane.assign_value(obj, "p_enabled")
         pane.assign_value(obj, "p_anchor")
         pane.assign_value(obj, "p_panename")
+        pane.assign_value(obj, "p_secondaryname")
         pane.assign_value(obj, "p_size_x")
         pane.assign_value(obj, "p_size_y")
         pane.assign_value(obj, "p_scale_x")
