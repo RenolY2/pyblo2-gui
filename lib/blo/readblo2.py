@@ -287,7 +287,7 @@ class Pane(object):
         result["p_type"] = self.p_name
 
         for key, val in self.__dict__.items():
-            if key != "name" and key != "p_name" and key != "child" and key != "parent" and key != "widget":
+            if key != "name" and key != "p_name" and key != "child" and key != "parent" and key != "widget" and key != "hide":
                 if isinstance(val, bytes):
                     raise RuntimeError("hhhe")
                 result[key] = val
