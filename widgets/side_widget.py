@@ -29,7 +29,7 @@ class PikminSideWidget(QWidget):
         self.button_add_object = QPushButton(parent)
 
         self.button_remove_object = QPushButton(parent)
-        self.button_ground_object = QPushButton(parent)
+        #self.button_ground_object = QPushButton(parent)
         #self.button_move_object = QPushButton(parent)
         #self.button_edit_object = QPushButton(parent)
 
@@ -38,13 +38,14 @@ class PikminSideWidget(QWidget):
 
         self.button_add_object.setText("Add Object")
         self.button_remove_object.setText("Remove Object(s)")
-        self.button_ground_object.setText("Ground Object(s)")
+        #self.button_ground_object.setText("Ground Object(s)")
 
         self.button_add_object.setToolTip("Hotkey: Ctrl+A")
         self.button_remove_object.setToolTip("Hotkey: Delete")
-        self.button_ground_object.setToolTip("Hotkey: G")
+        #self.button_ground_object.setToolTip("Hotkey: G")
 
-
+        self.button_add_object.setEnabled(False)
+        self.button_remove_object.setEnabled(False)
         self.button_add_object.setCheckable(True)
         #self.button_move_object.setCheckable(True)
 
@@ -57,7 +58,7 @@ class PikminSideWidget(QWidget):
         #self.lineedit_rotationz = QLineEdit(parent)
         self.verticalLayout.addWidget(self.button_add_object)
         self.verticalLayout.addWidget(self.button_remove_object)
-        self.verticalLayout.addWidget(self.button_ground_object)
+        #self.verticalLayout.addWidget(self.button_ground_object)
         #self.verticalLayout.addWidget(self.button_move_object)
         self.verticalLayout.addStretch(20)
 

@@ -289,7 +289,7 @@ class LayoutEditor(QMainWindow):
 
 
         # ------ Collision Menu
-        self.collision_menu = QMenu(self.menubar)
+        """self.collision_menu = QMenu(self.menubar)
         self.collision_menu.setTitle("Geometry")
         self.collision_load_action = QAction("Load OBJ", self)
         self.collision_load_action.triggered.connect(self.button_load_collision)
@@ -299,18 +299,18 @@ class LayoutEditor(QMainWindow):
         self.collision_menu.addAction(self.collision_load_grid_action)
         self.collision_load_bmd_action = QAction("Load BMD", self)
         self.collision_load_bmd_action.triggered.connect(self.button_load_collision_bmd)
-        self.collision_menu.addAction(self.collision_load_bmd_action)
+        self.collision_menu.addAction(self.collision_load_bmd_action)"""
 
-        self.minimap_menu = QMenu(self.menubar)
+        """self.minimap_menu = QMenu(self.menubar)
         self.minimap_menu.setTitle("Minimap")
         load_minimap = QAction("Load Minimap Image", self)
         load_coordinates_dol = QAction("Load Data from DOL", self)
         save_coordinates_dol = QAction("Save Data to DOL", self)
         load_coordinates_json = QAction("Load Data from JSON", self)
-        save_coordinates_json = QAction("Save Data to JSON", self)
+        save_coordinates_json = QAction("Save Data to JSON", self)"""
 
 
-        load_minimap.triggered.connect(self.action_load_minimap_image)
+        """load_minimap.triggered.connect(self.action_load_minimap_image)
         load_coordinates_dol.triggered.connect(self.action_load_dol)
         save_coordinates_dol.triggered.connect(self.action_save_to_dol)
         load_coordinates_json.triggered.connect(self.action_load_coordinates_json)
@@ -319,10 +319,10 @@ class LayoutEditor(QMainWindow):
         self.minimap_menu.addAction(load_coordinates_dol)
         self.minimap_menu.addAction(save_coordinates_dol)
         self.minimap_menu.addAction(load_coordinates_json)
-        self.minimap_menu.addAction(save_coordinates_json)
+        self.minimap_menu.addAction(save_coordinates_json)"""
 
         # Misc
-        self.misc_menu = QMenu(self.menubar)
+        """self.misc_menu = QMenu(self.menubar)
         self.misc_menu.setTitle("Misc")
         #self.spawnpoint_action = QAction("Set startPos/Dir", self)
         #self.spawnpoint_action.triggered.connect(self.action_open_rotationedit_window)
@@ -345,6 +345,7 @@ class LayoutEditor(QMainWindow):
         self.change_to_topdownview_action.setShortcut("Ctrl+1")
 
         self.change_to_3dview_action = QAction("3D View", self)
+        self.change_to_3dview_action = QAction("3D View", self)
         self.change_to_3dview_action.triggered.connect(self.change_to_3dview)
         self.misc_menu.addAction(self.change_to_3dview_action)
         self.change_to_3dview_action.setCheckable(True)
@@ -353,13 +354,13 @@ class LayoutEditor(QMainWindow):
         self.choose_bco_area = QAction("Highlight Collision Area (BCO)")
         self.choose_bco_area.triggered.connect(self.action_choose_bco_area)
         self.misc_menu.addAction(self.choose_bco_area)
-        self.choose_bco_area.setShortcut("Ctrl+3")
+        self.choose_bco_area.setShortcut("Ctrl+3")"""
 
         self.menubar.addAction(self.file_menu.menuAction())
         self.menubar.addAction(self.visibility_menu.menuAction())
-        self.menubar.addAction(self.collision_menu.menuAction())
-        self.menubar.addAction(self.minimap_menu.menuAction())
-        self.menubar.addAction(self.misc_menu.menuAction())
+        #self.menubar.addAction(self.collision_menu.menuAction())
+        #self.menubar.addAction(self.minimap_menu.menuAction())
+        #self.menubar.addAction(self.misc_menu.menuAction())
         self.setMenuBar(self.menubar)
 
         self.last_obj_select_pos = 0
@@ -589,7 +590,7 @@ class LayoutEditor(QMainWindow):
         self.level_view.height_update.connect(self.action_change_object_heights)
         self.level_view.create_waypoint.connect(self.action_add_object)
         self.level_view.create_waypoint_3d.connect(self.action_add_object_3d)
-        self.pik_control.button_ground_object.pressed.connect(self.action_ground_objects)
+        #self.pik_control.button_ground_object.pressed.connect(self.action_ground_objects)
         self.pik_control.button_remove_object.pressed.connect(self.action_delete_objects)
 
         delete_shortcut = QtWidgets.QShortcut(QtGui.QKeySequence(Qt.Key_Delete), self)
@@ -652,14 +653,14 @@ class LayoutEditor(QMainWindow):
         filepath, choosentype = QFileDialog.getOpenFileName(
             self, "Open File",
             self.pathsconfig["bol"],
-            "BLO files (*.blo);;Archived files (*.arc);;BLO JSON (*.json);;All files (*)")
-
+            "BLO files (*.blo);;BLO JSON (*.json);;All files (*)")
+        #;;Archived files (*.arc)
         if filepath:
             print("Resetting editor")
             self.reset()
             print("Reset done")
             print("Chosen file type:", choosentype)
-            if choosentype == "Archived files (*.arc)" or filepath.endswith(".arc"):
+            if False and (choosentype == "Archived files (*.arc)" or filepath.endswith(".arc")):
                 with open(filepath, "rb") as f:
                     try:
                         self.loaded_archive = Archive.from_file(f)
@@ -813,7 +814,7 @@ class LayoutEditor(QMainWindow):
     @catch_exception_with_dialog
     def button_save_file(self, *args, **kwargs):
         if self.current_gen_path is not None:
-            if self.loaded_archive is not None:
+            if False and self.loaded_archive is not None:
                 assert self.loaded_archive_file is not None
                 root_name = self.loaded_archive.root.name
                 file = self.loaded_archive[root_name + "/" + self.loaded_archive_file]
@@ -847,9 +848,10 @@ class LayoutEditor(QMainWindow):
         filepath, choosentype = QFileDialog.getSaveFileName(
             self, "Save File",
             self.pathsconfig["bol"],
-            "Binary Layout (*.blo);;Archived files (*.arc);;BLO JSON(*.json);;All files (*)")
+            "Binary Layout (*.blo);;BLO JSON(*.json);;All files (*)")
+        #;;Archived files (*.arc)
         if filepath:
-            if choosentype == "Archived files (*.arc)" or filepath.endswith(".arc"):
+            if False and (choosentype == "Archived files (*.arc)" or filepath.endswith(".arc")):
                 if self.loaded_archive is None or self.loaded_archive_file is None:
                     with open(filepath, "rb") as f:
                         self.loaded_archive = Archive.from_file(f)
