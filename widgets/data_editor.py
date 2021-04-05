@@ -518,6 +518,7 @@ class PaneEdit(DataEditor):
         self.secondaryname = self.add_updater(self.add_text_input,
                                               "p_secondaryname", "Secondary Name", maxlength=8, pad="\x00",
                                               preprocess_func=lambda x: x.lstrip("\x00"))
+        self.enable = self.add_checkbox_updater(self.add_checkbox, "p_enabled", "Enable", 0, 1)
         self.hide = self.add_checkbox_updater(self.add_checkbox, "hide", "Hide (Editor only)", 0, 1)
         self.hide.stateChanged.connect(self.catch_text_update)
         self.hide.stateChanged.connect(self.update_name)
@@ -533,6 +534,8 @@ class PaneEdit(DataEditor):
         self.scale_y = self.add_updater(self.add_decimal_input, "p_scale_y", "Y Scale", -inf, +inf)
 
         self.rotation = self.add_updater(self.add_decimal_input, "p_rotation", "Rotation", -inf, +inf)
+        self.unk1 = self.add_updater(self.add_integer_input, "p_unk1", "Unknown 1", -MIN_UNSIGNED_SHORT, +MAX_UNSIGNED_SHORT)
+        self.unk2 = self.add_updater(self.add_decimal_input, "p_unk4", "Unknown 4", -inf, +inf)
 
     def update_data(self):
         super().update_data()
