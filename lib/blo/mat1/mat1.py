@@ -315,8 +315,8 @@ class MaterialInitData(object):
             write_int16(f, get_index_or_add(dataarrays["MaterialColor"], color))
 
         for color_channel in self.color_channels:  # 0xC
-            print("adding value", color_channel)
-            print(dataarrays["ColorChannelInfo"])
+            #print("adding value", color_channel)
+            #print(dataarrays["ColorChannelInfo"])
             write_int16(f, get_index_or_add(dataarrays["ColorChannelInfo"], color_channel))
         assert f.tell() - start == 0x14
         for texcoord in self.tex_coord_generators:  # 0x14
@@ -361,7 +361,7 @@ class MaterialInitData(object):
         write_int16(f, get_index_or_add(dataarrays["AlphaCompInfo"], self.alphacomp))
         write_int16(f, get_index_or_add(dataarrays["BlendInfo"], self.blend))
         f.write(b"\x00\x00")  # padding
-        print(hex(f.tell() - start))
+        #print(hex(f.tell() - start))
         assert f.tell() - start == 0xE8
 
     def serialize(self):
@@ -546,11 +546,11 @@ class MAT1(object):
                     write_uint8(f, data)
             elif datatype in ("UsArray4_TextureIndices", ):
                 for data in dataarrays[datatype]:
-                    print(data, type(data))
+                    #print(data, type(data))
                     write_uint16(f, data)
             else:
                 for data in dataarrays[datatype]:
-                    print(data)
+                    #print(data)
                     data.write(f)
 
             write_pad(f, 4)

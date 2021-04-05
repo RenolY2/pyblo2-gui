@@ -116,7 +116,7 @@ class UnknownData(object):
         return unkobj
 
     def __eq__(self, other):
-        print(self, other)
+        #print(self, other)
         assert type(self) == type(other)
         return self.data == other.data
 
