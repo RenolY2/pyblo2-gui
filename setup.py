@@ -1,7 +1,7 @@
 import sys
 import os 
 from cx_Freeze import setup, Executable
-version = "0.9.7"
+version = "0.1"
 # Dependencies are automatically detected, but it might need fine tuning.
 
 def files_from_folder(folder):
@@ -25,8 +25,8 @@ guiBase = None#"Win32GUI"
 #if sys.platform == "win32":
 #    base = "Win32GUI"
 
-setup(  name = "MKDD Track Editor",
+setup(  name = "Binary Layout Editor",
         version = version,
-        description = "Track Editor for MKDD",
+        description = "Binary Layout Editor",
         options={"build_exe": build_exe_options},
-        executables = [Executable("mkdd_editor.py", base=guiBase, icon="resources/icon.ico")])
+        executables = [Executable("blo_editor.py", base=guiBase, icon="resources/icon.ico")])
