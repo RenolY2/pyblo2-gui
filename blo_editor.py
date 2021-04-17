@@ -830,7 +830,7 @@ class LayoutEditor(QMainWindow):
 
             else:
                 if self.current_gen_path.lower().endswith(".json"):
-                    json_data = json.dump(self.layout_file.serialize())
+                    json_data = json.dumps(self.layout_file.serialize(), indent=4, ensure_ascii=False)
 
                     with open(self.current_gen_path, "w") as f:
                         f.write(json_data)
