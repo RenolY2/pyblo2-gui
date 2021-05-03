@@ -699,7 +699,7 @@ class LayoutEditor(QMainWindow):
                         open_error_dialog(str(error), self)
 
             elif filepath.lower().endswith(".json"):
-                with open(filepath, "r") as f:
+                with open(filepath, "r", encoding="utf-8") as f:
                     try:
                         json_data = json.load(f)
                         blo_file = ScreenBlo.deserialize(json_data)
@@ -832,7 +832,7 @@ class LayoutEditor(QMainWindow):
                 if self.current_gen_path.lower().endswith(".json"):
                     json_data = json.dumps(self.layout_file.serialize(), indent=4, ensure_ascii=False)
 
-                    with open(self.current_gen_path, "w") as f:
+                    with open(self.current_gen_path, "w", encoding="utf-8") as f:
                         f.write(json_data)
                 else:
                     with open(self.current_gen_path, "wb") as f:
@@ -872,7 +872,7 @@ class LayoutEditor(QMainWindow):
                 if filepath.lower().endswith(".json"):
                     json_data = json.dumps(self.layout_file.serialize(), indent=4, ensure_ascii=False)
 
-                    with open(filepath, "w") as f:
+                    with open(filepath, "w", encoding="utf-8") as f:
                         f.write(json_data)
                 else:
                     with open(filepath, "wb") as f:
