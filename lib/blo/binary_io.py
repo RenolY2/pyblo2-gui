@@ -39,7 +39,7 @@ def read_uint8_at(f, offset):
     
 def read_int8_at(f, offset):
     f.seek(offset)
-    return struct.unpack(">B", f.read(1))[0]
+    return struct.unpack(">b", f.read(1))[0]
 
 
 def read_float(f):
