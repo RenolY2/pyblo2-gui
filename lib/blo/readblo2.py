@@ -231,7 +231,7 @@ class Pane(object):
         pane.p_anchor = read_uint8(f)  # 0xD
         
         re = f.read(2)
-        assert re == b"RE"
+        assert re == b"RE" or re == b"\x00\x00"
         pane.p_panename = f.read(0x8).decode("ascii")
         pane.p_secondaryname = f.read(0x8).decode("ascii")
         #unknown = f.read(0x8)
@@ -428,7 +428,7 @@ class Window(Pane):
 
         window.size = read_uint16(f)
         reserved = f.read(6)
-        assert reserved == b"RESERV"
+        assert reserved == b"RESERV" or reserved == b"\x00"*7
         window.padding = str(hexlify(f.read(8)), encoding="ascii")#.decode("ascii", errors="backslashreplace")
         #assert window.padding == "\xFF"*8
         window.subdata = [{}, {}, {}, {}]
@@ -444,7 +444,7 @@ class Window(Pane):
         window.material = read_int16(f)
         
         re = f.read(2)
-        assert re == b"RE"
+        assert re == b"RE" or re == b"\x00\x00"
         
         for i in range(4):
             window.subdata[i]["sub_unk2"] = read_uint16(f)
@@ -532,7 +532,7 @@ class Picture(Pane):
         picture.material = read_uint16(f)
         
         re = f.read(2)
-        assert re == b"RE"
+        assert re == b"RE" or re == b"\x00\x00"
         color1 = {}
         color2 = {}
         
@@ -633,7 +633,7 @@ class Textbox(Pane):
         textbox.color_bottom = Color.from_file(f)
         textbox.unk11 = read_uint8(f)
         res = f.read(3)
-        assert res == b"RES"
+        assert res == b"RES" or res == b"\x00\x00\x00"
         textbox.text_cutoff = read_uint16(f)
         stringlength = read_uint16(f)
         assert f.tell() == start+0x70
