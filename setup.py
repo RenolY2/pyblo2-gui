@@ -1,7 +1,7 @@
 import sys
 import os 
 from cx_Freeze import setup, Executable
-version = "0.1"
+version = "0.1.2.1"
 # Dependencies are automatically detected, but it might need fine tuning.
 
 def files_from_folder(folder):
@@ -9,13 +9,13 @@ def files_from_folder(folder):
 
 #include_files = files_from_folder("resources/")
 #include_files.extend(files_from_folder("object_templates"))
-include_files = ["resources/", "lib/mkddobjects.json", "lib/music_ids.json"]
+include_files = ["resources/", "lib/mkddobjects.json", "lib/music_ids.json", "lib/color_coding.json"]
 build_exe_options = {
 "packages": ["OpenGL", "numpy.core._methods", "numpy.lib.format"],
 "includes": ["widgets"], 
 "excludes": ["tkinter", "scipy", "PyQt5.QtWebEngine", "PyQt5.QtWebEngineCore"],
 "optimize": 0,
-"build_exe": "build/mkdd-track-editor-{}".format(version),
+"build_exe": "build/blo-gui-editor-v{}".format(version),
 "include_files": include_files}
 
 # GUI applications require a different base on Windows (the default is for a
