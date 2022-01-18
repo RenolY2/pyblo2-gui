@@ -1,7 +1,7 @@
 import sys
 import os 
 from cx_Freeze import setup, Executable
-version = "0.1.2.1"
+version = "0.1.2.2"
 # Dependencies are automatically detected, but it might need fine tuning.
 
 def files_from_folder(folder):
