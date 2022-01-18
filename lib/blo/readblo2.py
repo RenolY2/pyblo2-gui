@@ -64,7 +64,8 @@ class Node(object):
                 last = Pane.from_file(f)
                 node.children.append(last)
             elif next == b"PIC2":
-                last = Picture.from_file(f)
+                last = Picture.from_file(f, materials)
+
                 node.children.append(last)
             elif next == b"WIN2":
                 last = Window.from_file(f)
@@ -95,11 +96,18 @@ class Node(object):
                 child.write(f)"""
 
             count += 1
-            child.write(f)
+            if isinstance(child, Pane):
+                child.write(f, self.materials)
+            else:
+                child.write(f)
             if hasattr(child, "child") and child.child is not None:
                 f.write(b"BGN1")
                 write_uint32(f, 8)
-                count += child.child.write(f) + 2
+                if isinstance(child.child, Pane):
+                    count += child.child.write(f, self.materials) + 2
+                else:
+                    count += child.child.write(f) + 2
+                
                 f.write(b"END1")
                 write_uint32(f, 8)
 
@@ -253,7 +261,7 @@ class Pane(object):
         assert f.tell() == start + 0x48
         return pane
 
-    def write(self, f):
+    def write(self, f, mat1):
         start = f.tell()
         write_name(f, self.p_name)
         write_uint32(f, 0x48)
@@ -453,11 +461,11 @@ class Window(Pane):
         assert f.tell() == start+0x90
         return window 
 
-    def write(self, f):
+    def write(self, f, mat1):
         start = f.tell()
         write_name(f, self.name)
         write_uint32(f, 0x90)
-        super().write(f) # Write pane
+        super().write(f, mat1) # Write pane
         write_uint16(f, self.size)
 
         f.write(b"RESERV")
@@ -518,7 +526,7 @@ class Picture(Pane):
         self.name = "PIC2"
     
     @classmethod
-    def from_file(cls, f):
+    def from_file(cls, f, mat1):
         start = f.tell()
         name = read_name(f)
         size = read_uint32(f)
@@ -529,7 +537,8 @@ class Picture(Pane):
 
         picture.size = read_uint16(f)
         picture.unk_index = read_uint16(f)
-        picture.material = read_uint16(f)
+        mat_index = read_uint16(f)
+        picture.material = mat1.materials[mat_index].name
         
         re = f.read(2)
         assert re == b"RE" or re == b"\x00\x00"
@@ -554,14 +563,14 @@ class Picture(Pane):
         assert f.tell() == start+0x80
         return picture 
 
-    def write(self, f):
+    def write(self, f, mat1):
         start = f.tell()
         write_name(f, self.name)
         write_uint32(f, 0x80)
-        super().write(f)  # Write pane
+        super().write(f, mat1)  # Write pane
         write_uint16(f, self.size)
         write_uint16(f, self.unk_index)
-        write_uint16(f, self.material)
+        write_uint16(f, mat1.get_mat_index(self.material))
         f.write(b"RE")
         write_uint16(f, self.color1["unk1"])
         write_uint16(f, self.color1["unk2"])
@@ -641,11 +650,11 @@ class Textbox(Pane):
         f.seek(start+size)
         return textbox
 
-    def write(self, f):
+    def write(self, f, mat1):
         start = f.tell()
         write_name(f, self.name)
         write_uint32(f, 0x70)
-        super().write(f)
+        super().write(f, mat1)
 
         write_uint16(f, self.size)
         write_uint16(f, self.unk1)

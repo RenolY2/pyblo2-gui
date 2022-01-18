@@ -166,16 +166,16 @@ class MaterialInitData(object):
         initdata.cullmode = CullModeSetting.from_array(f, offsets["GXCullMode"], cullmodeIndex)
 
         colorChannelNumIndex = read_int8_at(f, initdatastart + 0x2)
-        initdata.color_channel_count = read_int8_at(f, offsets["UcArray2_ColorChannelCount"]+colorChannelNumIndex)
+        initdata.color_channel_count = read_uint8_at(f, offsets["UcArray2_ColorChannelCount"]+colorChannelNumIndex)
 
         texGenNumIndex = read_int8_at(f, initdatastart + 0x3)
-        initdata.tex_gen_count = read_int8_at(f, offsets["TexCoordInfo"]+texGenNumIndex)
+        initdata.tex_gen_count = read_uint8_at(f, offsets["TexCoordInfo"]+texGenNumIndex)
 
         tevStageNumIndex = read_int8_at(f, initdatastart + 0x4)
-        initdata.tev_stage_count = read_int8_at(f, offsets["UCArray6_Tevstagenums"] + tevStageNumIndex)
+        initdata.tev_stage_count = read_uint8_at(f, offsets["UCArray6_Tevstagenums"] + tevStageNumIndex)
 
         ditherIndex = read_int8_at(f, initdatastart + 0x5)
-        initdata.dither = read_int8_at(f, offsets["UcArray7_Dither"] + ditherIndex)
+        initdata.dither = read_uint8_at(f, offsets["UcArray7_Dither"] + ditherIndex)
         unk = read_int8_at(f, initdatastart + 0x6)
         initdata.unk = unk
         
@@ -430,7 +430,14 @@ class MAT1(object):
         self.name = "MAT1"
         #self.material_names = StringTable()
         self.materials = []
-        
+
+    def get_mat_index(self, name):
+        for i, v in enumerate(self.materials):
+            if v.name == name:
+                return i
+
+        return None
+
     @classmethod
     def from_file(cls, f):
         start = f.tell()
