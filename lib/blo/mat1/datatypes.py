@@ -87,30 +87,48 @@ class ChannelControl(object):
 class UnknownData(object):
     size = 0
 
-    def __init__(self):
+    def __init__(self, index=None):
         self.data = b""
+        self.index = index
 
     @classmethod
-    def from_file(cls, f):
-        obj = cls()
+    def from_file(cls, f, index=None):
+        obj = cls(index)
         obj.data = f.read(cls.size)
         return obj
 
     @classmethod
-    def from_array(cls, f, start, i):
+    def from_array(cls, f, start, i, remember_index=False):
         f.seek(start + i*cls.size)
-        return cls.from_file(f)
+        if remember_index:
+            return cls.from_file(f, index=i)
+        else:
+            return cls.from_file(f)
 
     def write(self, f):
         assert len(self.data) == self.size
         f.write(self.data)
 
     def serialize(self):
-        return str(hexlify(self.data), encoding="ascii")
+        if self.index is None:
+            return str(hexlify(self.data), encoding="ascii")
+        else:
+            return "i={0};".format(self.index)+str(hexlify(self.data), encoding="ascii")
+        
 
     @classmethod
     def deserialize(cls, obj):
-        unkobj = cls()
+        if obj.startswith("i="):
+            start = obj.find("=")+1
+            end = obj.find(";")
+            index = int(obj[start:end])
+            obj = obj[end+1:]
+            print(obj)
+            print("Detected index", index, obj)
+            unkobj = cls(index)
+        else:
+            unkobj = cls()
+            
         unkobj.data = unhexlify(obj)
         assert len(unkobj.data) == cls.size
         return unkobj
@@ -118,7 +136,7 @@ class UnknownData(object):
     def __eq__(self, other):
         #print(self, other)
         assert type(self) == type(other)
-        return self.data == other.data
+        return self.data == other.data and self.index == other.index
 
 
 class ChannelControl(UnknownData):
