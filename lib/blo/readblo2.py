@@ -676,7 +676,7 @@ class Textbox(Pane):
         assert f.tell() == start + 0x70
         f.write(text)
         #f.write(b"\x00")
-        write_pad(f, 4)
+        write_pad(f, 8)
         curr = f.tell()
         f.seek(start+4)
         write_uint32(f, curr-start)
@@ -936,6 +936,7 @@ class ScreenBlo(object):
 
 
 if __name__ == "__main__":
+    """
     pane = Pane()
     pane.p_offset_x = 0
     pane.p_offset_y = 0
@@ -974,7 +975,7 @@ if __name__ == "__main__":
             blo = ScreenBlo.deserialize(json.load(f))
 
         with open(outfile, "wb") as f:
-            blo.write(f)"""
+            blo.write(f)
 
 
     """inputfile = "cave_pikmin.blo"
