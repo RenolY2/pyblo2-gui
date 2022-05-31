@@ -7,7 +7,7 @@ import os
 from OpenGL.GL import *
 
 from PyQt5 import QtGui
-from lib.blo.readblo2 import Pane
+from lib.blo.readblo2 import Pane, ScreenBlo
 
 with open("lib/color_coding.json") as f:
     colors = json.load(f)
@@ -1184,28 +1184,72 @@ class PaneRender(object):
     def __init__(self):
         pass
 
-    def render_pane(self, pane: Pane, material, is_selected):
+    def render_pane(self, screen: ScreenBlo, pane: Pane, material, is_selected, texture_handler):
         w, h = pane.p_size_x, pane.p_size_y
-        #glEnable(GL_TEXTURE_2D)
-        #glBindTexture(GL_TEXTURE_2D, self.ID)
-        #glBegin(GL_TRIANGLE_FAN)
-        #glTexCoord2f(0.0, 0.0)
-        glBegin(GL_LINE_LOOP)
-        if is_selected:
-            glColor3f(1.0, 0.0, 0.0)
+        if pane.name == "PIC2":
+            material = pane._material
+
+            texture_id = material.textures[0]
+            texture = screen.root.textures.references[texture_id].lower()
+
+            if texture is not None and texture in texture_handler.textures_render:
+                gltex = texture_handler.textures_render[texture]
+                ID = gltex.ID
+                glEnable(GL_TEXTURE_2D)
+                glBindTexture(GL_TEXTURE_2D, ID)
+                glBegin(GL_TRIANGLE_FAN)
+                if is_selected:
+                    glColor3f(1.0, 0.0, 0.0)
+                else:
+                    glColor3f(1.0, 1.0, 1.0)
+
+                offset_x, offset_y = PaneRender.get_anchor_offset(pane)
+
+                glTexCoord2f(0.0, 0.0)
+                glVertex3f(0.0 + offset_x, 0.0 - offset_y, 0)
+                glTexCoord2f(0.0, 1.0)
+                glVertex3f(0.0 + offset_x, -h - offset_y, 0)
+                glTexCoord2f(1.0, 1.0)
+                glVertex3f(w + offset_x, -h - offset_y, 0)
+                glTexCoord2f(1.0, 0.0)
+                glVertex3f(w + offset_x, 0 - offset_y, 0)
+                glEnd()
+            else:
+                glBegin(GL_LINE_LOOP)
+                if is_selected:
+                    glColor3f(1.0, 0.0, 0.0)
+                else:
+                    glColor3f(0.0, 0.0, 0.0)
+
+                offset_x, offset_y = PaneRender.get_anchor_offset(pane)
+
+                glVertex3f(0.0 + offset_x, 0.0 - offset_y, 0)
+                # glTexCoord2f(0.0, 1.0)
+                glVertex3f(0.0 + offset_x, -h - offset_y, 0)
+                # glTexCoord2f(1.0, 1.0)
+                glVertex3f(w + offset_x, -h - offset_y, 0)
+                # glTexCoord2f(1.0, 0.0)
+                glVertex3f(w + offset_x, 0 - offset_y, 0)
+                glEnd()
         else:
-            glColor3f(0.0, 0.0, 0.0)
+            #glBegin(GL_TRIANGLE_FAN)
+            #glTexCoord2f(0.0, 0.0)
+            glBegin(GL_LINE_LOOP)
+            if is_selected:
+                glColor3f(1.0, 0.0, 0.0)
+            else:
+                glColor3f(0.0, 0.0, 0.0)
 
-        offset_x, offset_y = PaneRender.get_anchor_offset(pane)
+            offset_x, offset_y = PaneRender.get_anchor_offset(pane)
 
-        glVertex3f(0.0+offset_x, 0.0-offset_y, 0)
-        #glTexCoord2f(0.0, 1.0)
-        glVertex3f(0.0+offset_x, -h-offset_y, 0)
-        #glTexCoord2f(1.0, 1.0)
-        glVertex3f(w+offset_x, -h-offset_y, 0)
-        #glTexCoord2f(1.0, 0.0)
-        glVertex3f(w+offset_x, 0-offset_y, 0)
-        glEnd()
+            glVertex3f(0.0+offset_x, 0.0-offset_y, 0)
+            #glTexCoord2f(0.0, 1.0)
+            glVertex3f(0.0+offset_x, -h-offset_y, 0)
+            #glTexCoord2f(1.0, 1.0)
+            glVertex3f(w+offset_x, -h-offset_y, 0)
+            #glTexCoord2f(1.0, 0.0)
+            glVertex3f(w+offset_x, 0-offset_y, 0)
+            glEnd()
 
     @staticmethod
     def get_anchor_offset(pane):

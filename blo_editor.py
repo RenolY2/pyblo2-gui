@@ -39,6 +39,8 @@ from widgets.file_select import FileSelect
 from PyQt5.QtWidgets import QTreeWidgetItem
 from lib.bmd_render import clear_temp_folder, load_textured_bmd
 from lib.blo.readblo2 import ScreenBlo, Pane
+from widgets.texture_handler_widget import TextureHandlerMenu
+
 
 EDITOR_NAME = "BLO Layout Editor"
 
@@ -69,6 +71,7 @@ class LayoutEditor(QMainWindow):
         self.level_view.set_editorconfig(self.configuration["editor"])
         self.level_view.visibility_menu = self.visibility_menu
         self.level_view.main_program = self
+        self.level_view.texture_handler = self.texture_menu.texture_handler
         self.pathsconfig = self.configuration["default paths"]
         self.editorconfig = self.configuration["editor"]
         self.current_gen_path = None
@@ -189,8 +192,10 @@ class LayoutEditor(QMainWindow):
         self.level_view.selected_positions = []
         self.level_view.selected_rotations = []
 
-        if isinstance(item, (tree_view.PaneItem, )):
+        if isinstance(item, (tree_view.PaneItem,)):
             self.level_view.selected = [item.bound_to]
+        elif isinstance(item, (tree_view.Texture, tree_view.Material)):
+            self.level_view.selected = [item]
 
         self.level_view.do_redraw()
         self.level_view.select_update.emit()
@@ -287,6 +292,9 @@ class LayoutEditor(QMainWindow):
         self.visibility_menu = blo_editor_widgets.FilterViewMenu(self)
         self.visibility_menu.filter_update.connect(self.update_render)
 
+        self.texture_menu = TextureHandlerMenu(self)
+
+
 
         # ------ Collision Menu
         """self.collision_menu = QMenu(self.menubar)
@@ -358,6 +366,7 @@ class LayoutEditor(QMainWindow):
 
         self.menubar.addAction(self.file_menu.menuAction())
         self.menubar.addAction(self.visibility_menu.menuAction())
+        self.menubar.addAction(self.texture_menu.menuAction())
         #self.menubar.addAction(self.collision_menu.menuAction())
         #self.menubar.addAction(self.minimap_menu.menuAction())
         #self.menubar.addAction(self.misc_menu.menuAction())

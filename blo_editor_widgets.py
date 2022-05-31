@@ -20,19 +20,17 @@ from PyQt5.QtCore import Qt
 
 
 from helper_functions import calc_zoom_in_factor, calc_zoom_out_factor
-from lib.libgen import GeneratorObject
 from lib.collision import Collision
 from widgets.editor_widgets import catch_exception, catch_exception_with_dialog
-#from pikmingen import PikminObject
-from libpiktxt import PikminTxt
+
 from opengltext import draw_collision
 from lib.vectors import Matrix4x4, Vector3, Line, Plane, Triangle
-import pikmingen
+
 from lib.model_rendering import TexturedPlane, Model, Grid, GenericObject, Material, Minimap
 from lib.object_models import ObjectModels
 from editor_controls import UserControl
 from lib.libpath import Paths
-from lib.blo.readblo2 import ScreenBlo
+from lib.blo.readblo2 import ScreenBlo, Pane
 from lib.control.box_manipulator import BoxManipulator
 from gizmo import Gizmo2D
 
@@ -230,6 +228,8 @@ class BolMapViewer(QtWidgets.QOpenGLWidget):
         self.gizmo2d = Gizmo2D()
         self.transforms = {}
 
+        self.texture_handler = None
+
     @catch_exception_with_dialog
     def initializeGL(self):
         self.rotation_visualizer = glGenLists(1)
@@ -247,6 +247,7 @@ class BolMapViewer(QtWidgets.QOpenGLWidget):
 
         self.minimap = Minimap(Vector3(-1000.0, 0.0, -1000.0), Vector3(1000.0, 0.0, 1000.0), 0,
                                "resources/arrow.png")
+
 
     def resizeGL(self, width, height):
         # Called upon window resizing: reinitialize the viewport.
@@ -533,6 +534,8 @@ class BolMapViewer(QtWidgets.QOpenGLWidget):
     #@catch_exception_with_dialog
     #@catch_exception
     def paintGL(self):
+        self.texture_handler.update_gl()
+
         start = default_timer()
         offset_x = self.offset_x
         offset_z = self.offset_z
@@ -803,7 +806,10 @@ class BolMapViewer(QtWidgets.QOpenGLWidget):
             selected = self.selected
             positions = self.selected_positions
 
-            select_optimize = {x: True for x in selected}
+            select_optimize = self.selected#x: True for x in selected}
+            #for x in selected:
+            #    if isinstance(x, (Pane, )):
+            #        select_optimize
             #objects = self.pikmin_generators.generators
 
             #for pikminobject in objects:
@@ -811,7 +817,7 @@ class BolMapViewer(QtWidgets.QOpenGLWidget):
 
             vismenu = self.visibility_menu
 
-            self.models.render_hierarchy(self.layout_file, select_optimize, vismenu)
+            self.models.render_hierarchy(self.layout_file, select_optimize, vismenu, self.texture_handler)
 
             #glDisable(GL_TEXTURE_2D)
 
@@ -819,7 +825,7 @@ class BolMapViewer(QtWidgets.QOpenGLWidget):
 
         glColor3f(0.0, 0.0, 0.0)
         glDisable(GL_TEXTURE_2D)
-        if len(self.selected) == 1:
+        if len(self.selected) == 1 and isinstance(self.selected[0], (Pane, )):
             element = self.selected[0]
             self.box_manipulator.set_visible(True)
             self.box_manipulator.render(element_transforms[element], element, self.zoom_factor)

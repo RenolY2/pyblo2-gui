@@ -190,10 +190,10 @@ class ObjectModels(object):
 
         glPopMatrix()
 
-    def render_pane(self, pane, material, selected):
-        self.pane_render.render_pane(pane, material, pane in selected)
+    def render_pane(self, root, pane, material, selected, texture_handler):
+        self.pane_render.render_pane(root, pane, material, pane in selected, texture_handler)
 
-    def render_node(self, node, materials, selected, vismenu, highlight_pass):
+    def render_node(self, root, node, materials, selected, vismenu, texture_handler, highlight_pass):
         for child in node.children:
             if isinstance(child, Pane):
                 glPushMatrix()
@@ -203,7 +203,7 @@ class ObjectModels(object):
                 glScalef(child.p_scale_x, child.p_scale_y, 1.0)
 
                 if highlight_pass and child in selected:
-                    self.render_pane(child, materials, selected)
+                    self.render_pane(root, child, materials, selected, texture_handler)
                 elif not highlight_pass:
                     if (
                             ((child.name == "PAN2" and vismenu.panes.is_visible()) or
@@ -211,10 +211,10 @@ class ObjectModels(object):
                             (child.name == "TBX2" and vismenu.textboxes.is_visible()) or
                             (child.name == "WIN2" and vismenu.windows.is_visible())) and not child.hide
                     ):
-                        self.render_pane(child, materials, selected)
+                        self.render_pane(root, child, materials, selected, texture_handler)
 
                 if child.child is not None:
-                    self.render_node(child.child, materials, selected, vismenu, highlight_pass)
+                    self.render_node(root, child.child, materials, selected, vismenu, texture_handler, highlight_pass)
 
                 glPopMatrix()
 
@@ -238,9 +238,9 @@ class ObjectModels(object):
 
         return transforms
 
-    def render_hierarchy(self, screen: ScreenBlo, selected, vismenu):
-        self.render_node(screen.root, None, selected, vismenu, highlight_pass=False)
-        self.render_node(screen.root, None, selected, vismenu, highlight_pass=True)
+    def render_hierarchy(self, screen: ScreenBlo, selected, vismenu, texture_handler):
+        self.render_node(screen, screen.root, None, selected, vismenu, texture_handler, highlight_pass=False)
+        self.render_node(screen, screen.root, None, selected, vismenu, texture_handler, highlight_pass=True)
 
     def collision_detect_node(self, node, point, vismenu, transforms):#transform: Matrix4x4 = None):
         results = []

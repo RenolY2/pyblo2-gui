@@ -77,14 +77,26 @@ class NamedItem(QTreeWidgetItem):
         pass
 
 
-class NamedItemWithChildren(NamedItem):
-    def remove_children(self):
-        self.takeChildren()
+class Texture(NamedItem):
+    pass
+
+
+class Material(NamedItem):
+    pass
 
 
 class InformationItem(NamedItem):
     def __init__(self, bound_to: Information):
         super().__init__(None, "Information", bound_to, None)
+
+
+class NamedItemWithChildren(NamedItem):
+    def remove_children(self):
+        self.takeChildren()
+
+
+class TextureList(NamedItemWithChildren):
+    pass
 
 
 class PaneItem(NamedItemWithChildren):
@@ -207,7 +219,7 @@ class LayoutDataTreeView(QTreeWidget):
         self.information = InformationItem(None)
         self.addTopLevelItem(self.information)
         self.material_list = NamedItemWithChildren(None, "Materials", None, None)
-        self.texture_list = NamedItemWithChildren(None, "Textures", None, None)
+        self.texture_list = TextureList(None, "Textures", None, None)
         self.font_list = NamedItemWithChildren(None, "Fonts", None, None)
         self.layout = NamedItemWithChildren(None, "Layout", None, None)
 
@@ -299,11 +311,11 @@ class LayoutDataTreeView(QTreeWidget):
         mat1: MAT1 = screen_data.root.materials
 
         for material in mat1.materials:
-            material_item = NamedItem(self.material_list, material.name, material, None)
+            material_item = Material(self.material_list, material.name, material, None)
 
         textures: TextureNames = screen_data.root.textures
         for texture in textures.references:
-            texture_item = NamedItem(self.texture_list, texture, texture, None)
+            texture_item = Texture(self.texture_list, texture, texture, None)
 
         self.set_node_objects(screen_data.root, self.layout)
 

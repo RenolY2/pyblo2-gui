@@ -3,15 +3,17 @@ import json
 
 from collections import OrderedDict
 from PyQt5.QtWidgets import QSizePolicy, QWidget, QHBoxLayout, QVBoxLayout, QLabel, QCheckBox, QLineEdit, QComboBox, QSizePolicy
-from PyQt5.QtGui import QIntValidator, QDoubleValidator, QValidator
+from PyQt5.QtGui import QIntValidator, QDoubleValidator, QValidator, QPainter, QColor
 from math import inf
 from lib.libbol import (EnemyPoint, EnemyPointGroup, CheckpointGroup, Checkpoint, Route, RoutePoint,
                         MapObject, KartStartPoint, Area, Camera, BOL, JugemPoint, MapObject,
                         LightParam, MGEntry, OBJECTNAMES, REVERSEOBJECTNAMES, MUSIC_IDS, REVERSE_MUSIC_IDS)
 from lib.vectors import Vector3
 from lib.model_rendering import Minimap
-from PyQt5.QtCore import pyqtSignal
+from PyQt5.QtCore import pyqtSignal, QSize, QRect
 from lib.blo import readblo2
+from widgets import tree_view
+#from blo_editor import LayoutEditor
 
 
 def load_parameter_names(objectname):
@@ -57,7 +59,7 @@ class DataEditor(QWidget):
 
     def __init__(self, parent, bound_to):
         super().__init__(parent)
-
+        self.main_editor = parent
         self.bound_to = bound_to
         self.vbox = QVBoxLayout(self)
         self.setLayout(self.vbox)
@@ -67,6 +69,11 @@ class DataEditor(QWidget):
         self.field_updaters = []
 
         self.setup_widgets()
+
+    def add_texture_widget(self):
+        tex = TextureView(self)
+        self.vbox.addWidget(tex)
+        return tex
 
     def catch_text_update(self):
         self.emit_3d_update.emit()
@@ -435,6 +442,7 @@ def create_setter(lineedit, bound_to, attribute, subattr, update3dview, isFloat)
             update3dview()
         return input_edited
 
+
 MIN_SIGNED_BYTE = -128
 MAX_SIGNED_BYTE = 127
 MIN_SIGNED_SHORT = -2**15
@@ -449,8 +457,11 @@ MAX_UNSIGNED_INT = 2**32 - 1
 
 
 def choose_data_editor(obj):
+    print("acoo", type(obj), obj)
     if isinstance(obj, readblo2.Pane):
         return PaneEdit
+    elif isinstance(obj, tree_view.Texture):
+        return Texture
     elif isinstance(obj, EnemyPoint):
         return EnemyPointEdit
     elif isinstance(obj, EnemyPointGroup):
@@ -495,6 +506,69 @@ def choose_data_editor(obj):
         self.p_panename = None
         self.p_secondaryname = None
 
+
+class TextureView(QWidget):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.img = None
+        self.p = QPainter(self)
+        self.setMinimumSize(QSize(100, 256))
+        print("did get initialized")
+
+    def set_image(self, img):
+        self.img = img
+
+    def paintEvent(self, event):
+        print("hiii")
+        p = self.p
+        p.begin(self)
+        h = self.height()
+        w = self.width()
+        """print(w,h)
+        p.setBrush(QColor("white"))
+        p.drawRect(0, 0, w - 1, h - 1)"""
+        if self.img is not None:
+            ratio = self.img.width()/self.img.height()
+
+            new_h = w//ratio
+            new_w = w
+
+            if new_h > h:
+                new_h = h
+                new_w = new_h*w
+
+            p.drawImage(QRect(0, 0, new_w, new_h), self.img)
+
+            """if w < h:
+                p.drawImage(QRect(0, 0, w, w//ratio), self.img)
+            else:
+                new_w = h*ratio
+                new_h = h
+                if w < new_w:
+                    new_w = w
+                    new_h = w//ratio
+                p.drawImage(QRect(0, 0, new_w, new_h), self.img)"""
+        p.end()
+
+
+class Texture(DataEditor):
+    def setup_widgets(self):
+        self.tex = self.add_texture_widget()
+        self.a = self.add_label("Dimensions:")
+
+    def update_data(self):
+        super().update_data()
+        #self.main_editor: LayoutEditor
+        self.bound_to: tree_view.Texture
+
+        name = self.bound_to.bound_to
+        print(name)
+
+        img = self.main_editor.parent.texture_menu.texture_handler.get_texture_image(name)
+        if img is not None:
+            self.tex.set_image(img)
+
+        self.a.setText("Dimensions: {0}x{1}".format(img.width(), img.height()))
 
 anchor_dropdown = OrderedDict()
 anchor_dropdown["Top-Left"] = 0

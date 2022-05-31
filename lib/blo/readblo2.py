@@ -539,7 +539,8 @@ class Picture(Pane):
         picture.unk_index = read_uint16(f)
         mat_index = read_uint16(f)
         picture.material = mat1.materials[mat_index].name
-        
+        picture._material = mat1.materials[mat_index]
+
         re = f.read(2)
         assert re == b"RE" or re == b"\x00\x00"
         color1 = {}
