@@ -1,3 +1,5 @@
+from functools import partial
+
 from PyQt5.QtWidgets import QTreeWidget, QTreeWidgetItem
 from lib.libbol import BOL, get_full_name
 from PyQt5.QtCore import Qt, pyqtSignal
@@ -99,6 +101,14 @@ class TextureList(NamedItemWithChildren):
     pass
 
 
+class MaterialList(NamedItemWithChildren):
+    pass
+
+
+class FontList(NamedItemWithChildren):
+    pass
+
+
 class PaneItem(NamedItemWithChildren):
     def __init__(self, parent, name, bound_to: Pane=None, index=None):
         name = bound_to.name
@@ -112,6 +122,18 @@ class PaneItem(NamedItemWithChildren):
         if self.bound_to.hide:
             name += " (H)"
         self.setText(0, name)
+
+
+class TextboxItem(PaneItem):
+    pass
+
+
+class PictureItem(PaneItem):
+    pass
+
+
+class WindowItem(PaneItem):
+    pass
 
 
 
@@ -205,9 +227,20 @@ class MGEntry(NamedItem):
 """
 
 
+
 class LayoutDataTreeView(QTreeWidget):
-    select_all = pyqtSignal(ObjectGroup)
-    reverse = pyqtSignal(ObjectGroup)
+    #select_all = pyqtSignal(ObjectGroup)
+    #reverse = pyqtSignal(ObjectGroup)
+    add_item = pyqtSignal(PaneItem)
+    add_material = pyqtSignal(MaterialList)
+    add_texture = pyqtSignal(TextureList)
+
+    delete_item = pyqtSignal(PaneItem)
+    delete_material = pyqtSignal(MaterialList)
+    delete_texture = pyqtSignal(TextureList)
+
+    copy_item = pyqtSignal(PaneItem)
+    paste_item = pyqtSignal(PaneItem)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args)
@@ -218,9 +251,9 @@ class LayoutDataTreeView(QTreeWidget):
 
         self.information = InformationItem(None)
         self.addTopLevelItem(self.information)
-        self.material_list = NamedItemWithChildren(None, "Materials", None, None)
+        self.material_list = MaterialList(None, "Materials", None, None)
         self.texture_list = TextureList(None, "Textures", None, None)
-        self.font_list = NamedItemWithChildren(None, "Fonts", None, None)
+        self.font_list = FontList(None, "Fonts", None, None)
         self.layout = NamedItemWithChildren(None, "Layout", None, None)
 
         for item in (self.texture_list, self.material_list, self.font_list, self.layout):
@@ -236,32 +269,57 @@ class LayoutDataTreeView(QTreeWidget):
         self.respawnpoints = self._add_group("Respawn points")
         self.lightparams = self._add_group("Light param entries")
         self.mgentries = self._add_group("MG entries")
-
+        """
         self.setContextMenuPolicy(Qt.CustomContextMenu)
-        self.customContextMenuRequested.connect(self.run_context_menu)"""
+        self.customContextMenuRequested.connect(self.run_context_menu)
+
+    def emit_add_item(self, pos):
+        item = self.itemAt(pos)
+        if isinstance(item, (PaneItem, )):
+            self.add_item.emit(item)
+
+    def emit_delete_item(self, pos):
+        item = self.itemAt(pos)
+        if isinstance(item, (PaneItem, )):
+            self.delete_item.emit(item)
 
     def run_context_menu(self, pos):
         item = self.itemAt(pos)
 
-        if not isinstance(item, (EnemyPointGroup, ObjectPointGroup, CheckpointGroup)):
+        if not isinstance(item, (PaneItem, )):
             return
 
+        allow_delete = True
+        if isinstance(item, (PaneItem, )) and item.bound_to.parent is None:
+            allow_delete = False
+
+
+        add_item_menu = QMenu("Add Item", self)
+        add_pane = QAction("[PAN2] Pane")
+        add_pic = QAction("[PIC2] Picture")
+        add_tbx = QAction("[TBX2] Textbox")
+        add_win = QAction("[WIN2] Window")
+        add_copied = QAction("--------")
+        add_copied.setDisabled(True)
+
+        add_item_menu.addAction(add_pane)
+        add_item_menu.addAction(add_pic)
+        add_item_menu.addAction(add_tbx)
+        add_item_menu.addAction(add_win)
+        add_item_menu.addAction(add_copied)
+
         context_menu = QMenu(self)
-        select_all_action = QAction("Select All", self)
-        reverse_action = QAction("Reverse", self)
 
-        def emit_current_selectall():
-            item = self.itemAt(pos)
-            self.select_all.emit(item)
 
-        def emit_current_reverse():
-            item = self.itemAt(pos)
-            self.reverse.emit(item)
-        select_all_action.triggered.connect(emit_current_selectall)
-        reverse_action.triggered.connect(emit_current_reverse)
+        #add_action = QAction("Add Item", self)
+        #add_action.triggered.connect(partial(self.emit_add_item, pos))
+        context_menu.addMenu(add_item_menu)
 
-        context_menu.addAction(select_all_action)
-        context_menu.addAction(reverse_action)
+        if allow_delete:
+            delete_action = QAction("Delete Item", self)
+            delete_action.triggered.connect(partial(self.emit_delete_item, pos))
+            context_menu.addAction(delete_action)
+
         context_menu.exec(self.mapToGlobal(pos))
         context_menu.destroy()
         del context_menu
@@ -284,11 +342,21 @@ class LayoutDataTreeView(QTreeWidget):
         for child in node.children:
             if not isinstance(child, (TextureNames, MAT1, FontNames)):
                 assert not isinstance(child, Node)
-                child_item = PaneItem(parent, child.p_panename, child, None)
+                assert child.name in ("PAN2", "WIN2", "PIC2", "TBX2")
+
+                if child.name == "PAN2":
+                    child_item = PaneItem(parent, child.p_panename, child, None)
+                elif child.name == "WIN2":
+                    child_item = WindowItem(parent, child.p_panename, child, None)
+                elif child.name == "PIC2":
+                    child_item = PictureItem(parent, child.p_panename, child, None)
+                elif child.name == "TBX2":
+                    child_item = TextboxItem(parent, child.p_panename, child, None)
+
                 if child.child is not None:
                     self.set_node_objects(child.child, child_item)
 
-    def get_item_for_obj(self, obj, root:PaneItem=None):
+    def get_item_for_obj(self, obj, root: PaneItem=None):
         if self.layout.childCount() == 0:
             return None
 
@@ -360,6 +428,39 @@ class LayoutDataTreeView(QTreeWidget):
 
         for mg in boldata.mgentries:
             item = MGEntry(self.mgentries, "MG", mg)"""
+
+    def save_expand_status(self, expand, child: NamedItemWithChildren):
+        if child.isExpanded():
+            expand[child.bound_to] = True
+
+        for i in range(child.childCount()):
+            self.save_expand_status(expand, child.child(i))
+
+    def restore_expand_status(self, expand, child: NamedItemWithChildren):
+        expanded = False
+        if child.bound_to in expand:
+            expanded = expand[child.bound_to]
+
+        child.setExpanded(expanded)
+
+        for i in range(child.childCount()):
+            self.restore_expand_status(expand, child.child(i))
+
+    def set_objects_remember_expanded(self, screen_data: ScreenBlo):
+        matlist_expanded = self.material_list.isExpanded()
+        texlist_expanded = self.texture_list.isExpanded()
+        layout_expanded = self.layout.isExpanded()
+
+        layout_children_expanded = {}
+
+        self.save_expand_status(layout_children_expanded, self.layout)
+
+        self.set_objects(screen_data)
+
+        self.material_list.setExpanded(matlist_expanded)
+        self.texture_list.setExpanded(texlist_expanded)
+        self.layout.setExpanded(layout_expanded)
+        self.restore_expand_status(layout_children_expanded, self.layout)
 
     def sort_objects(self):
         self.objects.sort()

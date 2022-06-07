@@ -30,6 +30,7 @@ from widgets.editor_widgets import open_error_dialog, catch_exception_with_dialo
 from blo_editor_widgets import BolMapViewer, MODE_TOPDOWN
 from lib.libbol import BOL, MGEntry, Route, get_full_name
 import lib.libbol as libbol
+import lib.blo.readblo2 as readblo2
 from lib.rarc import Archive
 from lib.BCOllider import RacetrackCollision
 from lib.model_rendering import TexturedModel, CollisionModel, Minimap
@@ -40,6 +41,7 @@ from PyQt5.QtWidgets import QTreeWidgetItem
 from lib.bmd_render import clear_temp_folder, load_textured_bmd
 from lib.blo.readblo2 import ScreenBlo, Pane
 from widgets.texture_handler_widget import TextureHandlerMenu
+
 
 
 EDITOR_NAME = "BLO Layout Editor"
@@ -612,23 +614,17 @@ class LayoutEditor(QMainWindow):
         redo_shortcut.activated.connect(self.action_redo)
 
         self.level_view.rotate_current.connect(self.action_rotate_object)
-        self.layoutdatatreeview.select_all.connect(self.select_all_of_group)
-        self.layoutdatatreeview.reverse.connect(self.reverse_all_of_group)
+        self.layoutdatatreeview.delete_item.connect(self.delete_blo_item)
+        #self.layoutdatatreeview.reverse.connect(self.reverse_all_of_group)
 
-    def reverse_all_of_group(self, item):
-        group = item.bound_to
-        if isinstance(group, libbol.CheckpointGroup):
-            group.points.reverse()
-            for point in group.points:
-                start = point.start
-                point.start = point.end
-                point.end = start
-        elif isinstance(group, libbol.EnemyPointGroup):
-            group.points.reverse()
-        elif isinstance(group, libbol.Route):
-            group.points.reverse()
+    def delete_blo_item(self, item):
+        blo_item = item.bound_to
+        if blo_item.parent is not None:
+            parent: readblo2.Pane = blo_item.parent
+            assert blo_item in parent.child.children
+            parent.child.children.remove(blo_item)
 
-        self.leveldatatreeview.set_objects(self.level_file)
+            self.layoutdatatreeview.set_objects_remember_expanded(self.layout_file)
         self.update_3d()
 
     def select_all_of_group(self, item):
