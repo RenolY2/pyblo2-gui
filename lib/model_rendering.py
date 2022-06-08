@@ -1188,9 +1188,11 @@ class PaneRender(object):
         w, h = pane.p_size_x, pane.p_size_y
         if pane.name == "PIC2":
             material = pane._material
-
-            texture_id = material.textures[0]
-            texture = screen.root.textures.references[texture_id].lower()
+            if material is not None:
+                texture_id = material.textures[0]
+                texture = screen.root.textures.references[texture_id].lower()
+            else:
+                texture = None
 
             if texture is not None and texture in texture_handler.textures_render:
                 gltex = texture_handler.textures_render[texture]

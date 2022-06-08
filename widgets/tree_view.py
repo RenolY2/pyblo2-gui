@@ -303,6 +303,12 @@ class LayoutDataTreeView(QTreeWidget):
             item.bound_to.add_child(self._copied_object.copy(children=True))
             self.rebuild_tree.emit()
 
+    def handle_add_item(self, pos, itemcls):
+        item = self.itemAt(pos)
+        if isinstance(item, (PaneItem,)):
+            item.bound_to.add_child(itemcls.new())
+            self.rebuild_tree.emit()
+
     def run_context_menu(self, pos):
         item = self.itemAt(pos)
 
@@ -318,6 +324,11 @@ class LayoutDataTreeView(QTreeWidget):
         add_pic = QAction("[PIC2] Picture")
         add_tbx = QAction("[TBX2] Textbox")
         add_win = QAction("[WIN2] Window")
+
+        add_pane.triggered.connect(partial(self.handle_add_item, pos, Pane))
+        add_pic.triggered.connect(partial(self.handle_add_item, pos, Picture))
+        add_tbx.triggered.connect(partial(self.handle_add_item, pos, Textbox))
+        add_win.triggered.connect(partial(self.handle_add_item, pos, Window))
 
         if self._copied_object is not None:
             add_copied = QAction("{0}: {1}".format(self._copied_object.name, self._copied_object.p_panename))

@@ -210,6 +210,7 @@ class Pane(object):
 
         self.name = "PAN2"
         self.p_name = "PAN2"
+        self.p_enabled = 1
         self.child = None
         self.parent = None
         self.p_anchor = None
@@ -243,6 +244,25 @@ class Pane(object):
         else:
             copied.child = None
         return copied
+
+    @classmethod
+    def new(cls):
+        pane = cls()
+
+        pane.p_anchor = 0
+        pane.p_size_x = 10.0
+        pane.p_size_y = 10.0
+        pane.p_scale_x = 1.0
+        pane.p_scale_y = 1.0
+        pane.p_offset_x = 0.0
+        pane.p_offset_y = 0.0
+        pane.p_rotation = 0.0
+        pane.p_panename = "New_Pane"
+        pane.p_secondaryname = "        "
+        pane.p_unk1 = 0
+        pane.p_unk4 = 0.0
+
+        return pane
 
     @classmethod
     def from_file(cls, f):
@@ -452,6 +472,30 @@ class Window(Pane):
         return copied
 
     @classmethod
+    def new(cls):
+        window = super(Window, cls).new()
+        window.name = "WIN2"
+        window.size = 0
+        window.padding = b"\xFF"*8
+
+        window.subdata = [{}, {}, {}, {}]
+        for i in range(4):
+            window.subdata[i]["material"] = -1
+            window.subdata[i]["sub_unk2"] = 0
+            window.subdata[i]["sub_unk3"] = 0
+
+        window.unkbyte1 = 0
+        window.unkbyte2 = 0
+        window.unk3 = 0
+        window.unk4 = 0
+        window.unk5 = 0
+        window.unk6 = 0
+        window.unk7 = 0
+        window.material = -1
+
+        return window
+
+    @classmethod
     def from_file(cls, f):
         start = f.tell()
         name = read_name(f)
@@ -566,6 +610,35 @@ class Picture(Pane):
         return copied
 
     @classmethod
+    def new(cls):
+        picture = super(Picture, cls).new()
+        picture.name = "PIC2"
+        picture.size = 0
+        picture.unk_index = 0
+        picture.material = 0
+        picture._material = None
+
+        color1 = {}
+        color2 = {}
+
+        color1["unk1"] = 0
+        color1["unk2"] = 0
+        color2["unk1"] = 0
+        color2["unk2"] = 0
+
+        color1["unknowns"] = [0 for x in range(4)]
+        color2["unknowns"] = [0 for x in range(4)]
+        color1["col1"] = [0 for x in range(4)]
+        color1["col2"] = [0 for x in range(4)]
+        color2["col1"] = [0 for x in range(4)]
+        color2["col2"] = [0 for x in range(4)]
+
+        picture.color1 = color1
+        picture.color2 = color2
+
+        return picture
+
+    @classmethod
     def from_file(cls, f, mat1):
         start = f.tell()
         name = read_name(f)
@@ -669,6 +742,26 @@ class Textbox(Pane):
         if children:
             copied.child = self.child.copy(children, copied)
         return copied
+
+    @classmethod
+    def new(cls):
+        textbox = super(Textbox, cls).new()
+        textbox.size = 0
+        textbox.unk1 = 0
+        textbox.material = 0
+        textbox.signedunk3 = 0
+        textbox.signedunk4 = 0
+        textbox.unk5 = 0
+        textbox.unk6 = 0
+        textbox.unk7byte = 0
+        textbox.unk8byte = 0
+        textbox.color_top = Color(0, 0, 0, 0)
+        textbox.color_bottom = Color(0, 0, 0, 0)
+        textbox.unk11 = 0
+        textbox.text_cutoff = 0
+        textbox.text = ""
+
+        return textbox
 
     @classmethod
     def from_file(cls, f):
