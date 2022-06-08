@@ -1,12 +1,11 @@
 from functools import partial
+from copy import deepcopy
 
 from PyQt5.QtWidgets import QTreeWidget, QTreeWidgetItem
 from lib.libbol import BOL, get_full_name
 from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtWidgets import QAction, QMenu
 from lib.blo.readblo2 import Information, Pane, Window, Textbox, Picture, ScreenBlo, MAT1, TextureNames, FontNames, Node
-
-
 
 
 class ObjectGroup(QTreeWidgetItem):
@@ -242,6 +241,8 @@ class LayoutDataTreeView(QTreeWidget):
     copy_item = pyqtSignal(PaneItem)
     paste_item = pyqtSignal(PaneItem)
 
+    rebuild_tree = pyqtSignal()
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args)
         self.setMaximumWidth(600)
@@ -273,6 +274,9 @@ class LayoutDataTreeView(QTreeWidget):
         self.setContextMenuPolicy(Qt.CustomContextMenu)
         self.customContextMenuRequested.connect(self.run_context_menu)
 
+        self._copied_object = None
+        self._moving = False
+
     def emit_add_item(self, pos):
         item = self.itemAt(pos)
         if isinstance(item, (PaneItem, )):
@@ -283,30 +287,63 @@ class LayoutDataTreeView(QTreeWidget):
         if isinstance(item, (PaneItem, )):
             self.delete_item.emit(item)
 
+    def handle_copy_item_with_children(self, pos):
+        item = self.itemAt(pos)
+        if isinstance(item, (PaneItem,)):
+            self._copied_object = item.bound_to.copy(children=True)
+
+    def handle_copy_item_without_children(self, pos):
+        item = self.itemAt(pos)
+        if isinstance(item, (PaneItem,)):
+            self._copied_object = item.bound_to.copy(children=False)
+
+    def handle_paste_item(self, pos):
+        item = self.itemAt(pos)
+        if isinstance(item, (PaneItem,)):
+            item.bound_to.add_child(self._copied_object.copy(children=True))
+            self.rebuild_tree.emit()
+
     def run_context_menu(self, pos):
         item = self.itemAt(pos)
 
         if not isinstance(item, (PaneItem, )):
             return
 
-        allow_delete = True
+        is_not_root = True
         if isinstance(item, (PaneItem, )) and item.bound_to.parent is None:
-            allow_delete = False
-
+            is_not_root = False
 
         add_item_menu = QMenu("Add Item", self)
         add_pane = QAction("[PAN2] Pane")
         add_pic = QAction("[PIC2] Picture")
         add_tbx = QAction("[TBX2] Textbox")
         add_win = QAction("[WIN2] Window")
-        add_copied = QAction("--------")
-        add_copied.setDisabled(True)
+
+        if self._copied_object is not None:
+            add_copied = QAction("{0}: {1}".format(self._copied_object.name, self._copied_object.p_panename))
+            add_copied.triggered.connect(partial(self.handle_paste_item, pos))
+            add_copied.setDisabled(False)
+        else:
+            add_copied = QAction("--------")
+            add_copied.setDisabled(True)
+
+
 
         add_item_menu.addAction(add_pane)
         add_item_menu.addAction(add_pic)
         add_item_menu.addAction(add_tbx)
         add_item_menu.addAction(add_win)
         add_item_menu.addAction(add_copied)
+
+        copy_item_menu = QMenu("Copy Item", self)
+
+        copy_without_children = QAction("Without Children")
+        copy_with_children = QAction("With Children")
+        copy_with_children.triggered.connect(partial(self.handle_copy_item_with_children, pos))
+        copy_without_children.triggered.connect(partial(self.handle_copy_item_without_children, pos))
+        copy_item_menu.addAction(copy_without_children)
+        copy_item_menu.addAction(copy_with_children)
+
 
         context_menu = QMenu(self)
 
@@ -315,10 +352,17 @@ class LayoutDataTreeView(QTreeWidget):
         #add_action.triggered.connect(partial(self.emit_add_item, pos))
         context_menu.addMenu(add_item_menu)
 
-        if allow_delete:
+        if is_not_root:
+            copy_action = QAction("Copy Item", self)
+            #delet_action.triggered.connect(partial(self.emit_delete_item, pos))
+            context_menu.addMenu(copy_item_menu)
+            context_menu.addSeparator()
+
             delete_action = QAction("Delete Item", self)
             delete_action.triggered.connect(partial(self.emit_delete_item, pos))
             context_menu.addAction(delete_action)
+
+
 
         context_menu.exec(self.mapToGlobal(pos))
         context_menu.destroy()

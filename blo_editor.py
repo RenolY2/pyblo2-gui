@@ -615,7 +615,12 @@ class LayoutEditor(QMainWindow):
 
         self.level_view.rotate_current.connect(self.action_rotate_object)
         self.layoutdatatreeview.delete_item.connect(self.delete_blo_item)
+        self.layoutdatatreeview.rebuild_tree.connect(self.rebuild_tree)
         #self.layoutdatatreeview.reverse.connect(self.reverse_all_of_group)
+
+    def rebuild_tree(self):
+        self.layoutdatatreeview.set_objects_remember_expanded(self.layout_file)
+        self.update_3d()
 
     def delete_blo_item(self, item):
         blo_item = item.bound_to

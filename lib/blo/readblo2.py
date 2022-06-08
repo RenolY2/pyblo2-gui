@@ -1,3 +1,4 @@
+from copy import copy, deepcopy
 from math import radians, sin, cos
 from .binary_io import *
 from binascii import hexlify, unhexlify
@@ -222,6 +223,27 @@ class Pane(object):
         self.p_panename = None
         self.p_secondaryname = None
 
+    def add_child(self, child_pane):
+        if self.child is not None:
+            self.child.children.append(child_pane)
+            child_pane.parent = self
+        else:
+            self.child = Node()
+            self.child.materials = self.parent.child.materials
+            self.child.textures = self.parent.child.textures
+            self.child.children.append(child_pane)
+            child_pane.parent = self
+
+    def copy(self, children=False, parent=None):
+        copied = copy(self)
+        copied.parent = parent
+        if children and self.child is not None:
+            copied.child = copy(self.child)
+            copied.child.children = [child.copy(children, copied) for child in self.child.children]
+        else:
+            copied.child = None
+        return copied
+
     @classmethod
     def from_file(cls, f):
         start = f.tell()
@@ -421,6 +443,14 @@ class Window(Pane):
         super().__init__()
         self.name = "WIN2"
 
+    def copy(self, children=False, parent=None):
+        copied = copy(self)
+        copied.parent = parent
+        copied.subdata = deepcopy(self.subdata)
+        if children:
+            copied.child = self.child.copy(children, copied)
+        return copied
+
     @classmethod
     def from_file(cls, f):
         start = f.tell()
@@ -524,7 +554,17 @@ class Picture(Pane):
     def __init__(self):
         super().__init__()
         self.name = "PIC2"
-    
+
+    def copy(self, children=False, parent=None):
+        copied = copy(self)
+        copied.parent = parent
+        copied.color1 = deepcopy(self.color1)
+        copied.color2 = deepcopy(self.color2)
+
+        if children and self.child is not None:
+            copied.child = self.child.copy(children, copied)
+        return copied
+
     @classmethod
     def from_file(cls, f, mat1):
         start = f.tell()
@@ -619,7 +659,17 @@ class Textbox(Pane):
     def __init__(self):
         super().__init__()
         self.name = "TBX2"
-    
+
+    def copy(self, children=False, parent=None):
+        copied = copy(self)
+        copied.parent = parent
+        copied.color_top = deepcopy(self.color_top)
+        copied.color_bottom = deepcopy(self.color_bottom)
+
+        if children:
+            copied.child = self.child.copy(children, copied)
+        return copied
+
     @classmethod
     def from_file(cls, f):
         start = f.tell()
