@@ -2,7 +2,7 @@ import os
 import json
 
 from collections import OrderedDict
-from PyQt5.QtWidgets import QSizePolicy, QWidget, QHBoxLayout, QVBoxLayout, QLabel, QCheckBox, QLineEdit, QComboBox, QSizePolicy
+from PyQt5.QtWidgets import QScrollArea, QSizePolicy, QWidget, QHBoxLayout, QVBoxLayout, QLabel, QCheckBox, QLineEdit, QComboBox, QSizePolicy
 from PyQt5.QtGui import QIntValidator, QDoubleValidator, QValidator, QPainter, QColor
 from math import inf
 from lib.libbol import (EnemyPoint, EnemyPointGroup, CheckpointGroup, Checkpoint, Route, RoutePoint,
@@ -69,6 +69,10 @@ class DataEditor(QWidget):
         self.field_updaters = []
 
         self.setup_widgets()
+
+    def add_widget(self, widget):
+        self.vbox.addWidget(widget)
+        return widget
 
     def add_texture_widget(self):
         tex = TextureView(self)
@@ -192,6 +196,23 @@ class DataEditor(QWidget):
             print("edited AAAAaaa", line_edit.text())
             text = line_edit.text()
             text = text.rjust(maxlength, pad)
+            setattr(self.bound_to, attribute, text)
+
+        line_edit.editingFinished.connect(input_edited)
+        self.vbox.addLayout(layout)
+
+        return line_edit
+
+    def add_text_input_unlimited(self, attribute, text):
+        line_edit = QLineEdit(self)
+        layout = self.create_labeled_widget(self, text, line_edit)
+
+        #line_edit.setMaxLength(maxlength)
+
+        def input_edited():
+            print("edited AAAAaaa", line_edit.text())
+            text = line_edit.text()
+            #text = text.rjust(maxlength, pad)
             setattr(self.bound_to, attribute, text)
 
         line_edit.editingFinished.connect(input_edited)
@@ -458,7 +479,13 @@ MAX_UNSIGNED_INT = 2**32 - 1
 
 def choose_data_editor(obj):
     print("acoo", type(obj), obj)
-    if isinstance(obj, readblo2.Pane):
+    if isinstance(obj, readblo2.Window):
+        return PaneEdit  # TODO
+    elif isinstance(obj, readblo2.Textbox):
+        return PaneEdit  # TODO
+    elif isinstance(obj, readblo2.Picture):
+        return PictureEdit
+    elif isinstance(obj, readblo2.Pane):
         return PaneEdit
     elif isinstance(obj, tree_view.Texture):
         return Texture
@@ -582,6 +609,133 @@ anchor_dropdown["Center-Bottom"] = 7
 anchor_dropdown["Bottom-Right"] = 8
 
 
+def dict_setter_int(var, field):
+    def setter(x):
+        var[field] = int(x)
+
+    return setter
+
+
+def dict_setter_int_list(var, field, i):
+    def setter(x):
+        var[field][i] = int(x)
+
+    return setter
+
+
+class PictureColorEditor(QWidget):
+    def __init__(self, color, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.color = color
+        self.layout = QVBoxLayout(self)
+        self.setLayout(self.layout)
+
+        self.unk1 = self.add_integer_input(dict_setter_int(self.color, "unk1"),
+                                           "Unk 1", -MIN_UNSIGNED_SHORT, MAX_UNSIGNED_SHORT)
+        self.unk2 = self.add_integer_input(dict_setter_int(self.color, "unk2"),
+                                           "Unk 2", -MIN_UNSIGNED_SHORT, MAX_UNSIGNED_SHORT)
+
+        self.unknowns = self.add_multiple_integer_input_list(
+            [dict_setter_int_list(self.color, "unknowns", i) for i in range(4)], 4,
+            "Unknowns", -MIN_UNSIGNED_SHORT, MAX_UNSIGNED_SHORT)
+
+        self.color1 = self.add_multiple_integer_input_list(
+            [dict_setter_int_list(self.color, "col1", i) for i in range(4)], 4,
+            "Color Left", -MIN_UNSIGNED_BYTE, MAX_UNSIGNED_BYTE)
+
+        self.color2 = self.add_multiple_integer_input_list(
+            [dict_setter_int_list(self.color, "col2", i) for i in range(4)], 4,
+            "Color Right", -MIN_UNSIGNED_BYTE, MAX_UNSIGNED_BYTE)
+
+    def update(self):
+        self.unk1.setText(str(self.color["unk1"]))
+        self.unk2.setText(str(self.color["unk2"]))
+
+        for i in range(4):
+            self.unknowns[i].setText(str(self.color["unknowns"][i]))
+
+        for i in range(4):
+            self.color1[i].setText(str(self.color["col1"][i]))
+
+        for i in range(4):
+            self.color2[i].setText(str(self.color["col2"][i]))
+
+    def create_labeled_widgets(self, parent, text, widgetlist):
+        layout = QHBoxLayout(parent)
+        label = self.create_label(text)
+        label.setText(text)
+        layout.addWidget(label)
+        for widget in widgetlist:
+            layout.addWidget(widget)
+        return layout
+
+    def add_integer_input(self, setter, text, min_val, max_val):
+        line_edit = QLineEdit(self)
+        layout = self.create_labeled_widget(self, text, line_edit)
+
+        line_edit.setValidator(PythonIntValidator(min_val, max_val, line_edit))
+
+        def input_edited():
+            print("Hmmmm")
+            text = line_edit.text()
+            print("input:", text)
+
+            #setattr(self.bound_to, attribute, int(text))
+            #self.bound_to
+            setter(text)
+
+        line_edit.editingFinished.connect(input_edited)
+
+        self.layout.addLayout(layout)
+        return line_edit
+
+    def add_multiple_integer_input_list(self, setter_list, length, text, min_val, max_val):
+        line_edits = []
+
+        for i in range(length):
+            line_edit = QLineEdit(self)
+            line_edit.setMaximumWidth(30)
+
+            line_edit.setValidator(QIntValidator(min_val, max_val, self))
+
+            def create_input_edited(i, line_edit):
+                def input_edited():
+                    print("Hmmmm", i, line_edit)
+                    text = line_edit.text()
+                    print("input:", text)
+
+                    # setattr(self.bound_to, attribute, int(text))
+                    # self.bound_to
+                    setter_list[i](text)
+                return input_edited
+
+            line_edit.editingFinished.connect(create_input_edited(i, line_edit))
+            line_edits.append(line_edit)
+
+        layout = self.create_labeled_widgets(self, text, line_edits)
+        self.layout.addLayout(layout)
+
+        return line_edits
+
+    def create_label(self, text):
+        label = QLabel(self)
+        label.setText(text)
+        return label
+
+    def add_label(self, text):
+        label = self.create_label(text)
+        self.layout.addWidget(label)
+        return label
+
+    def create_labeled_widget(self, parent, text, widget):
+        layout = QHBoxLayout(parent)
+        label = self.create_label(text)
+        label.setText(text)
+        layout.addWidget(label)
+        layout.addWidget(widget)
+        return layout
+
+
 class PaneEdit(DataEditor):
     def setup_widgets(self):
         readblo2.Pane
@@ -611,6 +765,7 @@ class PaneEdit(DataEditor):
         self.unk1 = self.add_updater(self.add_integer_input, "p_unk1", "Unknown 1", -MIN_UNSIGNED_SHORT, +MAX_UNSIGNED_SHORT)
         self.unk2 = self.add_updater(self.add_decimal_input, "p_unk4", "Unknown 4", -inf, +inf)
 
+
     def update_data(self):
         super().update_data()
         self.bound_to: readblo2.Pane
@@ -631,6 +786,57 @@ class PaneEdit(DataEditor):
         if self.bound_to.widget is None:
             return
         self.bound_to.widget.update_name()
+
+
+class PictureEdit(PaneEdit):
+    def setup_widgets(self):
+        super().setup_widgets()
+        self.size = self.add_updater(self.add_integer_input, "size", "Size", -MIN_UNSIGNED_SHORT, +MAX_UNSIGNED_SHORT)
+        self.unk_index = self.add_updater(self.add_decimal_input, "unk_index", "Unk Index", -inf, +inf)
+
+
+        #self.material = self.add_updater(self.add_text_input_unlimited, "material", "Material")
+        self.material = QComboBox(self)
+        self.vbox.addWidget(self.material)
+        blo: readblo2.ScreenBlo = self.main_editor.parent.layout_file
+
+        self.mat_dict = OrderedDict()
+        matpairs = []
+        for material in blo.root.materials.materials:
+            matpairs.append((material.name, material))
+
+        matpairs.sort(key=lambda x: x[0])
+        for matname, mat in matpairs:
+            self.mat_dict[matname] = mat
+
+            self.material.addItem(matname)
+
+        self.material.currentTextChanged.connect(self._change_material)
+
+        self.add_label("Color Top")
+        self.color_1 = self.add_widget(PictureColorEditor(self.bound_to.color1))
+
+        self.add_label("Color Bottom")
+        self.color_2 = self.add_widget(PictureColorEditor(self.bound_to.color2))
+
+    def _change_material(self, text):
+        self.bound_to._material = self.mat_dict[text]
+        self.bound_to.material = text
+        self.emit_3d_update.emit()
+
+
+    def update_data(self):
+        super().update_data()
+        self.color_1.update()
+        self.color_2.update()
+
+        for i in range(self.material.count()):
+            if self.bound_to._material.name == self.material.itemText(i):
+                self.material.setCurrentIndex(i)
+                break
+
+    def update_name(self):
+        super().update_name()
 
 
 class EnemyPointGroupEdit(DataEditor):

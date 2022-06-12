@@ -1,5 +1,5 @@
 from PyQt5.QtGui import QMouseEvent, QWheelEvent, QPainter, QColor, QFont, QFontMetrics, QPolygon, QImage, QPixmap, QKeySequence
-from PyQt5.QtWidgets import (QWidget, QListWidget, QListWidgetItem, QDialog, QMenu, QLineEdit,
+from PyQt5.QtWidgets import (QScrollArea, QWidget, QListWidget, QListWidgetItem, QDialog, QMenu, QLineEdit,
                             QMdiSubWindow, QHBoxLayout, QVBoxLayout, QLabel, QPushButton, QTextEdit, QAction, QShortcut)
 import PyQt5.QtWidgets as QtWidgets
 import PyQt5.QtCore as QtCore
@@ -17,6 +17,8 @@ class PikminSideWidget(QWidget):
         self.setMinimumWidth(300)
         self.verticalLayout = QVBoxLayout(self)
         self.verticalLayout.setAlignment(Qt.AlignTop)
+
+        self.scollarea = None
 
         font = QFont()
         font.setFamily("Consolas")
@@ -140,13 +142,19 @@ class PikminSideWidget(QWidget):
             self.object_data_edit.deleteLater()
             del self.object_data_edit
             self.object_data_edit = None
+
+            self.scrollarea.deleteLater()
+            del self.scrollarea
+            self.scrollarea = None
             print("should be removed")
 
         editor = choose_data_editor(obj)
         if editor is not None:
 
             self.object_data_edit = editor(self, obj)
-            self.verticalLayout.addWidget(self.object_data_edit)
+            self.scrollarea = QScrollArea(self)
+            self.scrollarea.setWidget(self.object_data_edit)
+            self.verticalLayout.addWidget(self.scrollarea)
             self.object_data_edit.emit_3d_update.connect(update3d)
 
         self.objectlist = []

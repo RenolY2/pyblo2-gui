@@ -9,7 +9,7 @@ from .mat1.datatypes import Color
 class Node(object): 
     def __init__(self):
         self.children = []
-        self.materials = None 
+        self.materials: MAT1 = None
         self.textures = None 
         
     def print_hierarchy(self, indent=0):
