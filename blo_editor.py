@@ -1541,6 +1541,7 @@ class EditorHistory(object):
         self.step += 1
         return item
 
+
 def find_file(rarc_folder, ending):
     for filename in rarc_folder.files.keys():
         if filename.endswith(ending):
