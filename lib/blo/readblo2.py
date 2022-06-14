@@ -72,7 +72,7 @@ class Node(object):
                 last = Window.from_file(f)
                 node.children.append(last)
             elif next == b"TBX2":
-                last = Textbox.from_file(f)
+                last = Textbox.from_file(f, materials)
                 node.children.append(last)
             elif not next:
                 raise RuntimeError("malformed file?")
@@ -764,7 +764,7 @@ class Textbox(Pane):
         return textbox
 
     @classmethod
-    def from_file(cls, f):
+    def from_file(cls, f, mat1):
         start = f.tell()
         name = read_name(f)
         size = read_uint32(f)
@@ -775,7 +775,10 @@ class Textbox(Pane):
 
         textbox.size = read_uint16(f)
         textbox.unk1 = read_uint16(f)
-        textbox.material = read_uint16(f)
+        mat_index = read_uint16(f)
+        textbox.material = mat1.materials[mat_index].name
+        textbox._material = mat1.materials[mat_index]
+
         textbox.signedunk3 = read_int16(f)
         textbox.signedunk4 = read_int16(f)
         textbox.unk5 = read_uint16(f)
