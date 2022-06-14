@@ -882,7 +882,6 @@ class PictureEdit(PaneEdit):
         self.add_label("Color Bottom")
         self.color_2 = self.add_widget(PictureColorEditor(self.bound_to.color2))
 
-
     def update_data(self):
         super().update_data()
         self.color_1.update()
