@@ -123,7 +123,7 @@ class PikminSideWidget(QWidget):
             self.object_data_edit.deleteLater()
             del self.object_data_edit
             self.object_data_edit = None
-            
+
             self.scrollarea.deleteLater()
             del self.scrollarea
             self.scrollarea = None

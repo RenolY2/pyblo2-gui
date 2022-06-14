@@ -1,6 +1,6 @@
 import os
 import json
-
+from functools import partial
 from collections import OrderedDict
 from PyQt5.QtWidgets import QScrollArea, QSizePolicy, QWidget, QHBoxLayout, QVBoxLayout, QLabel, QCheckBox, QLineEdit, QComboBox, QSizePolicy
 from PyQt5.QtGui import QIntValidator, QDoubleValidator, QValidator, QPainter, QColor
@@ -435,6 +435,30 @@ class DataEditor(QWidget):
         self.field_updaters.append(update_text)
         return widget
 
+    def add_material_combobox(self):
+        material_widget = self.add_widget(QComboBox(self))
+        blo: readblo2.ScreenBlo = self.main_editor.parent.layout_file
+
+        mat_dict = OrderedDict()
+        matpairs = []
+        for material in blo.root.materials.materials:
+            matpairs.append((material.name, material))
+
+        matpairs.sort(key=lambda x: x[0])
+        for matname, mat in matpairs:
+            mat_dict[matname] = mat
+
+            material_widget.addItem(matname)
+
+        material_widget.currentTextChanged.connect(partial(self._change_material, mat_dict))
+
+        return material_widget, mat_dict
+
+    def _change_material(self, mat_dict, text):
+        self.bound_to._material = mat_dict[text]
+        self.bound_to.material = text
+        self.emit_3d_update.emit()
+
 
 def create_setter_list(lineedit, bound_to, attribute, index):
     def input_edited():
@@ -482,7 +506,7 @@ def choose_data_editor(obj):
     if isinstance(obj, readblo2.Window):
         return PaneEdit  # TODO
     elif isinstance(obj, readblo2.Textbox):
-        return PaneEdit  # TODO
+        return TextboxEditor  # TODO
     elif isinstance(obj, readblo2.Picture):
         return PictureEdit
     elif isinstance(obj, readblo2.Pane):
@@ -623,42 +647,18 @@ def dict_setter_int_list(var, field, i):
     return setter
 
 
-class PictureColorEditor(QWidget):
-    def __init__(self, color, *args, **kwargs):
+def color_setter_int(var, field):
+    def setter(x):
+        var.setattr(field, x)
+
+    return setter
+
+
+class SubEditor(QWidget):
+    def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.color = color
         self.layout = QVBoxLayout(self)
         self.setLayout(self.layout)
-
-        self.unk1 = self.add_integer_input(dict_setter_int(self.color, "unk1"),
-                                           "Unk 1", -MIN_UNSIGNED_SHORT, MAX_UNSIGNED_SHORT)
-        self.unk2 = self.add_integer_input(dict_setter_int(self.color, "unk2"),
-                                           "Unk 2", -MIN_UNSIGNED_SHORT, MAX_UNSIGNED_SHORT)
-
-        self.unknowns = self.add_multiple_integer_input_list(
-            [dict_setter_int_list(self.color, "unknowns", i) for i in range(4)], 4,
-            "Unknowns", -MIN_UNSIGNED_SHORT, MAX_UNSIGNED_SHORT)
-
-        self.color1 = self.add_multiple_integer_input_list(
-            [dict_setter_int_list(self.color, "col1", i) for i in range(4)], 4,
-            "Color Left", -MIN_UNSIGNED_BYTE, MAX_UNSIGNED_BYTE)
-
-        self.color2 = self.add_multiple_integer_input_list(
-            [dict_setter_int_list(self.color, "col2", i) for i in range(4)], 4,
-            "Color Right", -MIN_UNSIGNED_BYTE, MAX_UNSIGNED_BYTE)
-
-    def update(self):
-        self.unk1.setText(str(self.color["unk1"]))
-        self.unk2.setText(str(self.color["unk2"]))
-
-        for i in range(4):
-            self.unknowns[i].setText(str(self.color["unknowns"][i]))
-
-        for i in range(4):
-            self.color1[i].setText(str(self.color["col1"][i]))
-
-        for i in range(4):
-            self.color2[i].setText(str(self.color["col2"][i]))
 
     def create_labeled_widgets(self, parent, text, widgetlist):
         layout = QHBoxLayout(parent)
@@ -736,6 +736,51 @@ class PictureColorEditor(QWidget):
         return layout
 
 
+class PictureColorEditor(SubEditor):
+    def __init__(self, color, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.color = color
+
+        self.unk1 = self.add_integer_input(dict_setter_int(self.color, "unk1"),
+                                           "Unk 1", -MIN_UNSIGNED_SHORT, MAX_UNSIGNED_SHORT)
+        self.unk2 = self.add_integer_input(dict_setter_int(self.color, "unk2"),
+                                           "Unk 2", -MIN_UNSIGNED_SHORT, MAX_UNSIGNED_SHORT)
+
+        self.unknowns = self.add_multiple_integer_input_list(
+            [dict_setter_int_list(self.color, "unknowns", i) for i in range(4)], 4,
+            "Unknowns", -MIN_UNSIGNED_SHORT, MAX_UNSIGNED_SHORT)
+
+        self.color1 = self.add_multiple_integer_input_list(
+            [dict_setter_int_list(self.color, "col1", i) for i in range(4)], 4,
+            "Color Left", -MIN_UNSIGNED_BYTE, MAX_UNSIGNED_BYTE)
+
+        self.color2 = self.add_multiple_integer_input_list(
+            [dict_setter_int_list(self.color, "col2", i) for i in range(4)], 4,
+            "Color Right", -MIN_UNSIGNED_BYTE, MAX_UNSIGNED_BYTE)
+
+    def update(self):
+        self.unk1.setText(str(self.color["unk1"]))
+        self.unk2.setText(str(self.color["unk2"]))
+
+        for i in range(4):
+            self.unknowns[i].setText(str(self.color["unknowns"][i]))
+
+        for i in range(4):
+            self.color1[i].setText(str(self.color["col1"][i]))
+
+        for i in range(4):
+            self.color2[i].setText(str(self.color["col2"][i]))
+
+
+class ColorEdit(SubEditor):
+    def __init__(self, color, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.color = color
+        self.color_input = self.add_multiple_integer_input_list(
+            [color_setter_int(self.color, x) for x in ("r", "g", "b", "a")], 4,
+            "Color Top", -MIN_UNSIGNED_BYTE, MAX_UNSIGNED_BYTE)
+
+
 class PaneEdit(DataEditor):
     def setup_widgets(self):
         readblo2.Pane
@@ -788,6 +833,39 @@ class PaneEdit(DataEditor):
         self.bound_to.widget.update_name()
 
 
+class TextboxEditor(DataEditor):
+    def setup_widgets(self):
+        super().setup_widgets()
+        self.size = self.add_updater(self.add_integer_input, "size", "Size", -MIN_UNSIGNED_SHORT, +MAX_UNSIGNED_SHORT)
+        self.unk_1 = self.add_updater(self.add_decimal_input, "unk1", "Unk 1", -inf, +inf)
+        self.material, self.mat_dict = self.add_material_combobox()
+        self.signedunk3 = self.add_updater(self.add_integer_input, "signedunk3", "Unk 3", -MIN_SIGNED_SHORT, +MAX_SIGNED_SHORT)
+        self.signedunk4 = self.add_updater(self.add_integer_input, "signedunk4", "Unk 4", -MIN_SIGNED_SHORT,
+                                           +MAX_SIGNED_SHORT)
+
+        self.unk5 = self.add_updater(self.add_integer_input, "unk5", "Unk 5", -MIN_UNSIGNED_SHORT, +MAX_UNSIGNED_SHORT)
+        self.unk6 = self.add_updater(self.add_integer_input, "unk6", "Unk 6", -MIN_UNSIGNED_SHORT, +MAX_UNSIGNED_SHORT)
+        self.unk7 = self.add_updater(self.add_integer_input, "unk7byte", "Unk 7", -MIN_UNSIGNED_BYTE, +MAX_UNSIGNED_BYTE)
+        self.unk8 = self.add_updater(self.add_integer_input, "unk8byte", "Unk 8", -MIN_UNSIGNED_BYTE, +MAX_UNSIGNED_BYTE)
+
+        self.color_top = ColorEdit(self.bound_to.color_top)
+        self.color_bottom = ColorEdit(self.bound_to.color_bottom)
+
+        self.unk11 = self.add_updater(self.add_integer_input, "unk11", "Unk 11", -MIN_UNSIGNED_SHORT, +MAX_UNSIGNED_SHORT)
+        self.text_cutoff = self.add_updater(self.add_integer_input, "text_cutoff", "Text Cutoff", -MIN_UNSIGNED_SHORT, +MAX_UNSIGNED_SHORT)
+        self.text = self.add_text_input_unlimited("text", "Text")
+
+    def update_data(self):
+        super().update_data()
+
+        self.text.setText(self.bound_to.text)
+
+        for i in range(self.material.count()):
+            if self.bound_to.material == self.material.itemText(i):
+                self.material.setCurrentIndex(i)
+                break
+
+
 class PictureEdit(PaneEdit):
     def setup_widgets(self):
         super().setup_widgets()
@@ -796,33 +874,13 @@ class PictureEdit(PaneEdit):
 
 
         #self.material = self.add_updater(self.add_text_input_unlimited, "material", "Material")
-        self.material = QComboBox(self)
-        self.vbox.addWidget(self.material)
-        blo: readblo2.ScreenBlo = self.main_editor.parent.layout_file
-
-        self.mat_dict = OrderedDict()
-        matpairs = []
-        for material in blo.root.materials.materials:
-            matpairs.append((material.name, material))
-
-        matpairs.sort(key=lambda x: x[0])
-        for matname, mat in matpairs:
-            self.mat_dict[matname] = mat
-
-            self.material.addItem(matname)
-
-        self.material.currentTextChanged.connect(self._change_material)
+        self.material, self.mat_dict = self.add_material_combobox()
 
         self.add_label("Color Top")
         self.color_1 = self.add_widget(PictureColorEditor(self.bound_to.color1))
 
         self.add_label("Color Bottom")
         self.color_2 = self.add_widget(PictureColorEditor(self.bound_to.color2))
-
-    def _change_material(self, text):
-        self.bound_to._material = self.mat_dict[text]
-        self.bound_to.material = text
-        self.emit_3d_update.emit()
 
 
     def update_data(self):
