@@ -607,6 +607,10 @@ class Texture(DataEditor):
         self.tex = self.add_texture_widget()
         self.a = self.add_label("Dimensions:")
 
+    #def resizeEvent(self, a):
+    #    print(self.main_editor.width())
+    #    self.setMinimumWidth(self.main_editor.width())
+
     def update_data(self):
         super().update_data()
         #self.main_editor: LayoutEditor

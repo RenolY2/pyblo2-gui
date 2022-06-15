@@ -5,7 +5,7 @@ import PyQt5.QtWidgets as QtWidgets
 import PyQt5.QtCore as QtCore
 from PyQt5.QtCore import QSize, pyqtSignal, QPoint, QRect
 from PyQt5.QtCore import Qt
-from widgets.data_editor import choose_data_editor
+from widgets.data_editor import choose_data_editor, Texture
 
 
 class PikminSideWidget(QWidget):
@@ -18,9 +18,9 @@ class PikminSideWidget(QWidget):
         self.setMinimumWidth(300)
         self.verticalLayout = QVBoxLayout(self)
         self.verticalLayout.setAlignment(Qt.AlignTop)
-        self.setLayout(self.verticalLayout)
+        #self.setLayout(self.verticalLayout)
 
-        self.scollarea = None
+        self.scrollarea = None
 
         font = QFont()
         font.setFamily("Consolas")
@@ -126,9 +126,10 @@ class PikminSideWidget(QWidget):
             del self.object_data_edit
             self.object_data_edit = None
 
-            self.scrollarea.deleteLater()
-            del self.scrollarea
-            self.scrollarea = None
+            if self.scrollarea is not None:
+                self.scrollarea.deleteLater()
+                del self.scrollarea
+                self.scrollarea = None
         self.objectlist = []
 
     def update_info(self):
@@ -148,22 +149,26 @@ class PikminSideWidget(QWidget):
             del self.object_data_edit
             self.object_data_edit = None
 
-            self.scrollarea.deleteLater()
-            del self.scrollarea
-            self.scrollarea = None
+            if self.scrollarea is not None:
+                self.scrollarea.deleteLater()
+                del self.scrollarea
+                self.scrollarea = None
             print("should be removed")
 
         editor = choose_data_editor(obj)
         if editor is not None:
-
             self.object_data_edit = editor(self, obj)
-            self.scrollarea = QScrollArea(self)
-            self.scrollarea.setMinimumHeight(self.height() - 300)
-            #print(self.parent.height())
-            #self.scrollarea.setMinimumHeight(max(500, self.parent.height()-300))
-            #self.scrollarea.setSizePolicy(QtWidgets.QSizePolicy.Policy.Preferred, QtWidgets.QSizePolicy.Policy.Fixed)
-            self.scrollarea.setWidget(self.object_data_edit)
-            self.verticalLayout.addWidget(self.scrollarea)
+            if isinstance(self.object_data_edit, Texture):
+                self.verticalLayout.addWidget(self.object_data_edit)
+            else:
+
+                self.scrollarea = QScrollArea(self)
+                self.scrollarea.setMinimumHeight(self.height() - 300)
+                #print(self.parent.height())
+                #self.scrollarea.setMinimumHeight(max(500, self.parent.height()-300))
+                #self.scrollarea.setSizePolicy(QtWidgets.QSizePolicy.Policy.Preferred, QtWidgets.QSizePolicy.Policy.Fixed)
+                self.scrollarea.setWidget(self.object_data_edit)
+                self.verticalLayout.addWidget(self.scrollarea)
             self.object_data_edit.emit_3d_update.connect(update3d)
 
         self.objectlist = []
