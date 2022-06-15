@@ -276,6 +276,7 @@ class LayoutDataTreeView(QTreeWidget):
 
         self._copied_object = None
         self._moving = False
+        self.blo: ScreenBlo = None
 
     def emit_add_item(self, pos):
         item = self.itemAt(pos)
@@ -309,75 +310,106 @@ class LayoutDataTreeView(QTreeWidget):
             item.bound_to.add_child(itemcls.new())
             self.rebuild_tree.emit()
 
+    def handle_duplicate(self, pos):
+        item = self.itemAt(pos)
+        if isinstance(item, (Material, )):
+            mat = item.bound_to.copy()
+
+            num = 0
+            new_name = "{0}({1})".format(mat.name, num)
+            while self.blo.root.materials.get_mat_index(new_name) is not None:
+                num += 1
+                new_name = "{0}({1})".format(mat.name, num)
+
+            mat.name = new_name
+
+            self.blo.root.materials.materials.append(mat)
+            self.rebuild_tree.emit()
+
     def run_context_menu(self, pos):
         item = self.itemAt(pos)
 
-        if not isinstance(item, (PaneItem, )):
-            return
-
-        is_not_root = True
-        if isinstance(item, (PaneItem, )) and item.bound_to.parent is None:
-            is_not_root = False
-
-        add_item_menu = QMenu("Add Item", self)
-        add_pane = QAction("[PAN2] Pane")
-        add_pic = QAction("[PIC2] Picture")
-        add_tbx = QAction("[TBX2] Textbox")
-        add_win = QAction("[WIN2] Window")
-
-        add_pane.triggered.connect(partial(self.handle_add_item, pos, Pane))
-        add_pic.triggered.connect(partial(self.handle_add_item, pos, Picture))
-        add_tbx.triggered.connect(partial(self.handle_add_item, pos, Textbox))
-        add_win.triggered.connect(partial(self.handle_add_item, pos, Window))
-
-        if self._copied_object is not None:
-            add_copied = QAction("{0}: {1}".format(self._copied_object.name, self._copied_object.p_panename))
-            add_copied.triggered.connect(partial(self.handle_paste_item, pos))
-            add_copied.setDisabled(False)
-        else:
-            add_copied = QAction("--------")
-            add_copied.setDisabled(True)
+        if isinstance(item, (Material, )):
+            context_menu = QMenu(self)
 
 
-
-        add_item_menu.addAction(add_pane)
-        add_item_menu.addAction(add_pic)
-        add_item_menu.addAction(add_tbx)
-        add_item_menu.addAction(add_win)
-        add_item_menu.addAction(add_copied)
-
-        copy_item_menu = QMenu("Copy Item", self)
-
-        copy_without_children = QAction("Without Children")
-        copy_with_children = QAction("With Children")
-        copy_with_children.triggered.connect(partial(self.handle_copy_item_with_children, pos))
-        copy_without_children.triggered.connect(partial(self.handle_copy_item_without_children, pos))
-        copy_item_menu.addAction(copy_without_children)
-        copy_item_menu.addAction(copy_with_children)
-
-
-        context_menu = QMenu(self)
-
-
-        #add_action = QAction("Add Item", self)
-        #add_action.triggered.connect(partial(self.emit_add_item, pos))
-        context_menu.addMenu(add_item_menu)
-
-        if is_not_root:
-            copy_action = QAction("Copy Item", self)
-            #delet_action.triggered.connect(partial(self.emit_delete_item, pos))
-            context_menu.addMenu(copy_item_menu)
+            duplicate_material = QAction("Duplicate")
+            remove_material = QAction("Remove")
+            context_menu.addAction(duplicate_material)
+            duplicate_material.triggered.connect(partial(self.handle_duplicate, pos))
             context_menu.addSeparator()
+            context_menu.addAction(remove_material)
 
-            delete_action = QAction("Delete Item", self)
-            delete_action.triggered.connect(partial(self.emit_delete_item, pos))
-            context_menu.addAction(delete_action)
+            context_menu.exec(self.mapToGlobal(pos))
+
+            context_menu.destroy()
+            del context_menu
+
+        elif isinstance(item, (PaneItem, )):
+
+            is_not_root = True
+            if isinstance(item, (PaneItem, )) and item.bound_to.parent is None:
+                is_not_root = False
+
+            add_item_menu = QMenu("Add Item", self)
+            add_pane = QAction("[PAN2] Pane")
+            add_pic = QAction("[PIC2] Picture")
+            add_tbx = QAction("[TBX2] Textbox")
+            add_win = QAction("[WIN2] Window")
+
+            add_pane.triggered.connect(partial(self.handle_add_item, pos, Pane))
+            add_pic.triggered.connect(partial(self.handle_add_item, pos, Picture))
+            add_tbx.triggered.connect(partial(self.handle_add_item, pos, Textbox))
+            add_win.triggered.connect(partial(self.handle_add_item, pos, Window))
+
+            if self._copied_object is not None:
+                add_copied = QAction("{0}: {1}".format(self._copied_object.name, self._copied_object.p_panename))
+                add_copied.triggered.connect(partial(self.handle_paste_item, pos))
+                add_copied.setDisabled(False)
+            else:
+                add_copied = QAction("--------")
+                add_copied.setDisabled(True)
 
 
 
-        context_menu.exec(self.mapToGlobal(pos))
-        context_menu.destroy()
-        del context_menu
+            add_item_menu.addAction(add_pane)
+            add_item_menu.addAction(add_pic)
+            add_item_menu.addAction(add_tbx)
+            add_item_menu.addAction(add_win)
+            add_item_menu.addAction(add_copied)
+
+            copy_item_menu = QMenu("Copy Item", self)
+
+            copy_without_children = QAction("Without Children")
+            copy_with_children = QAction("With Children")
+            copy_with_children.triggered.connect(partial(self.handle_copy_item_with_children, pos))
+            copy_without_children.triggered.connect(partial(self.handle_copy_item_without_children, pos))
+            copy_item_menu.addAction(copy_without_children)
+            copy_item_menu.addAction(copy_with_children)
+
+
+            context_menu = QMenu(self)
+
+
+            #add_action = QAction("Add Item", self)
+            #add_action.triggered.connect(partial(self.emit_add_item, pos))
+            context_menu.addMenu(add_item_menu)
+
+            if is_not_root:
+                copy_action = QAction("Copy Item", self)
+                #delet_action.triggered.connect(partial(self.emit_delete_item, pos))
+                context_menu.addMenu(copy_item_menu)
+                context_menu.addSeparator()
+
+                delete_action = QAction("Delete Item", self)
+                delete_action.triggered.connect(partial(self.emit_delete_item, pos))
+                context_menu.addAction(delete_action)
+
+
+
+            context_menu.exec(self.mapToGlobal(pos))
+            context_menu.destroy()
+            del context_menu
 
     def _add_group(self, name, customgroup=None):
         if customgroup is None:
@@ -430,7 +462,7 @@ class LayoutDataTreeView(QTreeWidget):
 
     def set_objects(self, screen_data: ScreenBlo):
         self.reset()
-
+        self.blo = screen_data
         mat1: MAT1 = screen_data.root.materials
 
         for material in mat1.materials:

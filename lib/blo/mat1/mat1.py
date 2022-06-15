@@ -1,5 +1,6 @@
 import struct
 from binascii import hexlify
+from copy import deepcopy
 
 from ..binary_io import *
 from .enums import *
@@ -421,6 +422,10 @@ class MaterialInitData(object):
                 result[k] = v
 
         return result
+
+
+    def copy(self):
+        return deepcopy(self)
 
     @classmethod
     def deserialize(cls, obj):
