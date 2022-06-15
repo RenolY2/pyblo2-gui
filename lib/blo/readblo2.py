@@ -69,7 +69,7 @@ class Node(object):
 
                 node.children.append(last)
             elif next == b"WIN2":
-                last = Window.from_file(f)
+                last = Window.from_file(f, materials)
                 node.children.append(last)
             elif next == b"TBX2":
                 last = Textbox.from_file(f, materials)
@@ -496,7 +496,7 @@ class Window(Pane):
         return window
 
     @classmethod
-    def from_file(cls, f):
+    def from_file(cls, f, mat1):
         start = f.tell()
         name = read_name(f)
         size = read_uint32(f)
@@ -515,7 +515,9 @@ class Window(Pane):
         #assert window.padding == "\xFF"*8
         window.subdata = [{}, {}, {}, {}]
         for i in range(4):
-            window.subdata[i]["material"] = read_int16(f)
+            mat_index = read_uint16(f)
+            window.subdata[i]["material"] = mat1.materials[mat_index].name
+
         window.unkbyte1 = read_uint8(f)
         window.unkbyte2 = read_uint8(f)
         window.unk3 = read_uint16(f)
@@ -523,7 +525,8 @@ class Window(Pane):
         window.unk5 = read_uint16(f)
         window.unk6 = read_uint16(f)
         window.unk7 = read_uint16(f)
-        window.material = read_int16(f)
+        mat_index = read_uint16(f)
+        window.material = mat1.materials[mat_index].name
         
         re = f.read(2)
         assert re == b"RE" or re == b"\x00\x00"
@@ -531,7 +534,7 @@ class Window(Pane):
         for i in range(4):
             window.subdata[i]["sub_unk2"] = read_uint16(f)
         for i in range(4):
-            window.subdata[i]["sub_unk3"] = hex(read_uint32(f))
+            window.subdata[i]["sub_unk3"] = read_uint32(f)
         assert f.tell() == start+0x90
         return window 
 
@@ -546,7 +549,8 @@ class Window(Pane):
         f.write(unhexlify(self.padding))
         assert len(unhexlify(self.padding)) == 8
         for i in range(4):
-            write_int16(f, self.subdata[i]["material"])
+            index = mat1.get_mat_index(self.subdata[i]["material"])
+            write_int16(f, index)
 
         write_uint8(f, self.unkbyte1)
         write_uint8(f, self.unkbyte2)
@@ -555,7 +559,8 @@ class Window(Pane):
         write_uint16(f, self.unk5)
         write_uint16(f, self.unk6)
         write_uint16(f, self.unk7)
-        write_int16(f, self.material)
+        index = mat1.get_mat_index(self.subdata[i]["material"])
+        write_int16(f, index)
 
         f.write(b"RE")
 
@@ -563,7 +568,7 @@ class Window(Pane):
             write_uint16(f, self.subdata[i]["sub_unk2"])
 
         for i in range(4):
-            write_uint32(f, int(self.subdata[i]["sub_unk3"], 16))
+            write_uint32(f, self.subdata[i]["sub_unk3"])
 
         assert f.tell() == start + 0x90
 

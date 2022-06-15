@@ -504,7 +504,7 @@ MAX_UNSIGNED_INT = 2**32 - 1
 def choose_data_editor(obj):
     print("acoo", type(obj), obj)
     if isinstance(obj, readblo2.Window):
-        return PaneEdit  # TODO
+        return WindowEditor  # TODO
     elif isinstance(obj, readblo2.Textbox):
         return TextboxEditor  # TODO
     elif isinstance(obj, readblo2.Picture):
@@ -689,6 +689,26 @@ class SubEditor(QWidget):
         self.layout.addLayout(layout)
         return line_edit
 
+    def add_text_input(self, setter, text, min_val, max_val):
+        line_edit = QLineEdit(self)
+        layout = self.create_labeled_widget(self, text, line_edit)
+
+        line_edit.setValidator(PythonIntValidator(min_val, max_val, line_edit))
+
+        def input_edited():
+            print("Hmmmm")
+            text = line_edit.text()
+            print("input:", text)
+
+            #setattr(self.bound_to, attribute, int(text))
+            #self.bound_to
+            setter(text)
+
+        line_edit.editingFinished.connect(input_edited)
+
+        self.layout.addLayout(layout)
+        return line_edit
+
     def add_multiple_integer_input_list(self, setter_list, length, text, min_val, max_val):
         line_edits = []
 
@@ -781,6 +801,55 @@ class ColorEdit(SubEditor):
             "Color Top", -MIN_UNSIGNED_BYTE, MAX_UNSIGNED_BYTE)
 
 
+class WindowSubSettingEdit(SubEditor):
+    def __init__(self, subdata, parent, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.subdata = subdata
+        self.parent = parent
+        self.main_editor = parent.main_editor
+
+        self.sub_unk2 = self.add_integer_input(dict_setter_int(self.subdata, "sub_unk2"),
+                                           "Unk 2", -MIN_UNSIGNED_SHORT, MAX_UNSIGNED_SHORT)
+
+        self.sub_unk3 = self.add_integer_input(dict_setter_int(self.subdata, "sub_unk3"),
+                                               "Unk 3", -MIN_UNSIGNED_SHORT, MAX_UNSIGNED_SHORT)
+
+        self.material, mat_dict = self.add_material_combobox()
+
+    def add_material_combobox(self):
+        material_widget = QComboBox(self)
+        self.layout.addWidget(material_widget)
+        blo: readblo2.ScreenBlo = self.main_editor.parent.layout_file
+
+        mat_dict = OrderedDict()
+        matpairs = []
+        for material in blo.root.materials.materials:
+            matpairs.append((material.name, material))
+
+        matpairs.sort(key=lambda x: x[0])
+        for matname, mat in matpairs:
+            mat_dict[matname] = mat
+
+            material_widget.addItem(matname)
+
+        material_widget.currentTextChanged.connect(partial(self._change_material, mat_dict))
+
+        return material_widget, mat_dict
+
+    def _change_material(self, mat_dict, text):
+        #self.bound_to._material = mat_dict[text]
+        self.subdata["material"] = text
+        self.parent.emit_3d_update.emit()
+
+    def update_data(self):
+        self.sub_unk2.setText(str(self.subdata["sub_unk2"]))
+        self.sub_unk3.setText(str(self.subdata["sub_unk3"]))
+
+        for i in range(self.material.count()):
+            if self.subdata["material"] == self.material.itemText(i):
+                self.material.setCurrentIndex(i)
+                break
+
 class PaneEdit(DataEditor):
     def setup_widgets(self):
         readblo2.Pane
@@ -831,6 +900,49 @@ class PaneEdit(DataEditor):
         if self.bound_to.widget is None:
             return
         self.bound_to.widget.update_name()
+
+
+class WindowEditor(DataEditor):
+    def setup_widgets(self):
+        super().setup_widgets()
+        self.size = self.add_updater(self.add_integer_input, "size", "Size",
+                                     -MIN_UNSIGNED_SHORT, +MAX_UNSIGNED_SHORT)
+
+        self.unkbyte1 = self.add_updater(self.add_integer_input, "unkbyte1", "Unk 1",
+                                     -MIN_UNSIGNED_BYTE, +MAX_UNSIGNED_BYTE)
+
+        self.unkbyte2 = self.add_updater(self.add_integer_input, "unkbyte2", "Unk 2",
+                                         -MIN_UNSIGNED_BYTE, +MAX_UNSIGNED_BYTE)
+
+        self.unk3 = self.add_updater(self.add_integer_input, "unk3", "Unk 3",
+                                         -MIN_UNSIGNED_SHORT, +MAX_UNSIGNED_SHORT)
+        self.unk4 = self.add_updater(self.add_integer_input, "unk4", "Unk 4",
+                                     -MIN_UNSIGNED_SHORT, +MAX_UNSIGNED_SHORT)
+        self.unk5 = self.add_updater(self.add_integer_input, "unk5", "Unk 5",
+                                     -MIN_UNSIGNED_SHORT, +MAX_UNSIGNED_SHORT)
+        self.unk6 = self.add_updater(self.add_integer_input, "unk6", "Unk 6",
+                                     -MIN_UNSIGNED_SHORT, +MAX_UNSIGNED_SHORT)
+        self.unk7 = self.add_updater(self.add_integer_input, "unk7", "Unk 7",
+                                     -MIN_UNSIGNED_SHORT, +MAX_UNSIGNED_SHORT)
+
+        self.material, mat_dict = self.add_material_combobox()
+        self.subs = []
+
+        for i in range(4):
+            self.add_label("Corner {0}".format(i+1))
+            sub = self.add_widget(WindowSubSettingEdit(self.bound_to.subdata[i], self))
+            self.subs.append(sub)
+
+    def update_data(self):
+        super().update_data()
+
+        for i in range(self.material.count()):
+            if self.bound_to.material == self.material.itemText(i):
+                self.material.setCurrentIndex(i)
+                break
+
+        for sub in self.subs:
+            sub.update_data()
 
 
 class TextboxEditor(DataEditor):
