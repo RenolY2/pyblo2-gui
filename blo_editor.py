@@ -1450,16 +1450,12 @@ class LayoutEditor(QMainWindow):
                     self.layoutdatatreeview.setCurrentItem(item)
 
     def resizeEvent(self, arg):
-        try:
-            if self.pik_control.scrollarea is not None:
-                # Normally resizing the main window should resize it already
-                # but the widget isn't properly set up for that yet
-                # so we force the minimum height manually.
-                self.pik_control.scrollarea.setMinimumHeight(self.height()-300)
-        except AttributeError:
-            # On startup for some reason the scrollarea attribute doesn't exist
-            # so we have to ignore the error.
-            pass
+        if self.pik_control.scrollarea is not None:
+            # Normally resizing the main window should resize it already
+            # but the widget isn't properly set up for that yet
+            # so we force the minimum height manually.
+            self.pik_control.scrollarea.setMinimumHeight(self.height()-300)
+
 
     @catch_exception
     def action_update_info(self):
