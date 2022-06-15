@@ -7,6 +7,7 @@ from PyQt5.QtCore import QSize, pyqtSignal, QPoint, QRect
 from PyQt5.QtCore import Qt
 from widgets.data_editor import choose_data_editor
 
+
 class PikminSideWidget(QWidget):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -17,6 +18,7 @@ class PikminSideWidget(QWidget):
         self.setMinimumWidth(300)
         self.verticalLayout = QVBoxLayout(self)
         self.verticalLayout.setAlignment(Qt.AlignTop)
+        self.setLayout(self.verticalLayout)
 
         self.scollarea = None
 
@@ -156,6 +158,10 @@ class PikminSideWidget(QWidget):
 
             self.object_data_edit = editor(self, obj)
             self.scrollarea = QScrollArea(self)
+            self.scrollarea.setMinimumHeight(self.height() - 300)
+            #print(self.parent.height())
+            #self.scrollarea.setMinimumHeight(max(500, self.parent.height()-300))
+            #self.scrollarea.setSizePolicy(QtWidgets.QSizePolicy.Policy.Preferred, QtWidgets.QSizePolicy.Policy.Fixed)
             self.scrollarea.setWidget(self.object_data_edit)
             self.verticalLayout.addWidget(self.scrollarea)
             self.object_data_edit.emit_3d_update.connect(update3d)
