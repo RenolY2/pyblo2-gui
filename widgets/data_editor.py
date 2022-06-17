@@ -2,7 +2,7 @@ import os
 import json
 from functools import partial
 from collections import OrderedDict
-from PyQt5.QtWidgets import QScrollArea, QSizePolicy, QWidget, QHBoxLayout, QVBoxLayout, QLabel, QCheckBox, QLineEdit, QComboBox, QSizePolicy
+from PyQt5.QtWidgets import QMessageBox, QScrollArea, QSizePolicy, QWidget, QHBoxLayout, QVBoxLayout, QLabel, QCheckBox, QLineEdit, QComboBox, QSizePolicy
 from PyQt5.QtGui import QIntValidator, QDoubleValidator, QValidator, QPainter, QColor
 from math import inf
 from lib.libbol import (EnemyPoint, EnemyPointGroup, CheckpointGroup, Checkpoint, Route, RoutePoint,
@@ -14,6 +14,11 @@ from PyQt5.QtCore import pyqtSignal, QSize, QRect
 from lib.blo import readblo2
 from widgets import tree_view
 #from blo_editor import LayoutEditor
+
+def open_error_dialog(errormsg, self):
+    errorbox = QMessageBox()
+    errorbox.critical(self, "Error", errormsg)
+    errorbox.setFixedSize(500, 200)
 
 
 def load_parameter_names(objectname):
@@ -513,8 +518,8 @@ def choose_data_editor(obj):
         return PaneEdit
     elif isinstance(obj, tree_view.Texture):
         return Texture
-    elif isinstance(obj, EnemyPoint):
-        return EnemyPointEdit
+    elif isinstance(obj, tree_view.Material):
+        return MaterialEditor
     elif isinstance(obj, EnemyPointGroup):
         return EnemyPointGroupEdit
     elif isinstance(obj, CheckpointGroup):
@@ -758,6 +763,96 @@ class SubEditor(QWidget):
         layout.addWidget(label)
         layout.addWidget(widget)
         return layout
+
+
+class PythonSameNameValidator(QValidator):
+    def __init__(self, materials, parent):
+        super().__init__(parent)
+        self.materials = materials
+
+    def validate(self, p_str, p_int):
+        if p_str == "" :
+            return QValidator.Intermediate, p_str, p_int
+
+        if p_str in [mat.name for mat in self.materials]:
+            return QValidator.Invalid, p_str, p_int
+        else:
+            return QValidator.Acceptable, p_str, p_int
+
+    def fixup(self, s):
+        pass
+
+
+class MaterialEditor(DataEditor):
+    def setup_widgets(self):
+        super().setup_widgets()
+
+        self.line_edit = QLineEdit(self)
+        #line_edit.setValidator(PythonSameNameValidator())
+        layout = self.create_labeled_widget(self, "Name", self.line_edit)
+        mat = self.bound_to.bound_to
+        materials = self.main_editor.parent.layout_file.root.materials.materials
+
+        # line_edit.setMaxLength(maxlength)
+
+        def input_edited():
+            print("edited AAAAaaa", self.line_edit.text())
+            text = self.line_edit.text()
+            # text = text.rjust(maxlength, pad)
+            if text == self.bound_to.bound_to.name:
+                pass
+            elif text in [x.name for x in materials]:
+                open_error_dialog("Cannot use name, name already in use!", self)
+            else:
+                mat.name = text
+            #setattr(self.bound_to, attribute, text)
+
+        self.line_edit.editingFinished.connect(input_edited)
+        self.line_edit.editingFinished.connect(self.update_name)
+        self.vbox.addLayout(layout)
+
+        self.texture_edits = []
+
+        self.textures = OrderedDict()
+        texture_list = []
+        for i, tex in enumerate(self.main_editor.parent.layout_file.root.textures.references):
+            texture_list.append((tex, i))
+        texture_list.sort(key=lambda x: x[1])
+
+        for tex, i in texture_list:
+            self.textures[tex] = i
+
+        for i in range(8):
+            self.add_texture_edit(i)
+
+    def add_texture_edit(self, i):
+        combobox = QComboBox(self)
+        combobox.addItem("--None--")
+        for texture in self.textures:
+            combobox.addItem(texture)
+
+        combobox.currentTextChanged.connect(partial(self.set_texture, i))
+
+        self.vbox.addLayout(self.create_labeled_widget(self, "Tex {0}".format(i+1), combobox))
+        self.texture_edits.append(combobox)
+
+    def set_texture(self, pos, name):
+        if self.texture_edits[pos].currentIndex() == 0:
+            self.bound_to.bound_to.textures[pos] = None
+        else:
+            index = self.textures[name]
+            self.bound_to.bound_to.textures[pos] = index
+
+    def update_data(self):
+        self.line_edit.setText(self.bound_to.bound_to.name)
+        for i in range(8):
+            for j, v in enumerate(self.textures.items()):
+                tex, index = v
+                if self.bound_to.bound_to.textures[i] == index:
+                    self.texture_edits[i].setCurrentIndex(j+1)
+
+    def update_name(self):
+        self.bound_to.setText(0, self.bound_to.bound_to.name)
 
 
 class PictureColorEditor(SubEditor):
