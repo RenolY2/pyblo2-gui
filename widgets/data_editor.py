@@ -3,7 +3,7 @@ import json
 from functools import partial
 from collections import OrderedDict
 from PyQt5.QtWidgets import QMessageBox, QScrollArea, QSizePolicy, QWidget, QHBoxLayout, QVBoxLayout, QLabel, QCheckBox, QLineEdit, QComboBox, QSizePolicy
-from PyQt5.QtGui import QIntValidator, QDoubleValidator, QValidator, QPainter, QColor
+from PyQt5.QtGui import QDragEnterEvent, QDropEvent, QIntValidator, QDoubleValidator, QValidator, QPainter, QColor
 from math import inf
 from lib.libbol import (EnemyPoint, EnemyPointGroup, CheckpointGroup, Checkpoint, Route, RoutePoint,
                         MapObject, KartStartPoint, Area, Camera, BOL, JugemPoint, MapObject,
@@ -611,10 +611,32 @@ class Texture(DataEditor):
     def setup_widgets(self):
         self.tex = self.add_texture_widget()
         self.a = self.add_label("Dimensions:")
-
+        self.setAcceptDrops(True)
     #def resizeEvent(self, a):
     #    print(self.main_editor.width())
     #    self.setMinimumWidth(self.main_editor.width())
+
+    def dragEnterEvent(self, event: QDragEnterEvent):
+        if event.mimeData().hasText():
+            path = event.mimeData().text()
+            if path.startswith("file://"):
+                path = path[8:]
+                print(path, os.path.isfile(path))
+                if os.path.isfile(path):
+                    event.acceptProposedAction()
+
+    def dropEvent(self, event: QDropEvent):
+        if event.mimeData().hasText():
+            path = event.mimeData().text()
+            if path.startswith("file://"):
+                path = path[8:]
+                print(path, os.path.isfile(path))
+                if os.path.isfile(path):
+                    event.acceptProposedAction()
+                    texhandler = self.main_editor.parent.texture_menu.texture_handler
+                    texname = texhandler.init_from_path(path)
+                    self.main_editor.parent.layout_file.root.textures.references.append(texname)
+                    self.main_editor.parent.rebuild_tree()
 
     def update_data(self):
         super().update_data()
@@ -628,7 +650,7 @@ class Texture(DataEditor):
         if img is not None:
             self.tex.set_image(img)
 
-        self.a.setText("Dimensions: {0}x{1}".format(img.width(), img.height()))
+            self.a.setText("Dimensions: {0}x{1}".format(img.width(), img.height()))
 
 anchor_dropdown = OrderedDict()
 anchor_dropdown["Top-Left"] = 0
