@@ -854,6 +854,7 @@ class WindowSubSettingEdit(SubEditor):
                 self.material.setCurrentIndex(i)
                 break
 
+
 class PaneEdit(DataEditor):
     def setup_widgets(self):
         readblo2.Pane
@@ -883,7 +884,6 @@ class PaneEdit(DataEditor):
         self.unk1 = self.add_updater(self.add_integer_input, "p_unk1", "Unknown 1", -MIN_UNSIGNED_SHORT, +MAX_UNSIGNED_SHORT)
         self.unk2 = self.add_updater(self.add_decimal_input, "p_unk4", "Unknown 4", -inf, +inf)
 
-
     def update_data(self):
         super().update_data()
         self.bound_to: readblo2.Pane
@@ -906,7 +906,7 @@ class PaneEdit(DataEditor):
         self.bound_to.widget.update_name()
 
 
-class WindowEditor(DataEditor):
+class WindowEditor(PaneEdit):
     def setup_widgets(self):
         super().setup_widgets()
         self.size = self.add_updater(self.add_integer_input, "size", "Size",
@@ -949,7 +949,7 @@ class WindowEditor(DataEditor):
             sub.update_data()
 
 
-class TextboxEditor(DataEditor):
+class TextboxEditor(PaneEdit):
     def setup_widgets(self):
         super().setup_widgets()
         self.size = self.add_updater(self.add_integer_input, "size", "Size", -MIN_UNSIGNED_SHORT, +MAX_UNSIGNED_SHORT)

@@ -11,7 +11,7 @@ class Node(object):
         self.children = []
         self.materials: MAT1 = None
         self.textures = None 
-        
+
     def print_hierarchy(self, indent=0):
         for child in self.children:
             if isinstance(child, Node):
@@ -1032,7 +1032,35 @@ class ScreenBlo(object):
     def print_hierarchy(self):
         print("INF1 - {0} {1}".format(self.info.width, self.info.height))
         self.root.print_hierarchy(4)
-        
+
+    def find_elements_that_use_material(self, material, node=None):
+        if node is None:
+            node = self.root
+
+        elements = []
+
+        for child in node.children:
+            if isinstance(child, (Window, )):
+                if material.name in (
+                    child.material,
+                    child.subdata[0]["material"], child.subdata[1]["material"],
+                    child.subdata[2]["material"], child.subdata[3]["material"]
+                ):
+                    elements.append(child.p_panename)
+            elif isinstance(child, (Picture, )):
+                if child.material == material.name:
+                    elements.append(child.p_panename)
+            elif isinstance(child, (Textbox, )):
+                if child.material == material.name:
+                    elements.append(child.p_panename)
+            if isinstance(child, (Window, Picture, Textbox, Pane)) and child.child is not None:
+                elements.extend(self.find_elements_that_use_material(material, child.child))
+
+        return elements
+
+
+
+
     @classmethod 
     def from_file(cls, f):
         magic = f.read(8)

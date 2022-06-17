@@ -4,8 +4,14 @@ from copy import deepcopy
 from PyQt5.QtWidgets import QTreeWidget, QTreeWidgetItem
 from lib.libbol import BOL, get_full_name
 from PyQt5.QtCore import Qt, pyqtSignal
-from PyQt5.QtWidgets import QAction, QMenu
+from PyQt5.QtWidgets import QAction, QMenu, QMessageBox
 from lib.blo.readblo2 import Information, Pane, Window, Textbox, Picture, ScreenBlo, MAT1, TextureNames, FontNames, Node
+
+
+def open_error_dialog(errormsg, self):
+    errorbox = QMessageBox()
+    errorbox.critical(self, "Error", errormsg)
+    errorbox.setFixedSize(500, 200)
 
 
 class ObjectGroup(QTreeWidgetItem):
@@ -326,6 +332,32 @@ class LayoutDataTreeView(QTreeWidget):
             self.blo.root.materials.materials.append(mat)
             self.rebuild_tree.emit()
 
+    def handle_delete(self, pos):
+        item = self.itemAt(pos)
+        if isinstance(item, (Material,)):
+            mat = item.bound_to
+            assert mat in self.blo.root.materials.materials
+
+            result = self.blo.find_elements_that_use_material(mat)
+            if len(result) == 0:
+                self.blo.root.materials.materials.remove(mat)
+                self.rebuild_tree.emit()
+            else:
+                result = list(map(lambda x: x.strip("\x00"), result))
+                if len(result) > 5:
+                    show = result[0:5]
+                    error = ("Cannot delete, material is used by following element: \n"
+                            "{0} and {1} more".format(", ".join(show), len(result)-5))
+                else:
+                    if len(result) == 0:
+                        ending = ""
+                    else:
+                        ending = "s"
+                    error = ("Cannot delete, material is used by following element{1}: \n"
+                             "{0}".format(", ".join(result), ending))
+
+                open_error_dialog(error, self)
+
     def run_context_menu(self, pos):
         item = self.itemAt(pos)
 
@@ -339,6 +371,7 @@ class LayoutDataTreeView(QTreeWidget):
             duplicate_material.triggered.connect(partial(self.handle_duplicate, pos))
             context_menu.addSeparator()
             context_menu.addAction(remove_material)
+            remove_material.triggered.connect(partial(self.handle_delete, pos))
 
             context_menu.exec(self.mapToGlobal(pos))
 
