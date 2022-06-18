@@ -41,7 +41,7 @@ from PyQt5.QtWidgets import QTreeWidgetItem
 from lib.bmd_render import clear_temp_folder, load_textured_bmd
 from lib.blo.readblo2 import ScreenBlo, Pane
 from widgets.texture_handler_widget import TextureHandlerMenu
-
+from lib.blo.tex.textures import ImageTooLarge
 
 
 EDITOR_NAME = "BLO Layout Editor"
@@ -639,9 +639,15 @@ class LayoutEditor(QMainWindow):
                 if os.path.isfile(path):
                     event.acceptProposedAction()
                     texhandler = self.texture_menu.texture_handler
-                    texname = texhandler.init_from_path(path)
-                    self.layout_file.root.textures.references.append(texname)
-                    self.rebuild_tree()
+                    try:
+                        texname = texhandler.init_from_path(path)
+                    except ImageTooLarge as err:
+                        open_error_dialog(("Image resolution too high ({0}x{1})! "
+                                          "It cannot exceed 1024 in either width or height.").format(err.width, err.height),
+                                          self)
+                    else:
+                        self.layout_file.root.textures.references.append(texname)
+                        self.rebuild_tree()
 
     def delete_blo_item(self, item):
         blo_item = item.bound_to

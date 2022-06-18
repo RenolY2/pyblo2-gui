@@ -3,8 +3,13 @@ from OpenGL.GL import *
 from PyQt5.QtGui import QImage
 
 from lib.blo.tex.bti import BTIFile
+from widgets.editor_widgets import open_error_dialog
 FOLDER = "Folder"
 RARC = "RARC"
+
+
+class ImageTooLarge(Exception):
+    pass
 
 
 class GLTexture(object):
@@ -58,6 +63,11 @@ class TextureHandler(object):
     def init_from_path(self, path):
         texname = os.path.basename(path)
         qimg = QImage(path).convertToFormat(QImage.Format_RGBA8888)
+        if qimg.width() > 1024 or qimg.height() > 1024:
+            exception = ImageTooLarge("Image exceeds 1024x1024!")
+            exception.width = qimg.width()
+            exception.height = qimg.height()
+            raise exception
         self.textures[texname.lower()] = (None, qimg)
         self.textures_render[texname.lower()] = GLTexture(qimg)
         self.dirty = True
@@ -79,6 +89,15 @@ class TextureHandler(object):
 
                     self.textures[filename.lower()] = (bti, qimg)
                     self.textures_render[filename.lower()] = GLTexture(qimg)
+
+    def rename(self, old, new):
+        old_lo, new_lo = old.lower(), new.lower()
+        assert old_lo in self.textures
+        assert new_lo not in self.textures
+
+        tmp = self.textures[old_lo]
+        tmp_render = self.textures_render[old_lo]
+
 
     def get_texture_image(self, texname):
         if texname.lower() in self.textures:
