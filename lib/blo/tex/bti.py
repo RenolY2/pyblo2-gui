@@ -1,9 +1,15 @@
 from io import BytesIO
 from enum import Enum
+from binascii import unhexlify
+from PyQt5 import QtCore
 
 from .fs_helpers import *
 from .texture_utils import *
 #from wwlib.yaz0 import Yaz0
+
+# BTI Header with CMPR and dimensions of 0 by 0
+BASE_HEADER = unhexlify("0E01000000000000000000000000000000000000010100000100000000000020")
+
 
 class WrapMode(Enum):
   ClampToEdge    = 0
@@ -148,7 +154,7 @@ class BTI:
     self.num_colors = len(encoded_colors)
     self.width = new_image.width
     self.height = new_image.height
-  
+
   def replace_palette(self, new_colors):
     encoded_colors = generate_new_palettes_from_colors(new_colors, self.palette_format)
     self.palette_data = encode_palette(encoded_colors, self.palette_format, self.image_format)
@@ -182,7 +188,21 @@ class BTIFile(BTI): # For standalone .bti files (as opposed to textures embedded
     #if Yaz0.check_is_compressed(data):
     #  data = Yaz0.decompress(data)
     super(BTIFile, self).__init__(data)
-  
+    self.dirty = False
+
+  def mark_for_format_update(self):
+    self.dirty = True
+
+  @classmethod
+  def create_from_image(cls, image):
+    data = BytesIO(BASE_HEADER)
+    btifile = cls(data)
+    btifile.replace_image(image)
+    return btifile
+
+  def save_to_file(self, fp):
+    self.save_changes()
+
   def save_changes(self):
     # Cut off the image and palette data first since we're replacing this data entirely.
     self.data.truncate(0x20)

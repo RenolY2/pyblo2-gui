@@ -3,6 +3,8 @@ from OpenGL.GL import *
 from PyQt5.QtGui import QImage
 
 from lib.blo.tex.bti import BTIFile
+from PIL import Image
+
 from widgets.editor_widgets import open_error_dialog
 FOLDER = "Folder"
 RARC = "RARC"
@@ -47,6 +49,22 @@ class GLTexture(object):
         self.ID = ID
 
 
+class TextureBundle(object):
+    def __init__(self, img, qimg):
+        self.bti = None
+        self.img = img
+        self.qimg = qimg
+        self.dirty = True
+
+    def update_bti(self):
+        if self.dirty:
+            if self.bti is None:
+                self.bti = BTIFile.create_from_image(self.img)
+            else:
+                self.bti.replace_image(self.img)
+            self.dirty = False
+
+
 class TextureHandler(object):
     def __init__(self):
         self.textures = {}
@@ -62,16 +80,26 @@ class TextureHandler(object):
 
     def init_from_path(self, path):
         texname = os.path.basename(path)
-        qimg = QImage(path).convertToFormat(QImage.Format_RGBA8888)
+        with Image.open(path) as img:
+            img.load()
+        img = img.convert("RGBA")
+        qimg = QImage(img.tobytes(), img.width, img.height, img.width * 4, QImage.Format_RGBA8888)
+        #qimg = QImage(path).convertToFormat(QImage.Format_RGBA8888)
         if qimg.width() > 1024 or qimg.height() > 1024:
             exception = ImageTooLarge("Image exceeds 1024x1024!")
             exception.width = qimg.width()
             exception.height = qimg.height()
             raise exception
-        self.textures[texname.lower()] = (None, qimg)
+        self.textures[texname.lower()] = TextureBundle(img, qimg)
         self.textures_render[texname.lower()] = GLTexture(qimg)
         self.dirty = True
         return texname
+
+    def get_bti(self, name):
+        return self.textures[name.lower()].bti
+
+    def update_format(self, name):
+        self.textures[name.lower()].bti.dirty = True
 
     def init_from_folder(self, path):
         self.textures = {}
@@ -98,10 +126,9 @@ class TextureHandler(object):
         tmp = self.textures[old_lo]
         tmp_render = self.textures_render[old_lo]
 
-
     def get_texture_image(self, texname):
         if texname.lower() in self.textures:
-            return self.textures[texname.lower()][1]
+            return self.textures[texname.lower()].qimg
         else:
             return None
 
