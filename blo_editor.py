@@ -12,7 +12,7 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import (QWidget, QMainWindow, QFileDialog, QSplitter,
                              QSpacerItem, QLabel, QPushButton, QSizePolicy, QVBoxLayout, QHBoxLayout,
                              QScrollArea, QGridLayout, QMenuBar, QMenu, QAction, QApplication, QStatusBar, QLineEdit)
-from PyQt5.QtGui import QMouseEvent, QImage
+from PyQt5.QtGui import QMouseEvent, QImage, QDragEnterEvent, QDropEvent
 import PyQt5.QtGui as QtGui
 
 import opengltext
@@ -99,7 +99,7 @@ class LayoutEditor(QMainWindow):
         self.analyzer_window = None
 
         self._dontselectfromtree = False
-
+        self.setAcceptDrops(True)
 
     @catch_exception
     def reset(self):
@@ -621,6 +621,27 @@ class LayoutEditor(QMainWindow):
     def rebuild_tree(self):
         self.layoutdatatreeview.set_objects_remember_expanded(self.layout_file)
         self.update_3d()
+
+    def dragEnterEvent(self, event: QDragEnterEvent):
+        if event.mimeData().hasText():
+            path = event.mimeData().text()
+            if path.startswith("file://"):
+                path = path[8:]
+                if os.path.isfile(path):
+                    event.acceptProposedAction()
+
+    def dropEvent(self, event: QDropEvent):
+        if event.mimeData().hasText():
+            path = event.mimeData().text()
+            if path.startswith("file://"):
+                path = path[8:]
+                print(path, os.path.isfile(path))
+                if os.path.isfile(path):
+                    event.acceptProposedAction()
+                    texhandler = self.texture_menu.texture_handler
+                    texname = texhandler.init_from_path(path)
+                    self.layout_file.root.textures.references.append(texname)
+                    self.rebuild_tree()
 
     def delete_blo_item(self, item):
         blo_item = item.bound_to

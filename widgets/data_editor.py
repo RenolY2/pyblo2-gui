@@ -611,32 +611,10 @@ class Texture(DataEditor):
     def setup_widgets(self):
         self.tex = self.add_texture_widget()
         self.a = self.add_label("Dimensions:")
-        self.setAcceptDrops(True)
+
     #def resizeEvent(self, a):
     #    print(self.main_editor.width())
     #    self.setMinimumWidth(self.main_editor.width())
-
-    def dragEnterEvent(self, event: QDragEnterEvent):
-        if event.mimeData().hasText():
-            path = event.mimeData().text()
-            if path.startswith("file://"):
-                path = path[8:]
-                print(path, os.path.isfile(path))
-                if os.path.isfile(path):
-                    event.acceptProposedAction()
-
-    def dropEvent(self, event: QDropEvent):
-        if event.mimeData().hasText():
-            path = event.mimeData().text()
-            if path.startswith("file://"):
-                path = path[8:]
-                print(path, os.path.isfile(path))
-                if os.path.isfile(path):
-                    event.acceptProposedAction()
-                    texhandler = self.main_editor.parent.texture_menu.texture_handler
-                    texname = texhandler.init_from_path(path)
-                    self.main_editor.parent.layout_file.root.textures.references.append(texname)
-                    self.main_editor.parent.rebuild_tree()
 
     def update_data(self):
         super().update_data()
