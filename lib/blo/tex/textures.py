@@ -57,10 +57,10 @@ class TextureHandler(object):
 
     def init_from_path(self, path):
         texname = os.path.basename(path)
-        qimg = QImage(path)
+        qimg = QImage(path).convertToFormat(QImage.Format_RGBA8888)
         self.textures[texname.lower()] = (None, qimg)
         self.textures_render[texname.lower()] = GLTexture(qimg)
-
+        self.dirty = True
         return texname
 
     def init_from_folder(self, path):
