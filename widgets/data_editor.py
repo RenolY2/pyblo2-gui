@@ -591,7 +591,7 @@ class TextureView(QWidget):
 
             if new_h > h:
                 new_h = h
-                new_w = new_h*w
+                new_w = new_h*ratio
 
             p.drawImage(QRect(0, 0, new_w, new_h), self.img)
 
