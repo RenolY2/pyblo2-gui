@@ -15,6 +15,7 @@ from lib.blo import readblo2
 from widgets import tree_view
 #from blo_editor import LayoutEditor
 
+
 def open_error_dialog(errormsg, self):
     errorbox = QMessageBox()
     errorbox.critical(self, "Error", errormsg)
@@ -84,7 +85,7 @@ class DataEditor(QWidget):
         self.vbox.addWidget(tex)
         return tex
 
-    def catch_text_update(self):
+    def catch_text_update(self, *args):
         self.emit_3d_update.emit()
 
     def setup_widgets(self):
@@ -832,7 +833,7 @@ class MaterialEditor(DataEditor):
             combobox.addItem(texture)
 
         combobox.currentTextChanged.connect(partial(self.set_texture, i))
-
+        combobox.currentTextChanged.connect(self.catch_text_update)
         self.vbox.addLayout(self.create_labeled_widget(self, "Tex {0}".format(i+1), combobox))
         self.texture_edits.append(combobox)
 
