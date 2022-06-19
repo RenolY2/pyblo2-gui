@@ -10,7 +10,7 @@ from lib.libbol import (EnemyPoint, EnemyPointGroup, CheckpointGroup, Checkpoint
                         LightParam, MGEntry, OBJECTNAMES, REVERSEOBJECTNAMES, MUSIC_IDS, REVERSE_MUSIC_IDS)
 from lib.vectors import Vector3
 from lib.model_rendering import Minimap
-from PyQt5.QtCore import pyqtSignal, QSize, QRect
+from PyQt5.QtCore import pyqtSignal, QSize, QRect, Qt
 from lib.blo import readblo2
 from widgets import tree_view
 #from blo_editor import LayoutEditor
@@ -58,6 +58,18 @@ class PythonIntValidator(QValidator):
 
     def fixup(self, s):
         pass
+
+
+# Combobox variant that prevents accidental
+# scrolling when mouse hovers
+class NonScrollQComboBox(QComboBox):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.setFocusPolicy(Qt.StrongFocus)
+
+    def wheelEvent(self, *args, **kwargs):
+        if self.hasFocus():
+            return super().wheelEvent(*args, **kwargs)
 
 
 class DataEditor(QWidget):
@@ -227,7 +239,7 @@ class DataEditor(QWidget):
         return line_edit
 
     def add_dropdown_input(self, attribute, text, keyval_dict):
-        combobox = QComboBox(self)
+        combobox = NonScrollQComboBox(self)
         for val in keyval_dict:
             combobox.addItem(val)
 
@@ -442,7 +454,7 @@ class DataEditor(QWidget):
         return widget
 
     def add_material_combobox(self):
-        material_widget = self.add_widget(QComboBox(self))
+        material_widget = self.add_widget(NonScrollQComboBox(self))
         blo: readblo2.ScreenBlo = self.main_editor.parent.layout_file
 
         mat_dict = OrderedDict()
@@ -827,7 +839,7 @@ class MaterialEditor(DataEditor):
             self.add_texture_edit(i)
 
     def add_texture_edit(self, i):
-        combobox = QComboBox(self)
+        combobox = NonScrollQComboBox(self)
         combobox.addItem("--None--")
         for texture in self.textures:
             combobox.addItem(texture)
@@ -917,7 +929,7 @@ class WindowSubSettingEdit(SubEditor):
         self.material, mat_dict = self.add_material_combobox()
 
     def add_material_combobox(self):
-        material_widget = QComboBox(self)
+        material_widget = NonScrollQComboBox(self)
         self.layout.addWidget(material_widget)
         blo: readblo2.ScreenBlo = self.main_editor.parent.layout_file
 
