@@ -50,8 +50,8 @@ class GLTexture(object):
 
 
 class TextureBundle(object):
-    def __init__(self, img, qimg):
-        self.bti = None
+    def __init__(self, img, qimg, bti=None):
+        self.bti = bti
         self.img = img
         self.qimg = qimg
         self.dirty = True
@@ -115,7 +115,7 @@ class TextureHandler(object):
                     img = bti.render()
                     qimg = QImage(img.tobytes(), bti.width, bti.height, bti.width * 4, QImage.Format_RGBA8888)
 
-                    self.textures[filename.lower()] = (bti, qimg)
+                    self.textures[filename.lower()] = TextureBundle(img, qimg, bti)
                     self.textures_render[filename.lower()] = GLTexture(qimg)
 
     def rename(self, old, new):
