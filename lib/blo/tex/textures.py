@@ -1,7 +1,7 @@
 import os
 from OpenGL.GL import *
 from PyQt5.QtGui import QImage
-
+from io import BytesIO
 from lib.blo.tex.bti import BTIFile
 from PIL import Image
 
@@ -71,6 +71,7 @@ class TextureHandler(object):
         self.textures_render = {}
         self.origin = None
         self.dirty = True
+        self.marked_for_deletion = []
 
     def update_gl(self):
         if self.dirty:
@@ -101,6 +102,29 @@ class TextureHandler(object):
     def update_format(self, name):
         self.textures[name.lower()].bti.dirty = True
 
+    def delete_texture(self, name):
+        self.marked_for_deletion.append(name.lower())
+        del self.textures[name.lower()]
+        del self.textures_render[name.lower()]
+
+    def save_to_folder(self, path):
+        for tex, texbundle in self.textures.items():
+            texbundle: TextureBundle
+
+            texbundle.update_bti()
+
+            out_path = os.path.join(path, tex.lower())
+            print("Saving file", out_path)
+            with open(out_path, "wb") as f:
+                texbundle.bti.save_to_file(f)
+
+        for tex in self.marked_for_deletion:
+            out_path = os.path.join(path, tex)
+            print("Deleting file", out_path)
+            os.remove(out_path)
+
+        self.marked_for_deletion = []
+
     def init_from_folder(self, path):
         self.textures = {}
         self.origin = FOLDER
@@ -111,7 +135,7 @@ class TextureHandler(object):
                 filepath = os.path.join(path, filename)
 
                 with open(filepath, "rb") as f:
-                    bti = BTIFile(f)
+                    bti = BTIFile(BytesIO(f.read()))
                     img = bti.render()
                     qimg = QImage(img.tobytes(), bti.width, bti.height, bti.width * 4, QImage.Format_RGBA8888)
 

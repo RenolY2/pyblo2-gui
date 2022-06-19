@@ -21,12 +21,23 @@ class TextureHandlerMenu(QMenu):
         self.load_archive_action.triggered.connect(self.load_archive)
         self.addAction(self.load_archive_action)
 
+        self.save_file_action = QAction("Save To Folder", self)
+        self.save_file_action.triggered.connect(self.save_to_folder)
+        self.addAction(self.save_file_action)
+
+    def save_to_folder(self):
+        filepath = QFileDialog.getExistingDirectory(
+            self, "Choose Texture Folder",
+            "")
+        if filepath:
+            self.texture_handler.save_to_folder(filepath)
+
     def load_folder(self):
         filepath = QFileDialog.getExistingDirectory(
             self, "Choose Texture Folder",
             "")
-
-        self.texture_handler.init_from_folder(filepath)
+        if filepath:
+            self.texture_handler.init_from_folder(filepath)
 
     def load_archive(self):
         filepath, choosentype = QFileDialog.getOpenFileName(
