@@ -202,6 +202,8 @@ class BTIFile(BTI): # For standalone .bti files (as opposed to textures embedded
 
   def save_to_file(self, fp):
     self.save_changes()
+    self.data.seek(0)
+    fp.write(self.data.read())
 
   def save_changes(self):
     # Cut off the image and palette data first since we're replacing this data entirely.
