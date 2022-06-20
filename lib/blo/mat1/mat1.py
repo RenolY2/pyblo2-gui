@@ -476,6 +476,25 @@ class MAT1(object):
         #self.material_names = StringTable()
         self.materials = []
 
+    def remove_texture_index(self, i):
+        for material in self.materials:
+            for j in range(8):
+                if material.textures[j] is not None:
+                    if material.textures[j] == i:
+                        material.textures[j] = None
+                    elif material.textures[j] > i:
+                        material.textures[j] -= 1
+
+    def list_materials_that_use_texture(self, i):
+        result = []
+        for material in self.materials:
+            for index in material.textures:
+                if index is not None and index == i:
+                    result.append(material)
+                    break
+
+        return result
+
     def get_mat_index(self, name):
         for i, v in enumerate(self.materials):
             if v.name == name:
