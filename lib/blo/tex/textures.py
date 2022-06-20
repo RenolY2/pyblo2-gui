@@ -22,7 +22,9 @@ class GLTexture(object):
         self.dirty = True
     
     def delete(self):
-        glDeleteTextures(1, self.ID)
+        if self.ID is not None:
+            glDeleteTextures([self.ID])
+            self.ID = None
     
     def update_texture(self):
         if self.dirty:
@@ -37,7 +39,7 @@ class GLTexture(object):
         if self.ID is None:
             ID = glGenTextures(1)
         else:
-            glDeleteTextures(1, self.ID)
+            glDeleteTextures([self.ID])
             ID = glGenTextures(1)
 
         glBindTexture(GL_TEXTURE_2D, ID)
@@ -75,12 +77,17 @@ class TextureHandler(object):
         self.origin = None
         self.dirty = True
         self.marked_for_deletion = []
+        self.cleanup = []
 
     def update_gl(self):
         if self.dirty:
             for texname, tex in self.textures_render.items():
                 tex.update_texture()
             self.dirty = False
+        if self.cleanup:
+            for tex in self.cleanup:
+                tex.delete()
+            self.cleanup = []
 
     def init_from_path(self, path):
         texname = os.path.basename(path)
@@ -100,7 +107,10 @@ class TextureHandler(object):
         return texname
 
     def get_bti(self, name):
-        return self.textures[name.lower()].bti
+        if name.lower() not in self.textures:
+            return None
+        else:
+            return self.textures[name.lower()].bti
 
     def update_format(self, name):
         self.textures[name.lower()].bti.dirty = True
@@ -130,8 +140,8 @@ class TextureHandler(object):
 
     def init_from_folder(self, path):
         self.textures = {}
-        for texname, gltex in self.textures_render:
-            gltex.delete()
+        for texname, gltex in self.textures_render.items():
+            self.cleanup.extend(self.textures_render.values())
         self.textures_render = {}
         self.origin = FOLDER
         self.dirty = True

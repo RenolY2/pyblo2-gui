@@ -810,7 +810,7 @@ class Textbox(Pane):
 
         write_uint16(f, self.size)
         write_uint16(f, self.unk1)
-        write_uint16(f, self.material)
+        write_uint16(f, mat1.get_mat_index(self.material))
         write_int16(f, self.signedunk3)
         write_int16(f, self.signedunk4)
         write_uint16(f, self.unk5)

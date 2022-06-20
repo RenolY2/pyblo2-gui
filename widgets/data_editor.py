@@ -13,6 +13,7 @@ from lib.model_rendering import Minimap
 from PyQt5.QtCore import pyqtSignal, QSize, QRect, Qt
 from lib.blo import readblo2
 from widgets import tree_view
+from lib.blo.tex.texture_utils import ImageFormat, PaletteFormat
 #from blo_editor import LayoutEditor
 
 
@@ -149,7 +150,7 @@ class DataEditor(QWidget):
 
         return checkbox
 
-    def add_integer_input(self, attribute, text, min_val, max_val):
+    def add_integer_input(self, obj, attribute, text, min_val, max_val):
         line_edit = QLineEdit(self)
         layout = self.create_labeled_widget(self, text, line_edit)
 
@@ -160,7 +161,7 @@ class DataEditor(QWidget):
             text = line_edit.text()
             print("input:", text)
 
-            setattr(self.bound_to, attribute, int(text))
+            setattr(obj, attribute, int(text))
 
         line_edit.editingFinished.connect(input_edited)
 
@@ -186,7 +187,7 @@ class DataEditor(QWidget):
 
         return label, line_edit
 
-    def add_decimal_input(self, attribute, text, min_val, max_val):
+    def add_decimal_input(self, bound_to, attribute, text, min_val, max_val):
         line_edit = QLineEdit(self)
         layout = self.create_labeled_widget(self, text, line_edit)
 
@@ -196,7 +197,7 @@ class DataEditor(QWidget):
             text = line_edit.text()
             print("input:", text)
             self.catch_text_update()
-            setattr(self.bound_to, attribute, float(text))
+            setattr(bound_to, attribute, float(text))
 
         line_edit.editingFinished.connect(input_edited)
 
@@ -204,7 +205,7 @@ class DataEditor(QWidget):
 
         return line_edit
 
-    def add_text_input(self, attribute, text, maxlength, pad=" "):
+    def add_text_input(self, bound_to, attribute, text, maxlength, pad=" "):
         line_edit = QLineEdit(self)
         layout = self.create_labeled_widget(self, text, line_edit)
 
@@ -214,7 +215,7 @@ class DataEditor(QWidget):
             print("edited AAAAaaa", line_edit.text())
             text = line_edit.text()
             text = text.rjust(maxlength, pad)
-            setattr(self.bound_to, attribute, text)
+            setattr(bound_to, attribute, text)
 
         line_edit.editingFinished.connect(input_edited)
         self.vbox.addLayout(layout)
@@ -238,7 +239,7 @@ class DataEditor(QWidget):
 
         return line_edit
 
-    def add_dropdown_input(self, attribute, text, keyval_dict):
+    def add_dropdown_input(self, obj, attribute, text, keyval_dict):
         combobox = NonScrollQComboBox(self)
         for val in keyval_dict:
             combobox.addItem(val)
@@ -248,7 +249,7 @@ class DataEditor(QWidget):
         def item_selected(item):
             val = keyval_dict[item]
             print("selected", item)
-            setattr(self.bound_to, attribute, val)
+            setattr(obj, attribute, val)
 
         combobox.currentTextChanged.connect(item_selected)
         self.vbox.addLayout(layout)
@@ -396,37 +397,37 @@ class DataEditor(QWidget):
     def set_value(self, field, val):
         field.setText(str(val))
 
-    def add_updater(self, func, attr, *args, **kwargs):
+    def add_updater(self, func, bound_to, attr, *args, **kwargs):
         preprocess_func = None
         if "preprocess_func" in kwargs:
             preprocess_func = kwargs["preprocess_func"]
             del kwargs["preprocess_func"]
 
         #print(args, kwargs)
-        widget = func(attr, *args, **kwargs)
+        widget = func(bound_to, attr, *args, **kwargs)
 
         if preprocess_func is None:
             def update_text(editor: DataEditor):
-                widget.setText(str(getattr(editor.bound_to, attr)))
+                widget.setText(str(getattr(bound_to, attr)))
         else:
             def update_text(editor: DataEditor):
-                widget.setText(str(preprocess_func(getattr(editor.bound_to, attr))))
+                widget.setText(str(preprocess_func(getattr(bound_to, attr))))
 
         self.field_updaters.append(update_text)
         return widget
 
-    def add_combobox_updater(self, func, attr, *args, **kwargs):
+    def add_combobox_updater(self, func, bound_to, attr, *args, **kwargs):
         preprocess_func = None
         if "preprocess_func" in kwargs:
             preprocess_func = kwargs["preprocess_func"]
             del kwargs["preprocess_func"]
 
         #print(args, kwargs)
-        widget = func(attr, *args, **kwargs)
+        widget = func(bound_to, attr, *args, **kwargs)
 
         if preprocess_func is None:
             def update_text(editor: DataEditor):
-                widget.setCurrentIndex(getattr(editor.bound_to, attr))
+                widget.setCurrentIndex(getattr(bound_to, attr))
         else:
             def update_text(editor: DataEditor):
                 widget.setCurrentIndex(preprocess_func(getattr(editor.bound_to, attr)))
@@ -620,6 +621,25 @@ class TextureView(QWidget):
         p.end()
 
 
+FORMATS = OrderedDict()
+FORMATS["I4"]       = ImageFormat.I4
+FORMATS["I8"]       = ImageFormat.I8
+FORMATS["IA4"]      = ImageFormat.IA4
+FORMATS["IA8"]      = ImageFormat.IA8
+FORMATS["RGB565"]   = ImageFormat.RGB565
+FORMATS["RGB5A3"]   = ImageFormat.RGB5A3
+FORMATS["RGBA32"]   = ImageFormat.RGBA32
+FORMATS["C4"]       = ImageFormat.C4
+FORMATS["C8"]       = ImageFormat.C8
+FORMATS["C14X2"]    = ImageFormat.C14X2
+FORMATS["CMPR"]     = ImageFormat.CMPR
+
+PALETTE_FORMATS = OrderedDict()
+PALETTE_FORMATS["IA8"]     = PaletteFormat.IA8
+PALETTE_FORMATS["RGB565"]  = PaletteFormat.RGB565
+PALETTE_FORMATS["RGB5A3"]  = PaletteFormat.RGB5A3
+
+
 class Texture(DataEditor):
     def setup_widgets(self):
         self.tex = self.add_texture_widget()
@@ -653,9 +673,11 @@ class Texture(DataEditor):
         self.line_edit.editingFinished.connect(input_edited)
         self.vbox.addLayout(layout)
 
-    #def resizeEvent(self, a):
-    #    print(self.main_editor.width())
-    #    self.setMinimumWidth(self.main_editor.width())
+        bti = self.main_editor.parent.texture_menu.texture_handler.get_bti(texture)
+
+        if bti is not None:
+            self.alphasetting = self.add_integer_input(bti, "alpha_setting", "Alpha Setting", MIN_UNSIGNED_BYTE, MAX_UNSIGNED_BYTE)
+            self.format = self.add_dropdown_input(bti, "image_format", "Image Format", FORMATS)
 
     def update_data(self):
         super().update_data()
@@ -671,6 +693,13 @@ class Texture(DataEditor):
             self.tex.set_image(img)
 
             self.a.setText("Dimensions: {0}x{1}".format(img.width(), img.height()))
+        bti = self.main_editor.parent.texture_menu.texture_handler.get_bti(name)
+        if bti is not None:
+            self.alphasetting.setText(str(bti.alpha_setting))
+            for i, v in enumerate(FORMATS.values()):
+                if bti.image_format == v:
+                    self.format.setCurrentIndex(i)
+
 
 anchor_dropdown = OrderedDict()
 anchor_dropdown["Top-Left"] = 0
@@ -995,31 +1024,31 @@ class WindowSubSettingEdit(SubEditor):
 class PaneEdit(DataEditor):
     def setup_widgets(self):
         readblo2.Pane
-        self.name = self.add_updater(self.add_text_input,
+        self.name = self.add_updater(self.add_text_input, self.bound_to,
                                      "p_panename", "Name", maxlength=8, pad="\x00",
                                      preprocess_func=lambda x: x.lstrip("\x00"))
         self.name.editingFinished.connect(self.update_name)
-        self.secondaryname = self.add_updater(self.add_text_input,
+        self.secondaryname = self.add_updater(self.add_text_input, self.bound_to,
                                               "p_secondaryname", "Secondary Name", maxlength=8, pad="\x00",
                                               preprocess_func=lambda x: x.lstrip("\x00"))
         self.enable = self.add_checkbox_updater(self.add_checkbox, "p_enabled", "Enable", 0, 1)
         self.hide = self.add_checkbox_updater(self.add_checkbox, "hide", "Hide (Editor only)", 0, 1)
         self.hide.stateChanged.connect(self.catch_text_update)
         self.hide.stateChanged.connect(self.update_name)
-        self.anchor = self.add_combobox_updater(self.add_dropdown_input,
+        self.anchor = self.add_combobox_updater(self.add_dropdown_input, self.bound_to,
                                        "p_anchor", "Anchor", keyval_dict=anchor_dropdown)
 
         self.anchor.currentIndexChanged.connect(self.catch_text_update)
-        self.offset_x = self.add_updater(self.add_decimal_input, "p_offset_x", "X Offset", -inf, +inf)
-        self.offset_y = self.add_updater(self.add_decimal_input, "p_offset_y", "Y Offset", -inf, +inf)
-        self.size_x = self.add_updater(self.add_decimal_input, "p_size_x", "X Size", -inf, +inf)
-        self.size_y = self.add_updater(self.add_decimal_input, "p_size_y", "Y Size", -inf, +inf)
-        self.scale_x = self.add_updater(self.add_decimal_input, "p_scale_x", "X Scale", -inf, +inf)
-        self.scale_y = self.add_updater(self.add_decimal_input, "p_scale_y", "Y Scale", -inf, +inf)
+        self.offset_x = self.add_updater(self.add_decimal_input, self.bound_to, "p_offset_x", "X Offset", -inf, +inf)
+        self.offset_y = self.add_updater(self.add_decimal_input, self.bound_to, "p_offset_y", "Y Offset", -inf, +inf)
+        self.size_x = self.add_updater(self.add_decimal_input, self.bound_to, "p_size_x", "X Size", -inf, +inf)
+        self.size_y = self.add_updater(self.add_decimal_input, self.bound_to, "p_size_y", "Y Size", -inf, +inf)
+        self.scale_x = self.add_updater(self.add_decimal_input, self.bound_to, "p_scale_x", "X Scale", -inf, +inf)
+        self.scale_y = self.add_updater(self.add_decimal_input, self.bound_to, "p_scale_y", "Y Scale", -inf, +inf)
 
-        self.rotation = self.add_updater(self.add_decimal_input, "p_rotation", "Rotation", -inf, +inf)
-        self.unk1 = self.add_updater(self.add_integer_input, "p_unk1", "Unknown 1", -MIN_UNSIGNED_SHORT, +MAX_UNSIGNED_SHORT)
-        self.unk2 = self.add_updater(self.add_decimal_input, "p_unk4", "Unknown 4", -inf, +inf)
+        self.rotation = self.add_updater(self.add_decimal_input, self.bound_to, "p_rotation", "Rotation", -inf, +inf)
+        self.unk1 = self.add_updater(self.add_integer_input, self.bound_to, "p_unk1", "Unknown 1", -MIN_UNSIGNED_SHORT, +MAX_UNSIGNED_SHORT)
+        self.unk2 = self.add_updater(self.add_decimal_input, self.bound_to, "p_unk4", "Unknown 4", -inf, +inf)
 
     def update_data(self):
         super().update_data()
@@ -1046,24 +1075,24 @@ class PaneEdit(DataEditor):
 class WindowEditor(PaneEdit):
     def setup_widgets(self):
         super().setup_widgets()
-        self.size = self.add_updater(self.add_integer_input, "size", "Size",
+        self.size = self.add_updater(self.add_integer_input, self.bound_to, "size", "Size",
                                      -MIN_UNSIGNED_SHORT, +MAX_UNSIGNED_SHORT)
 
-        self.unkbyte1 = self.add_updater(self.add_integer_input, "unkbyte1", "Unk 1",
+        self.unkbyte1 = self.add_updater(self.add_integer_input, self.bound_to, "unkbyte1", "Unk 1",
                                      -MIN_UNSIGNED_BYTE, +MAX_UNSIGNED_BYTE)
 
-        self.unkbyte2 = self.add_updater(self.add_integer_input, "unkbyte2", "Unk 2",
+        self.unkbyte2 = self.add_updater(self.add_integer_input, self.bound_to, "unkbyte2", "Unk 2",
                                          -MIN_UNSIGNED_BYTE, +MAX_UNSIGNED_BYTE)
 
-        self.unk3 = self.add_updater(self.add_integer_input, "unk3", "Unk 3",
+        self.unk3 = self.add_updater(self.add_integer_input, self.bound_to, "unk3", "Unk 3",
                                          -MIN_UNSIGNED_SHORT, +MAX_UNSIGNED_SHORT)
-        self.unk4 = self.add_updater(self.add_integer_input, "unk4", "Unk 4",
+        self.unk4 = self.add_updater(self.add_integer_input, self.bound_to, "unk4", "Unk 4",
                                      -MIN_UNSIGNED_SHORT, +MAX_UNSIGNED_SHORT)
-        self.unk5 = self.add_updater(self.add_integer_input, "unk5", "Unk 5",
+        self.unk5 = self.add_updater(self.add_integer_input, self.bound_to, "unk5", "Unk 5",
                                      -MIN_UNSIGNED_SHORT, +MAX_UNSIGNED_SHORT)
-        self.unk6 = self.add_updater(self.add_integer_input, "unk6", "Unk 6",
+        self.unk6 = self.add_updater(self.add_integer_input, self.bound_to, "unk6", "Unk 6",
                                      -MIN_UNSIGNED_SHORT, +MAX_UNSIGNED_SHORT)
-        self.unk7 = self.add_updater(self.add_integer_input, "unk7", "Unk 7",
+        self.unk7 = self.add_updater(self.add_integer_input, self.bound_to, "unk7", "Unk 7",
                                      -MIN_UNSIGNED_SHORT, +MAX_UNSIGNED_SHORT)
 
         self.material, mat_dict = self.add_material_combobox()
@@ -1089,23 +1118,23 @@ class WindowEditor(PaneEdit):
 class TextboxEditor(PaneEdit):
     def setup_widgets(self):
         super().setup_widgets()
-        self.size = self.add_updater(self.add_integer_input, "size", "Size", -MIN_UNSIGNED_SHORT, +MAX_UNSIGNED_SHORT)
-        self.unk_1 = self.add_updater(self.add_decimal_input, "unk1", "Unk 1", -inf, +inf)
+        self.size = self.add_updater(self.add_integer_input, self.bound_to, "size", "Size", -MIN_UNSIGNED_SHORT, +MAX_UNSIGNED_SHORT)
+        self.unk_1 = self.add_updater(self.add_decimal_input, self.bound_to, "unk1", "Unk 1", -inf, +inf)
         self.material, self.mat_dict = self.add_material_combobox()
-        self.signedunk3 = self.add_updater(self.add_integer_input, "signedunk3", "Unk 3", -MIN_SIGNED_SHORT, +MAX_SIGNED_SHORT)
-        self.signedunk4 = self.add_updater(self.add_integer_input, "signedunk4", "Unk 4", -MIN_SIGNED_SHORT,
+        self.signedunk3 = self.add_updater(self.add_integer_input, self.bound_to, "signedunk3", "Unk 3", -MIN_SIGNED_SHORT, +MAX_SIGNED_SHORT)
+        self.signedunk4 = self.add_updater(self.add_integer_input, self.bound_to, "signedunk4", "Unk 4", -MIN_SIGNED_SHORT,
                                            +MAX_SIGNED_SHORT)
 
-        self.unk5 = self.add_updater(self.add_integer_input, "unk5", "Unk 5", -MIN_UNSIGNED_SHORT, +MAX_UNSIGNED_SHORT)
-        self.unk6 = self.add_updater(self.add_integer_input, "unk6", "Unk 6", -MIN_UNSIGNED_SHORT, +MAX_UNSIGNED_SHORT)
-        self.unk7 = self.add_updater(self.add_integer_input, "unk7byte", "Unk 7", -MIN_UNSIGNED_BYTE, +MAX_UNSIGNED_BYTE)
-        self.unk8 = self.add_updater(self.add_integer_input, "unk8byte", "Unk 8", -MIN_UNSIGNED_BYTE, +MAX_UNSIGNED_BYTE)
+        self.unk5 = self.add_updater(self.add_integer_input, self.bound_to, "unk5", "Unk 5", -MIN_UNSIGNED_SHORT, +MAX_UNSIGNED_SHORT)
+        self.unk6 = self.add_updater(self.add_integer_input, self.bound_to, "unk6", "Unk 6", -MIN_UNSIGNED_SHORT, +MAX_UNSIGNED_SHORT)
+        self.unk7 = self.add_updater(self.add_integer_input, self.bound_to, "unk7byte", "Unk 7", -MIN_UNSIGNED_BYTE, +MAX_UNSIGNED_BYTE)
+        self.unk8 = self.add_updater(self.add_integer_input, self.bound_to, "unk8byte", "Unk 8", -MIN_UNSIGNED_BYTE, +MAX_UNSIGNED_BYTE)
 
         self.color_top = ColorEdit(self.bound_to.color_top)
         self.color_bottom = ColorEdit(self.bound_to.color_bottom)
 
-        self.unk11 = self.add_updater(self.add_integer_input, "unk11", "Unk 11", -MIN_UNSIGNED_SHORT, +MAX_UNSIGNED_SHORT)
-        self.text_cutoff = self.add_updater(self.add_integer_input, "text_cutoff", "Text Cutoff", -MIN_UNSIGNED_SHORT, +MAX_UNSIGNED_SHORT)
+        self.unk11 = self.add_updater(self.add_integer_input, self.bound_to, "unk11", "Unk 11", -MIN_UNSIGNED_SHORT, +MAX_UNSIGNED_SHORT)
+        self.text_cutoff = self.add_updater(self.add_integer_input, self.bound_to, "text_cutoff", "Text Cutoff", -MIN_UNSIGNED_SHORT, +MAX_UNSIGNED_SHORT)
         self.text = self.add_text_input_unlimited("text", "Text")
 
     def update_data(self):
@@ -1122,8 +1151,8 @@ class TextboxEditor(PaneEdit):
 class PictureEdit(PaneEdit):
     def setup_widgets(self):
         super().setup_widgets()
-        self.size = self.add_updater(self.add_integer_input, "size", "Size", -MIN_UNSIGNED_SHORT, +MAX_UNSIGNED_SHORT)
-        self.unk_index = self.add_updater(self.add_decimal_input, "unk_index", "Unk Index", -inf, +inf)
+        self.size = self.add_updater(self.add_integer_input, self.bound_to, "size", "Size", -MIN_UNSIGNED_SHORT, +MAX_UNSIGNED_SHORT)
+        self.unk_index = self.add_updater(self.add_decimal_input, self.bound_to, "unk_index", "Unk Index", -inf, +inf)
 
 
         #self.material = self.add_updater(self.add_text_input_unlimited, "material", "Material")
