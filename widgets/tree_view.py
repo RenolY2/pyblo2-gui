@@ -344,8 +344,34 @@ class LayoutDataTreeView(QTreeWidget):
             self.blo.root.materials.materials.append(mat)
             self.rebuild_tree.emit()
 
+    def handle_delete_texture(self, delete_file, pos):
+        item = self.itemAt(pos)
+
+        if isinstance(item, (Texture,)):
+            index = self.blo.root.textures.references.index(item.bound_to)
+            mats_used = self.blo.root.materials.list_materials_that_use_texture(index)
+            result = [x.name for x in mats_used]
+            if len(result) == 0:
+                self.blo.root.textures.references.pop(index)
+                self.blo.root.materials.remove_texture_index(index)
+                self.rebuild_tree.emit()
+            else:
+                if len(result) > 5:
+                    show = result[0:5]
+                    error = ("Cannot delete, texture is used by following materials: \n"
+                             "{0} and {1} more".format(", ".join(show), len(result) - 5))
+                else:
+                    if len(result) == 0:
+                        ending = ""
+                    else:
+                        ending = "s"
+                    error = ("Cannot delete, texture is used by following material{1}: \n"
+                             "{0}".format(", ".join(result), ending))
+                open_error_dialog(error, self)
+
     def handle_delete(self, pos):
         item = self.itemAt(pos)
+
         if isinstance(item, (Material,)):
             mat = item.bound_to
             assert mat in self.blo.root.materials.materials
@@ -377,6 +403,16 @@ class LayoutDataTreeView(QTreeWidget):
             add_texture_entry = QAction("Add Texture Entry")
             add_texture_entry.triggered.connect(self.handle_add_new_texture)
             context_menu.addAction(add_texture_entry)
+
+            context_menu.exec(self.mapToGlobal(pos))
+            context_menu.destroy()
+            del context_menu
+
+        elif isinstance(item, (Texture, )):
+            context_menu = QMenu(self)
+            remove_texture_entry = QAction("Remove Texture Entry")
+            remove_texture_entry.triggered.connect(partial(self.handle_delete_texture, False, pos))
+            context_menu.addAction(remove_texture_entry)
 
             context_menu.exec(self.mapToGlobal(pos))
             context_menu.destroy()
