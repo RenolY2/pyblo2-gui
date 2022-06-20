@@ -159,6 +159,8 @@ class Node(object):
                 last = bloitem
             elif item["type"] == "PIC2":
                 bloitem = Picture.deserialize(item)
+                matindex = node.materials.get_mat_index(bloitem.material)
+                bloitem._material = node.materials.materials[matindex]
                 last = bloitem
             elif item["type"] == "MAT1":
                 bloitem = MAT1.preprocess_deserialize(item, node.textures)
@@ -337,6 +339,10 @@ class Pane(object):
         result["p_type"] = self.p_name
 
         for key, val in self.__dict__.items():
+            if key.startswith("_"):
+                print(key)
+                continue
+
             if key != "name" and key != "p_name" and key != "child" and key != "parent" and key != "widget" and key != "hide":
                 if isinstance(val, bytes):
                     raise RuntimeError("hhhe")
