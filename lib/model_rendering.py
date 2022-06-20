@@ -1190,7 +1190,10 @@ class PaneRender(object):
             material = pane._material
             if material is not None:
                 texture_id = material.textures[0]
-                texture = screen.root.textures.references[texture_id].lower()
+                if texture_id is None:
+                    texture = None
+                else:
+                    texture = screen.root.textures.references[texture_id].lower()
             else:
                 texture = None
 
