@@ -294,6 +294,18 @@ class LayoutDataTreeView(QTreeWidget):
         if isinstance(item, (PaneItem, )):
             self.delete_item.emit(item)
 
+    def handle_add_new_texture(self):
+        existing_textures = [x.lower() for x in self.blo.root.textures.references]
+
+        new_name = "NewTexture.bti"
+        i = 1
+        while new_name.lower() in existing_textures:
+            new_name = "NewTexture({0}).bti".format(i)
+            i += 1
+
+        self.blo.root.textures.references.append(new_name)
+        self.rebuild_tree.emit()
+
     def handle_copy_item_with_children(self, pos):
         item = self.itemAt(pos)
         if isinstance(item, (PaneItem,)):
@@ -360,10 +372,18 @@ class LayoutDataTreeView(QTreeWidget):
 
     def run_context_menu(self, pos):
         item = self.itemAt(pos)
-
-        if isinstance(item, (Material, )):
+        if isinstance(item, (TextureList, )):
             context_menu = QMenu(self)
+            add_texture_entry = QAction("Add Texture Entry")
+            add_texture_entry.triggered.connect(self.handle_add_new_texture)
+            context_menu.addAction(add_texture_entry)
 
+            context_menu.exec(self.mapToGlobal(pos))
+            context_menu.destroy()
+            del context_menu
+
+        elif isinstance(item, (Material, )):
+            context_menu = QMenu(self)
 
             duplicate_material = QAction("Duplicate")
             remove_material = QAction("Remove")
