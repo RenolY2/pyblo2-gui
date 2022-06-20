@@ -240,7 +240,7 @@ class LayoutEditor(QMainWindow):
         self.horizontalLayout = QSplitter()
         self.centralwidget = self.horizontalLayout
         self.setCentralWidget(self.horizontalLayout)
-        self.layoutdatatreeview = LayoutDataTreeView(self.centralwidget)
+        self.layoutdatatreeview = LayoutDataTreeView(self, self.centralwidget)
         #self.leveldatatreeview.itemClicked.connect(self.tree_select_object)
         self.layoutdatatreeview.itemDoubleClicked.connect(self.do_goto_action)
         self.layoutdatatreeview.itemSelectionChanged.connect(self.tree_select_arrowkey)
@@ -616,11 +616,15 @@ class LayoutEditor(QMainWindow):
         self.level_view.rotate_current.connect(self.action_rotate_object)
         self.layoutdatatreeview.delete_item.connect(self.delete_blo_item)
         self.layoutdatatreeview.rebuild_tree.connect(self.rebuild_tree)
+        self.layoutdatatreeview.delete_texture.connect(self.delete_texture)
         #self.layoutdatatreeview.reverse.connect(self.reverse_all_of_group)
 
     def rebuild_tree(self):
         self.layoutdatatreeview.set_objects_remember_expanded(self.layout_file)
         self.update_3d()
+
+    def delete_texture(self, texture):
+        self.texture_menu.texture_handler.delete_texture(texture.bound_to)
 
     def dragEnterEvent(self, event: QDragEnterEvent):
         if event.mimeData().hasText():

@@ -242,15 +242,16 @@ class LayoutDataTreeView(QTreeWidget):
 
     delete_item = pyqtSignal(PaneItem)
     delete_material = pyqtSignal(MaterialList)
-    delete_texture = pyqtSignal(TextureList)
+    delete_texture = pyqtSignal(Texture)
 
     copy_item = pyqtSignal(PaneItem)
     paste_item = pyqtSignal(PaneItem)
 
     rebuild_tree = pyqtSignal()
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, main_editor, *args, **kwargs):
         super().__init__(*args)
+        self.main_editor = main_editor
         self.setMaximumWidth(600)
         self.resize(200, self.height())
         self.setColumnCount(1)
@@ -352,9 +353,26 @@ class LayoutDataTreeView(QTreeWidget):
             mats_used = self.blo.root.materials.list_materials_that_use_texture(index)
             result = [x.name for x in mats_used]
             if len(result) == 0:
-                self.blo.root.textures.references.pop(index)
-                self.blo.root.materials.remove_texture_index(index)
-                self.rebuild_tree.emit()
+
+                if delete_file:
+                    result = QMessageBox.question(self, "Texture Deletion",
+                                                  ("The texture file will be removed when you save the textures. "
+                                                   "A texture might be used by other BLO files. "
+                                                   "Are you sure you want to delete the texture?"),
+                                                  QMessageBox.Yes | QMessageBox.No)
+                    if result == QMessageBox.Yes:
+                        self.delete_texture.emit(item)
+                        self.blo.root.textures.references.pop(index)
+                        self.blo.root.materials.remove_texture_index(index)
+                        self.rebuild_tree.emit()
+                else:
+
+                    self.blo.root.textures.references.pop(index)
+                    self.blo.root.materials.remove_texture_index(index)
+                    self.rebuild_tree.emit()
+
+
+
             else:
                 if len(result) > 5:
                     show = result[0:5]
@@ -368,6 +386,7 @@ class LayoutDataTreeView(QTreeWidget):
                     error = ("Cannot delete, texture is used by following material{1}: \n"
                              "{0}".format(", ".join(result), ending))
                 open_error_dialog(error, self)
+
 
     def handle_delete(self, pos):
         item = self.itemAt(pos)
@@ -413,6 +432,15 @@ class LayoutDataTreeView(QTreeWidget):
             remove_texture_entry = QAction("Remove Texture Entry")
             remove_texture_entry.triggered.connect(partial(self.handle_delete_texture, False, pos))
             context_menu.addAction(remove_texture_entry)
+
+            context_menu.addSeparator()
+
+            delete_texture_entry = QAction("Delete Texture")
+            delete_texture_entry.triggered.connect(partial(self.handle_delete_texture, True, pos))
+            context_menu.addAction(delete_texture_entry)
+
+            if item.bound_to.lower() not in self.main_editor.texture_menu.texture_handler.textures:
+                delete_texture_entry.setEnabled(False)
 
             context_menu.exec(self.mapToGlobal(pos))
             context_menu.destroy()
