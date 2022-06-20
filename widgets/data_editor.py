@@ -624,6 +624,34 @@ class Texture(DataEditor):
     def setup_widgets(self):
         self.tex = self.add_texture_widget()
         self.a = self.add_label("Dimensions:")
+        self.line_edit = QLineEdit(self)
+        # line_edit.setValidator(PythonSameNameValidator())
+        layout = self.create_labeled_widget(self, "Name", self.line_edit)
+        texture = self.bound_to.bound_to
+        old_text = texture
+        textures = self.main_editor.parent.layout_file.root.textures.references
+        index = textures.index(texture)
+        # line_edit.setMaxLength(maxlength)
+
+        def input_edited():
+            print("edited AAAAaaa", self.line_edit.text())
+            text = self.line_edit.text()
+            # text = text.rjust(maxlength, pad)
+            if text.lower() == self.bound_to.bound_to.lower():
+                pass
+            elif text.lower() in [x.lower() for x in textures]:
+                open_error_dialog("Cannot use name, name already in use!", self)
+            else:
+                textures[index] = text
+                self.bound_to.bound_to = text
+                self.bound_to.setText(0, text)
+                if self.main_editor.parent.texture_menu.texture_handler.exists(old_text):
+                    self.main_editor.parent.texture_menu.texture_handler.rename(old_text, text)
+                #mat.name = text
+            # setattr(self.bound_to, attribute, text)
+
+        self.line_edit.editingFinished.connect(input_edited)
+        self.vbox.addLayout(layout)
 
     #def resizeEvent(self, a):
     #    print(self.main_editor.width())
@@ -636,6 +664,7 @@ class Texture(DataEditor):
 
         name = self.bound_to.bound_to
         print(name)
+        self.line_edit.setText(name)
 
         img = self.main_editor.parent.texture_menu.texture_handler.get_texture_image(name)
         if img is not None:

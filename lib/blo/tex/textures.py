@@ -149,6 +149,14 @@ class TextureHandler(object):
 
         tmp = self.textures[old_lo]
         tmp_render = self.textures_render[old_lo]
+        del self.textures[old_lo]
+        del self.textures_render[old_lo]
+
+        self.textures[new_lo] = tmp
+        self.textures_render[new_lo] = tmp_render
+
+    def exists(self, name):
+        return name.lower() in self.textures
 
     def get_texture_image(self, texname):
         if texname.lower() in self.textures:
