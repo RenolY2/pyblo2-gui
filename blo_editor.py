@@ -762,6 +762,12 @@ class LayoutEditor(QMainWindow):
                         self.layoutdatatreeview.set_objects(blo_file)
                         self.current_gen_path = filepath
 
+                        dir = os.path.dirname(filepath)
+                        texture_path = os.path.join(dir, "..", "timg")
+                        print(texture_path)
+                        if os.path.exists(texture_path):
+                            print("found TIMG folder at", texture_path)
+                            self.texture_menu.texture_handler.init_from_folder(texture_path)
                         """if filepath.endswith("_course.bol"):
                             filepath_base = filepath[:-11]
                             additional_files = []

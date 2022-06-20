@@ -20,7 +20,10 @@ class GLTexture(object):
         self.qimage = qimage
 
         self.dirty = True
-
+    
+    def delete(self):
+        glDeleteTextures(1, self.ID)
+    
     def update_texture(self):
         if self.dirty:
             self.gl_init()
@@ -127,6 +130,9 @@ class TextureHandler(object):
 
     def init_from_folder(self, path):
         self.textures = {}
+        for texname, gltex in self.textures_render:
+            gltex.delete()
+        self.textures_render = {}
         self.origin = FOLDER
         self.dirty = True
 
