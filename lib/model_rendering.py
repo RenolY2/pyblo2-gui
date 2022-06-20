@@ -1239,6 +1239,7 @@ class PaneRender(object):
         else:
             #glBegin(GL_TRIANGLE_FAN)
             #glTexCoord2f(0.0, 0.0)
+            glDisable(GL_TEXTURE_2D)
             glBegin(GL_LINE_LOOP)
             if is_selected:
                 glColor3f(1.0, 0.0, 0.0)
