@@ -101,6 +101,8 @@ class LayoutEditor(QMainWindow):
         self._dontselectfromtree = False
         self.setAcceptDrops(True)
 
+        self.layout_file = None
+
     @catch_exception
     def reset(self):
         self.last_position_clicked = []
