@@ -1,9 +1,10 @@
 from functools import partial
 from copy import deepcopy
 
-from PyQt5.QtWidgets import QTreeWidget, QTreeWidgetItem
+from PyQt5.QtWidgets import QTreeWidget, QTreeWidgetItem, QAbstractItemView
 from lib.libbol import BOL, get_full_name
 from PyQt5.QtCore import Qt, pyqtSignal
+from PyQt5.QtGui import QDropEvent, QDragEnterEvent
 from PyQt5.QtWidgets import QAction, QMenu, QMessageBox
 from lib.blo.readblo2 import Information, Pane, Window, Textbox, Picture, ScreenBlo, MAT1, TextureNames, FontNames, Node
 
@@ -127,6 +128,8 @@ class PaneItem(NamedItemWithChildren):
         if self.bound_to.hide:
             name += " (H)"
         self.setText(0, name)
+
+
 
 
 class TextboxItem(PaneItem):
@@ -284,6 +287,90 @@ class LayoutDataTreeView(QTreeWidget):
         self._copied_object = None
         self._moving = False
         self.blo: ScreenBlo = None
+
+        self.setSelectionMode(self.SingleSelection)
+        self.setDragDropMode(QAbstractItemView.DragDrop)
+        self.setDragEnabled(True)
+        self.setAcceptDrops(True)
+        self.setDropIndicatorShown(True)
+        self.setAnimated(True)
+
+    def mimedataToItem(self):
+        mimedata_to_item = {}
+        widgets = []
+        next = [self.layout]
+
+        while len(next) > 0:
+            curr = next.pop(0)
+            mimedata = self.mimeData([curr])
+            mimedata_to_item[mimedata.data('application/x-qabstractitemmodeldatalist')] = curr
+            #print(mimedata, curr)
+
+            for i in range(curr.childCount()):
+                next.append(curr.child(i))
+
+        return mimedata_to_item
+
+    def dragEnterEvent(self, e: QDragEnterEvent):
+        data = e.mimeData().data('application/x-qabstractitemmodeldatalist')
+        mimedata_to_item = self.mimedataToItem()
+        if data in mimedata_to_item:
+            widget = mimedata_to_item[data]
+            if widget.parent() is not None and widget.parent() != self.layout:
+                e.acceptProposedAction()
+
+    def item_is_ancestor_of(self, item, child):
+        while child is not None:
+            if item == child:
+                return True
+            child = child.parent()
+        return False
+
+    def dropEvent(self, e: QDropEvent):
+        #, 'baseact', QtCore.Qt.CopyAction)
+        # if e.keyboardModifiers() & QtCore.Qt.AltModifier:
+        #     #e.setDropAction(QtCore.Qt.CopyAction)
+        #     print('copy')
+        # else:
+        #     #e.setDropAction(QtCore.Qt.MoveAction)
+        #     print("drop")
+        data = e.mimeData().data('application/x-qabstractitemmodeldatalist')
+        mimedata_to_item = self.mimedataToItem()
+        widget = mimedata_to_item[data]
+        index = self.indexAt(e.pos())
+        parent = index.parent()
+        print("Dropping", widget)
+        print(e.source())
+        print("Row/Column", index.row(),  index.column(), parent.row(), parent.column())
+
+        parent_item = self.itemFromIndex(parent)
+        item_drop = self.itemFromIndex(index)
+        print(self.item_is_ancestor_of(widget, item_drop))
+        if item_drop in mimedata_to_item.values():
+            blo_item = widget.bound_to
+            blo_item.parent.child.children.remove(blo_item)
+            if item_drop.parent() == self.layout:
+                new_blo_item = item_drop.bound_to
+                new_blo_item.child.children.insert(0, blo_item)
+                blo_item.parent = new_blo_item
+            else:
+                new_blo_item = parent_item.bound_to
+                new_blo_item.child.children.insert(index.row(), blo_item)
+                blo_item.parent = new_blo_item
+            self.rebuild_tree.emit()
+            e.acceptProposedAction()
+        """ 
+        print(e.dropAction())
+        # super(Tree, self).dropEvent(e)
+        index = self.indexAt(e.pos())
+        parent = index.parent()
+        print('in', index.row())
+        print(e.mimeData().text())
+        print(e.mimeData().formats())
+        print(e.mimeData().data('application/x-qabstractitemmodeldatalist'))
+        text = e.mimeData().data('application/x-qabstractitemmodeldatalist')
+        self.model().dropMimeData(e.mimeData(), e.dropAction(), index.row(), index.column(), parent)"""
+        #e.reject()
 
     def emit_add_item(self, pos):
         item = self.itemAt(pos)
