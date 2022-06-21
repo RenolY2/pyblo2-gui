@@ -91,7 +91,8 @@ class TextureHandler(object):
 
     def init_from_path(self, path):
         texname = os.path.basename(path)
-        with Image.open(path) as img:
+        self.replace_from_path(path, texname)
+        """with Image.open(path) as img:
             img.load()
         img = img.convert("RGBA")
         qimg = QImage(img.tobytes(), img.width, img.height, img.width * 4, QImage.Format_RGBA8888)
@@ -103,8 +104,25 @@ class TextureHandler(object):
             raise exception
         self.textures[texname.lower()] = TextureBundle(img, qimg)
         self.textures_render[texname.lower()] = GLTexture(qimg)
-        self.dirty = True
+        self.dirty = True"""
         return texname
+
+    def replace_from_path(self, path, name):
+        with Image.open(path) as img:
+            img.load()
+        img = img.convert("RGBA")
+        qimg = QImage(img.tobytes(), img.width, img.height, img.width * 4, QImage.Format_RGBA8888)
+        #qimg = QImage(path).convertToFormat(QImage.Format_RGBA8888)
+        if qimg.width() > 1024 or qimg.height() > 1024:
+            exception = ImageTooLarge("Image exceeds 1024x1024!")
+            exception.width = qimg.width()
+            exception.height = qimg.height()
+            raise exception
+        self.textures[name.lower()] = TextureBundle(img, qimg)
+        if name.lower() in self.textures_render:
+            self.textures_render[name.lower()].delete()
+        self.textures_render[name.lower()] = GLTexture(qimg)
+        self.dirty = True
 
     def get_bti(self, name):
         if name.lower() not in self.textures:

@@ -2,7 +2,7 @@ import os
 import json
 from functools import partial
 from collections import OrderedDict
-from PyQt5.QtWidgets import QMessageBox, QScrollArea, QSizePolicy, QWidget, QHBoxLayout, QVBoxLayout, QLabel, QCheckBox, QLineEdit, QComboBox, QSizePolicy
+from PyQt5.QtWidgets import QFileDialog, QPushButton, QMessageBox, QScrollArea, QSizePolicy, QWidget, QHBoxLayout, QVBoxLayout, QLabel, QCheckBox, QLineEdit, QComboBox, QSizePolicy
 from PyQt5.QtGui import QDragEnterEvent, QDropEvent, QIntValidator, QDoubleValidator, QValidator, QPainter, QColor
 from math import inf
 from lib.libbol import (EnemyPoint, EnemyPointGroup, CheckpointGroup, Checkpoint, Route, RoutePoint,
@@ -643,6 +643,9 @@ PALETTE_FORMATS["RGB5A3"]  = PaletteFormat.RGB5A3
 class Texture(DataEditor):
     def setup_widgets(self):
         self.tex = self.add_texture_widget()
+        self.load_texture = QPushButton("Import Texture", self)
+        self.load_texture.pressed.connect(self.handle_load_texture)
+        self.vbox.addWidget(self.load_texture)
         self.a = self.add_label("Dimensions:")
         self.line_edit = QLineEdit(self)
         # line_edit.setValidator(PythonSameNameValidator())
@@ -678,6 +681,16 @@ class Texture(DataEditor):
         if bti is not None:
             self.alphasetting = self.add_integer_input(bti, "alpha_setting", "Alpha Setting", MIN_UNSIGNED_BYTE, MAX_UNSIGNED_BYTE)
             self.format = self.add_dropdown_input(bti, "image_format", "Image Format", FORMATS)
+
+    def handle_load_texture(self):
+        filepath, choosentype = QFileDialog.getOpenFileName(
+            self, "Open File",
+            "",
+            "Image (*.png;*.jpg;*.jfif;);;All files (*)")
+
+        if filepath:
+            name = self.bound_to.bound_to
+            self.main_editor.parent.texture_menu.texture_handler.replace_from_path(filepath, name)
 
     def update_data(self):
         super().update_data()
