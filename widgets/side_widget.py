@@ -21,6 +21,7 @@ class PikminSideWidget(QWidget):
         #self.setLayout(self.verticalLayout)
 
         self.scrollarea = None
+        self.last_scroll_value = 0
 
         font = QFont()
         font.setFamily("Consolas")
@@ -127,9 +128,11 @@ class PikminSideWidget(QWidget):
             self.object_data_edit = None
 
             if self.scrollarea is not None:
+                self.last_scroll_value = self.scrollarea.verticalScrollBar().value()
                 self.scrollarea.deleteLater()
                 del self.scrollarea
                 self.scrollarea = None
+
         self.objectlist = []
 
     def update_info(self):
@@ -150,6 +153,7 @@ class PikminSideWidget(QWidget):
             self.object_data_edit = None
 
             if self.scrollarea is not None:
+                self.last_scroll_value = self.scrollarea.verticalScrollBar().value()
                 self.scrollarea.deleteLater()
                 del self.scrollarea
                 self.scrollarea = None
@@ -164,11 +168,13 @@ class PikminSideWidget(QWidget):
 
                 self.scrollarea = QScrollArea(self)
                 self.scrollarea.setMinimumHeight(self.height() - 300)
+
                 #print(self.parent.height())
                 #self.scrollarea.setMinimumHeight(max(500, self.parent.height()-300))
                 #self.scrollarea.setSizePolicy(QtWidgets.QSizePolicy.Policy.Preferred, QtWidgets.QSizePolicy.Policy.Fixed)
                 self.scrollarea.setWidget(self.object_data_edit)
                 self.verticalLayout.addWidget(self.scrollarea)
+                self.scrollarea.verticalScrollBar().setValue(self.last_scroll_value)
             self.object_data_edit.emit_3d_update.connect(update3d)
 
         self.objectlist = []
