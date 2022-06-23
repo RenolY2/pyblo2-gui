@@ -47,7 +47,9 @@ def read_float(f):
 
 
 def peek_id(f):
-    out = f.peek(4)
+    curr = f.tell()
+    out = f.read(4)
+    f.seek(curr)
     return out[:4]
     
     
