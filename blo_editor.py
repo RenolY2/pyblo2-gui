@@ -77,6 +77,7 @@ class LayoutEditor(QMainWindow):
         self.pathsconfig = self.configuration["default paths"]
         self.editorconfig = self.configuration["editor"]
         self.current_gen_path = None
+        self.last_chosen_type = ""
 
         self.current_coordinates = None
         self.editing_windows = {}
@@ -696,25 +697,60 @@ class LayoutEditor(QMainWindow):
         filepath, choosentype = QFileDialog.getOpenFileName(
             self, "Open File",
             self.pathsconfig["bol"],
-            "BLO files (*.blo);;BLO JSON (*.json);;All files (*)")
-        #;;Archived files (*.arc)
+            "BLO files (*.blo);;BLO JSON (*.json);;Archived BLO (*.arc;*.szs);;All files (*)",
+            self.last_chosen_type)
+
         if filepath:
+            self.last_chosen_type = choosentype
             print("Resetting editor")
             self.reset()
             print("Reset done")
             print("Chosen file type:", choosentype)
-            if False and (choosentype == "Archived files (*.arc)" or filepath.endswith(".arc")):
+            if (choosentype == "Archived BLO (*.arc;*.szs)"
+                    or filepath.endswith(".arc") or filepath.endswith(".szs")):
                 with open(filepath, "rb") as f:
                     try:
-                        self.loaded_archive = Archive.from_file(f)
-                        root_name = self.loaded_archive.root.name
+                        loaded_archive = Archive.from_file(f)
+                        root = loaded_archive.root
+                        try:
+                            print(root.files, root.subdirs)
+                            scrn_dir = root["scrn"]
+                        except FileNotFoundError:
+                            open_error_dialog("'scrn' directory not found, archive probably has no BLO files.", self)
+                        else:
+                            filepaths = list(filter(lambda x: x.endswith(".blo"), [x for x in scrn_dir.files.keys()]))
+                            filepaths.sort()
+                            file, lastpos = FileSelect.open_file_list(self, filepaths, title="Select file")
+                            print("Loaded")
+
+                            blo_file = ScreenBlo.from_file(BytesIO(scrn_dir[file].getvalue()))
+
+                            self.setup_blo_file(blo_file, filepath)
+                            self.layoutdatatreeview.set_objects(blo_file)
+                            self.current_gen_path = filepath
+
+                            self.loaded_archive = loaded_archive
+                            self.loaded_archive_file = file
+
+                            try:
+                                timg_dir = root["timg"]
+                            except FileNotFoundError:
+                                print("No TIMG folder found in archive")
+                            else:
+                                print("found TIMG in archive")
+                                self.texture_menu.texture_handler.init_from_archive_dir(blo_file.root.textures.references,
+                                                                                        timg_dir)
+
+
+
+                        """root_name = self.loaded_archive.root.name
                         coursename = find_file(self.loaded_archive.root, "_course.bol")
                         bol_file = self.loaded_archive[root_name + "/" + coursename]
                         bol_data = BOL.from_file(bol_file)
                         self.setup_bol_file(bol_data, filepath)
                         self.leveldatatreeview.set_objects(bol_data)
                         self.current_gen_path = filepath
-                        self.loaded_archive_file = coursename
+                        self.loaded_archive_file = coursename"""
                     except Exception as error:
                         print("Error appeared while loading:", error)
                         traceback.print_exc()
@@ -722,7 +758,7 @@ class LayoutEditor(QMainWindow):
                         self.loaded_archive = None
                         self.loaded_archive_file = None
                         return
-
+                    """
                     try:
                         additional_files = []
                         bmdfile = get_file_safe(self.loaded_archive.root, "_course.bmd")
@@ -739,7 +775,7 @@ class LayoutEditor(QMainWindow):
                     except Exception as error:
                         print("Error appeared while loading:", error)
                         traceback.print_exc()
-                        open_error_dialog(str(error), self)
+                        open_error_dialog(str(error), self)"""
 
             elif filepath.lower().endswith(".json"):
                 with open(filepath, "r", encoding="utf-8") as f:
@@ -769,7 +805,7 @@ class LayoutEditor(QMainWindow):
                         print(texture_path)
                         if os.path.exists(texture_path):
                             print("found TIMG folder at", texture_path)
-                            self.texture_menu.texture_handler.init_from_folder(texture_path)
+                            self.texture_menu.texture_handler.init_from_folder(blo_file.root.textures.references, texture_path)
                         """if filepath.endswith("_course.bol"):
                             filepath_base = filepath[:-11]
                             additional_files = []

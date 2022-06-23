@@ -138,8 +138,10 @@ class TextureHandler(object):
         del self.textures[name.lower()]
         del self.textures_render[name.lower()]
 
-    def save_to_folder(self, path):
-        for tex, texbundle in self.textures.items():
+    def save_to_folder(self, textures, path):
+        for texname in textures:
+            tex = texname.lower()
+            texbundle = self.textures[tex]
             texbundle: TextureBundle
 
             texbundle.update_bti()
@@ -156,7 +158,7 @@ class TextureHandler(object):
 
         self.marked_for_deletion = []
 
-    def init_from_folder(self, path):
+    def init_from_folder(self, textures, path):
         self.textures = {}
         for texname, gltex in self.textures_render.items():
             self.cleanup.extend(self.textures_render.values())
@@ -164,10 +166,9 @@ class TextureHandler(object):
         self.origin = FOLDER
         self.dirty = True
 
-        for filename in os.listdir(path):
-            if filename.lower().endswith(".bti"):
-                filepath = os.path.join(path, filename)
-
+        for filename in textures:
+            filepath = os.path.join(path, filename.lower())
+            try:
                 with open(filepath, "rb") as f:
                     bti = BTIFile(BytesIO(f.read()))
                     img = bti.render()
@@ -175,6 +176,27 @@ class TextureHandler(object):
 
                     self.textures[filename.lower()] = TextureBundle(img, qimg, bti)
                     self.textures_render[filename.lower()] = GLTexture(qimg)
+            except FileNotFoundError:
+                print("Texture", filepath, "not found")
+                pass
+
+    def init_from_archive_dir(self, textures, rarcdir):
+        self.textures = {}
+        for texname, gltex in self.textures_render.items():
+            self.cleanup.extend(self.textures_render.values())
+        self.textures_render = {}
+        self.origin = RARC
+        self.dirty = True
+        for filename in textures:
+            if filename.lower() in rarcdir.files:
+                file = rarcdir.files[filename.lower()]
+                bti = BTIFile(BytesIO(file.read()))
+                file.seek(0)
+                img = bti.render()
+                qimg = QImage(img.tobytes(), bti.width, bti.height, bti.width * 4, QImage.Format_RGBA8888)
+
+                self.textures[filename.lower()] = TextureBundle(img, qimg, bti)
+                self.textures_render[filename.lower()] = GLTexture(qimg)
 
     def rename(self, old, new):
         old_lo, new_lo = old.lower(), new.lower()
