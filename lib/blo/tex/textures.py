@@ -152,9 +152,27 @@ class TextureHandler(object):
                 texbundle.bti.save_to_file(f)
 
         for tex in self.marked_for_deletion:
-            out_path = os.path.join(path, tex)
+            out_path = os.path.join(path, tex.lower())
             print("Deleting file", out_path)
             os.remove(out_path)
+
+        self.marked_for_deletion = []
+
+    def save_to_archive_folder(self, textures, arcdir):
+        for texname in textures:
+            tex = texname.lower()
+            texbundle = self.textures[tex]
+            texbundle: TextureBundle
+
+            texbundle.update_bti()
+            file = arcdir[tex]
+            file.seek(0)
+            print("saving file", texname)
+            texbundle.bti.save_to_file(file)
+
+        for tex in self.marked_for_deletion:
+            print("Deleting file", tex)
+            del arcdir.files[tex.lower()]
 
         self.marked_for_deletion = []
 
