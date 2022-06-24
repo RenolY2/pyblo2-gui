@@ -825,62 +825,6 @@ class LayoutEditor(QMainWindow):
                         traceback.print_exc()
                         open_error_dialog(str(error), self)
 
-    def load_optional_3d_file(self, additional_files, bmdfile, collisionfile):
-        choice, pos = FileSelect.open_file_list(self, additional_files,
-                                                "Select additional file to load", startat=0)
-
-        if choice.endswith("(3D Model)"):
-            alternative_mesh = load_textured_bmd(bmdfile)
-            with open("lib/temp/temp.obj", "r") as f:
-                verts, faces, normals = py_obj.read_obj(f)
-
-            self.setup_collision(verts, faces, bmdfile, alternative_mesh)
-
-        elif choice.endswith("(3D Collision)"):
-            bco_coll = RacetrackCollision()
-            verts = []
-            faces = []
-
-            with open(collisionfile, "rb") as f:
-                bco_coll.load_file(f)
-
-            for vert in bco_coll.vertices:
-                verts.append(vert)
-
-            for v1, v2, v3, collision_type, rest in bco_coll.triangles:
-                faces.append(((v1 + 1, None), (v2 + 1, None), (v3 + 1, None)))
-            model = CollisionModel(bco_coll)
-            self.setup_collision(verts, faces, collisionfile, alternative_mesh=model)
-
-    def load_optional_3d_file_arc(self, additional_files, bmdfile, collisionfile, arcfilepath):
-        choice, pos = FileSelect.open_file_list(self, additional_files,
-                                                "Select additional file to load", startat=0)
-
-        if choice.endswith("(3D Model)"):
-            with open("lib/temp/temp.bmd", "wb") as f:
-                f.write(bmdfile.getvalue())
-
-            bmdpath = "lib/temp/temp.bmd"
-            alternative_mesh = load_textured_bmd(bmdpath)
-            with open("lib/temp/temp.obj", "r") as f:
-                verts, faces, normals = py_obj.read_obj(f)
-
-            self.setup_collision(verts, faces, arcfilepath, alternative_mesh)
-
-        elif choice.endswith("(3D Collision)"):
-            bco_coll = RacetrackCollision()
-            verts = []
-            faces = []
-
-            bco_coll.load_file(collisionfile)
-
-            for vert in bco_coll.vertices:
-                verts.append(vert)
-
-            for v1, v2, v3, collision_type, rest in bco_coll.triangles:
-                faces.append(((v1 + 1, None), (v2 + 1, None), (v3 + 1, None)))
-            model = CollisionModel(bco_coll)
-            self.setup_collision(verts, faces, arcfilepath, alternative_mesh=model)
 
     def setup_blo_file(self, blo_file:ScreenBlo, filepath):
         self.layout_file = blo_file
@@ -899,16 +843,22 @@ class LayoutEditor(QMainWindow):
     @catch_exception_with_dialog
     def button_save_file(self, *args, **kwargs):
         if self.current_gen_path is not None:
-            if False and self.loaded_archive is not None:
+            if self.loaded_archive is not None:
                 assert self.loaded_archive_file is not None
-                root_name = self.loaded_archive.root.name
-                file = self.loaded_archive[root_name + "/" + self.loaded_archive_file]
-                file.seek(0)
+                root = self.loaded_archive.root
+                scrn = root["scrn"]
+                img = root["timg"]
+                blo_file = scrn[self.loaded_archive_file]
+                blo_file.seek(0)
 
-                self.level_file.write(file)
+                self.layout_file.write(blo_file)
+                self.texture_menu.texture_handler.save_to_archive_folder(self.layout_file.root.textures.references, img)
 
                 with open(self.current_gen_path, "wb") as f:
-                    self.loaded_archive.write_arc(f)
+                    if self.current_gen_path.endswith(".szs"):
+                        self.loaded_archive.write_arc_compressed(f, pad=True)
+                    else:
+                        self.loaded_archive.write_arc(f)
 
                 self.set_has_unsaved_changes(False)
                 self.statusbar.showMessage("Saved to {0}".format(self.current_gen_path))
@@ -936,7 +886,7 @@ class LayoutEditor(QMainWindow):
             "Binary Layout (*.blo);;BLO JSON(*.json);;All files (*)")
         #;;Archived files (*.arc)
         if filepath:
-            if False and (choosentype == "Archived files (*.arc)" or filepath.endswith(".arc")):
+            """if False and (choosentype == "Archived files (*.arc)" or filepath.endswith(".arc")):
                 if self.loaded_archive is None or self.loaded_archive_file is None:
                     with open(filepath, "rb") as f:
                         self.loaded_archive = Archive.from_file(f)
@@ -952,7 +902,25 @@ class LayoutEditor(QMainWindow):
                     self.loaded_archive.write_arc(f)
 
                 self.set_has_unsaved_changes(False)
-                self.statusbar.showMessage("Saved to {0}".format(filepath))
+                self.statusbar.showMessage("Saved to {0}".format(filepath))"""
+            if False and self.loaded_archive is not None:
+                # TODO
+                assert self.loaded_archive_file is not None
+                root = self.loaded_archive.root
+                scrn = root["scrn"]
+                blo_file = scrn[self.loaded_archive_file]
+                blo_file.seek(0)
+
+                self.level_file.write(blo_file)
+
+                with open(self.current_gen_path, "wb") as f:
+                    if self.current_gen_path.endswith(".szs"):
+                        self.loaded_archive.write_arc_compressed(f, pad=True)
+                    else:
+                        self.loaded_archive.write_arc(f)
+
+                self.set_has_unsaved_changes(False)
+                self.statusbar.showMessage("Saved to {0}".format(self.current_gen_path))
             else:
                 if filepath.lower().endswith(".json"):
                     json_data = json.dumps(self.layout_file.serialize(), indent=4, ensure_ascii=False)
