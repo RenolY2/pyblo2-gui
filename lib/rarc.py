@@ -416,12 +416,17 @@ class Archive(object):
     def extract_to(self, path):
         self.root.extract_to(path)
 
-    def write_arc_compressed(self, f):
+    def write_arc_compressed(self, f, pad=False):
         temp = BytesIO()
         self.write_arc(temp)
         temp.seek(0)
 
         compress_fast(temp, f)
+
+        # Pikmin 2 SZS files require extra padding to prevent
+        # the last file in a SZS from getting corrupted and crashing the game
+        if pad:
+            write_pad32(f)
 
     def write_arc(self, f):
         stringtable = StringTable()
