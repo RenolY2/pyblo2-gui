@@ -240,20 +240,20 @@ class LayoutDataTreeView(QTreeWidget):
 
         parent_item = self.itemFromIndex(parent)
         item_drop = self.itemFromIndex(index)
-        print(self.item_is_ancestor_of(widget, item_drop))
-        if item_drop in mimedata_to_item.values():
-            blo_item = widget.bound_to
-            blo_item.parent.child.children.remove(blo_item)
-            if item_drop.parent() == self.layout:
-                new_blo_item = item_drop.bound_to
-                new_blo_item.child.children.insert(0, blo_item)
-                blo_item.parent = new_blo_item
-            else:
-                new_blo_item = parent_item.bound_to
-                new_blo_item.child.children.insert(index.row(), blo_item)
-                blo_item.parent = new_blo_item
-            self.rebuild_tree.emit()
-            e.acceptProposedAction()
+        if not self.item_is_ancestor_of(widget, item_drop):
+            if item_drop in mimedata_to_item.values():
+                blo_item = widget.bound_to
+                blo_item.parent.child.children.remove(blo_item)
+                if item_drop.parent() == self.layout:
+                    new_blo_item = item_drop.bound_to
+                    new_blo_item.child.children.insert(0, blo_item)
+                    blo_item.parent = new_blo_item
+                else:
+                    new_blo_item = parent_item.bound_to
+                    new_blo_item.child.children.insert(index.row(), blo_item)
+                    blo_item.parent = new_blo_item
+                self.rebuild_tree.emit()
+                e.acceptProposedAction()
 
     def emit_add_item(self, pos):
         item = self.itemAt(pos)
