@@ -247,6 +247,8 @@ class Pane(object):
             copied.child = None
         return copied
 
+    def set_default_material(self, mat):
+        pass
     @classmethod
     def new(cls):
         pane = cls()
@@ -481,8 +483,8 @@ class Window(Pane):
     def new(cls):
         window = super(Window, cls).new()
         window.name = "WIN2"
-        window.size = 0
-        window.padding = b"\xFF"*8
+        window.size = 64
+        window.padding = "FF"*8
 
         window.subdata = [{}, {}, {}, {}]
         for i in range(4):
@@ -515,8 +517,9 @@ class Window(Pane):
         window.name = name
 
         window.size = read_uint16(f)
+        assert window.size == 64
         reserved = f.read(6)
-        assert reserved == b"RESERV" or reserved == b"\x00"*7
+        assert reserved == b"RESERV" or reserved == b"\x00"*6
         window.padding = str(hexlify(f.read(8)), encoding="ascii")#.decode("ascii", errors="backslashreplace")
         #assert window.padding == "\xFF"*8
         window.subdata = [{}, {}, {}, {}]
@@ -544,12 +547,17 @@ class Window(Pane):
         assert f.tell() == start+0x90
         return window 
 
+    def set_default_material(self, mat):
+        for i in range(4):
+            self.subdata[i]["material"] = mat.name
+        self.material = mat.name
+
     def write(self, f, mat1):
         start = f.tell()
         write_name(f, self.name)
         write_uint32(f, 0x90)
         super().write(f, mat1) # Write pane
-        write_uint16(f, self.size)
+        write_uint16(f, 64)
 
         f.write(b"RESERV")
         f.write(unhexlify(self.padding))
@@ -624,9 +632,9 @@ class Picture(Pane):
     def new(cls):
         picture = super(Picture, cls).new()
         picture.name = "PIC2"
-        picture.size = 0
+        picture.size = 48
         picture.unk_index = 0
-        picture.material = 0
+        picture.material = ""
         picture._material = None
 
         color1 = {}
@@ -637,17 +645,21 @@ class Picture(Pane):
         color2["unk1"] = 0
         color2["unk2"] = 0
 
-        color1["unknowns"] = [0 for x in range(4)]
-        color2["unknowns"] = [0 for x in range(4)]
-        color1["col1"] = [0 for x in range(4)]
-        color1["col2"] = [0 for x in range(4)]
-        color2["col1"] = [0 for x in range(4)]
-        color2["col2"] = [0 for x in range(4)]
+        color1["unknowns"] = [0, 0, 256, 0]
+        color2["unknowns"] = [256, 256, 256, 256]
+        color1["col1"] = [255 for x in range(4)]
+        color1["col2"] = [255 for x in range(4)]
+        color2["col1"] = [255 for x in range(4)]
+        color2["col2"] = [255 for x in range(4)]
 
         picture.color1 = color1
         picture.color2 = color2
 
         return picture
+
+    def set_default_material(self, mat):
+        self.material = mat.name
+        self._material = mat
 
     @classmethod
     def from_file(cls, f, mat1):
@@ -660,8 +672,10 @@ class Picture(Pane):
         picture.name = name
 
         picture.size = read_uint16(f)
+        assert picture.size == 48
         picture.unk_index = read_uint16(f)
         mat_index = read_uint16(f)
+
         picture.material = mat1.materials[mat_index].name
         picture._material = mat1.materials[mat_index]
 
@@ -693,9 +707,9 @@ class Picture(Pane):
         write_name(f, self.name)
         write_uint32(f, 0x80)
         super().write(f, mat1)  # Write pane
-        write_uint16(f, self.size)
+        write_uint16(f, 48)
         write_uint16(f, self.unk_index)
-        write_uint16(f, mat1.get_mat_index(self.material))
+        write_int16(f, mat1.get_mat_index(self.material))
         f.write(b"RE")
         write_uint16(f, self.color1["unk1"])
         write_uint16(f, self.color1["unk2"])
@@ -759,7 +773,7 @@ class Textbox(Pane):
         textbox = super(Textbox, cls).new()
         textbox.size = 0
         textbox.unk1 = 0
-        textbox.material = 0
+        textbox.material = ""
         textbox.signedunk3 = 0
         textbox.signedunk4 = 0
         textbox.unk5 = 0
@@ -773,6 +787,10 @@ class Textbox(Pane):
         textbox.text = ""
 
         return textbox
+
+    def set_default_material(self, mat):
+        self.material = mat.name
+        self._material = mat
 
     @classmethod
     def from_file(cls, f, mat1):
@@ -813,7 +831,7 @@ class Textbox(Pane):
         write_name(f, self.name)
         write_uint32(f, 0x70)
         super().write(f, mat1)
-
+        sub_size_ref = f.tell()
         write_uint16(f, self.size)
         write_uint16(f, self.unk1)
         write_uint16(f, mat1.get_mat_index(self.material))
@@ -838,6 +856,10 @@ class Textbox(Pane):
         curr = f.tell()
         f.seek(start+4)
         write_uint32(f, curr-start)
+
+        f.seek(sub_size_ref)
+        write_uint32(f, curr-sub_size_ref)
+
         f.seek(curr)
     
     def serialize(self):

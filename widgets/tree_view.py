@@ -296,7 +296,9 @@ class LayoutDataTreeView(QTreeWidget):
     def handle_add_item(self, pos, itemcls):
         item = self.itemAt(pos)
         if isinstance(item, (PaneItem,)):
-            item.bound_to.add_child(itemcls.new())
+            pane = itemcls.new()
+            pane.set_default_material(self.blo.root.materials.materials[0])
+            item.bound_to.add_child(pane)
             self.rebuild_tree.emit()
 
     def handle_duplicate(self, pos):
@@ -306,7 +308,7 @@ class LayoutDataTreeView(QTreeWidget):
 
             num = 0
             new_name = "{0}({1})".format(mat.name, num)
-            while self.blo.root.materials.get_mat_index(new_name) is not None:
+            while self.blo.root.materials.get_mat_index(new_name) != -1:
                 num += 1
                 new_name = "{0}({1})".format(mat.name, num)
 

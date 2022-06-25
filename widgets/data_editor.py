@@ -1187,10 +1187,11 @@ class PictureEdit(PaneEdit):
         self.color_1.update()
         self.color_2.update()
 
-        for i in range(self.material.count()):
-            if self.bound_to._material.name == self.material.itemText(i):
-                self.material.setCurrentIndex(i)
-                break
+        if self.bound_to._material is not None:
+            for i in range(self.material.count()):
+                if self.bound_to._material.name == self.material.itemText(i):
+                    self.material.setCurrentIndex(i)
+                    break
 
     def update_name(self):
         super().update_name()

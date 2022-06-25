@@ -500,7 +500,7 @@ class MAT1(object):
             if v.name == name:
                 return i
 
-        return None
+        return -1
 
     @classmethod
     def from_file(cls, f):
