@@ -1093,8 +1093,8 @@ class PaneEdit(DataEditor):
 class WindowEditor(PaneEdit):
     def setup_widgets(self):
         super().setup_widgets()
-        self.size = self.add_updater(self.add_integer_input, self.bound_to, "size", "Size",
-                                     -MIN_UNSIGNED_SHORT, +MAX_UNSIGNED_SHORT)
+        #self.size = self.add_updater(self.add_integer_input, self.bound_to, "size", "Size",
+        #                             -MIN_UNSIGNED_SHORT, +MAX_UNSIGNED_SHORT)
 
         self.unkbyte1 = self.add_updater(self.add_integer_input, self.bound_to, "unkbyte1", "Unk 1",
                                      -MIN_UNSIGNED_BYTE, +MAX_UNSIGNED_BYTE)
@@ -1136,7 +1136,7 @@ class WindowEditor(PaneEdit):
 class TextboxEditor(PaneEdit):
     def setup_widgets(self):
         super().setup_widgets()
-        self.size = self.add_updater(self.add_integer_input, self.bound_to, "size", "Size", -MIN_UNSIGNED_SHORT, +MAX_UNSIGNED_SHORT)
+        #self.size = self.add_updater(self.add_integer_input, self.bound_to, "size", "Size", -MIN_UNSIGNED_SHORT, +MAX_UNSIGNED_SHORT)
         self.unk_1 = self.add_updater(self.add_decimal_input, self.bound_to, "unk1", "Unk 1", -inf, +inf)
         self.material, self.mat_dict = self.add_material_combobox()
         self.signedunk3 = self.add_updater(self.add_integer_input, self.bound_to, "signedunk3", "Unk 3", -MIN_SIGNED_SHORT, +MAX_SIGNED_SHORT)
@@ -1169,7 +1169,7 @@ class TextboxEditor(PaneEdit):
 class PictureEdit(PaneEdit):
     def setup_widgets(self):
         super().setup_widgets()
-        self.size = self.add_updater(self.add_integer_input, self.bound_to, "size", "Size", -MIN_UNSIGNED_SHORT, +MAX_UNSIGNED_SHORT)
+        #self.size = self.add_updater(self.add_integer_input, self.bound_to, "size", "Size", -MIN_UNSIGNED_SHORT, +MAX_UNSIGNED_SHORT)
         self.unk_index = self.add_updater(self.add_decimal_input, self.bound_to, "unk_index", "Unk Index", -inf, +inf)
 
 
