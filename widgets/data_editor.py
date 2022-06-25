@@ -956,7 +956,7 @@ class PictureColorEditor(SubEditor):
 
         self.unknowns = self.add_multiple_integer_input_list(
             [dict_setter_int_list(self.color, "unknowns", i) for i in range(4)], 4,
-            "Unknowns", -MIN_UNSIGNED_SHORT, MAX_UNSIGNED_SHORT)
+            "UV Coordinates (L/R)", -MIN_UNSIGNED_SHORT, MAX_UNSIGNED_SHORT)
 
         self.color1 = self.add_multiple_integer_input_list(
             [dict_setter_int_list(self.color, "col1", i) for i in range(4)], 4,
@@ -1065,7 +1065,7 @@ class PaneEdit(DataEditor):
         self.scale_y = self.add_updater(self.add_decimal_input, self.bound_to, "p_scale_y", "Y Scale", -inf, +inf)
 
         self.rotation = self.add_updater(self.add_decimal_input, self.bound_to, "p_rotation", "Rotation", -inf, +inf)
-        self.unk1 = self.add_updater(self.add_integer_input, self.bound_to, "p_unk1", "Unknown 1", -MIN_UNSIGNED_SHORT, +MAX_UNSIGNED_SHORT)
+        self.unk1 = self.add_updater(self.add_integer_input, self.bound_to, "p_unk1", "BCK Animation Index", -MIN_UNSIGNED_SHORT, +MAX_UNSIGNED_SHORT)
         self.unk2 = self.add_updater(self.add_decimal_input, self.bound_to, "p_unk4", "Unknown 4", -inf, +inf)
 
     def update_data(self):
@@ -1144,8 +1144,8 @@ class TextboxEditor(PaneEdit):
                                            +MAX_SIGNED_SHORT)
 
         self.unk5 = self.add_updater(self.add_integer_input, self.bound_to, "unk5", "Unk 5", -MIN_UNSIGNED_SHORT, +MAX_UNSIGNED_SHORT)
-        self.unk6 = self.add_updater(self.add_integer_input, self.bound_to, "unk6", "Unk 6", -MIN_UNSIGNED_SHORT, +MAX_UNSIGNED_SHORT)
-        self.unk7 = self.add_updater(self.add_integer_input, self.bound_to, "unk7byte", "Unk 7", -MIN_UNSIGNED_BYTE, +MAX_UNSIGNED_BYTE)
+        self.unk6 = self.add_updater(self.add_integer_input, self.bound_to, "unk6", "Font Width", -MIN_UNSIGNED_SHORT, +MAX_UNSIGNED_SHORT)
+        self.unk7 = self.add_updater(self.add_integer_input, self.bound_to, "unk7byte", "Font Height", -MIN_UNSIGNED_BYTE, +MAX_UNSIGNED_BYTE)
         self.unk8 = self.add_updater(self.add_integer_input, self.bound_to, "unk8byte", "Unk 8", -MIN_UNSIGNED_BYTE, +MAX_UNSIGNED_BYTE)
 
         self.color_top = ColorEdit(self.bound_to.color_top)
@@ -1176,10 +1176,10 @@ class PictureEdit(PaneEdit):
         #self.material = self.add_updater(self.add_text_input_unlimited, "material", "Material")
         self.material, self.mat_dict = self.add_material_combobox()
 
-        self.add_label("Color Top")
+        self.add_label("Top Settings")
         self.color_1 = self.add_widget(PictureColorEditor(self.bound_to.color1))
 
-        self.add_label("Color Bottom")
+        self.add_label("Bottom Settings")
         self.color_2 = self.add_widget(PictureColorEditor(self.bound_to.color2))
 
     def update_data(self):
