@@ -475,7 +475,7 @@ class Window(Pane):
         copied = copy(self)
         copied.parent = parent
         copied.subdata = deepcopy(self.subdata)
-        if children:
+        if children and self.child is not None:
             copied.child = self.child.copy(children, copied)
         return copied
 
@@ -764,8 +764,9 @@ class Textbox(Pane):
         copied.color_top = deepcopy(self.color_top)
         copied.color_bottom = deepcopy(self.color_bottom)
 
-        if children:
+        if children and self.child is not None:
             copied.child = self.child.copy(children, copied)
+
         return copied
 
     @classmethod
