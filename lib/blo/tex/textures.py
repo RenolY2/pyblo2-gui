@@ -4,6 +4,7 @@ from PyQt5.QtGui import QImage
 from io import BytesIO
 from lib.blo.tex.bti import BTIFile
 from PIL import Image
+from lib.rarc import File
 
 from widgets.editor_widgets import open_error_dialog
 FOLDER = "Folder"
@@ -165,7 +166,12 @@ class TextureHandler(object):
             texbundle: TextureBundle
 
             texbundle.update_bti()
-            file = arcdir[tex]
+            try:
+                file = arcdir[tex]
+            except FileNotFoundError:
+                file = File(tex)
+                arcdir.files[tex] = file
+
             file.seek(0)
             print("saving file", texname)
             texbundle.bti.save_to_file(file)

@@ -741,16 +741,6 @@ class LayoutEditor(QMainWindow):
                                 self.texture_menu.texture_handler.init_from_archive_dir(blo_file.root.textures.references,
                                                                                         timg_dir)
 
-
-
-                        """root_name = self.loaded_archive.root.name
-                        coursename = find_file(self.loaded_archive.root, "_course.bol")
-                        bol_file = self.loaded_archive[root_name + "/" + coursename]
-                        bol_data = BOL.from_file(bol_file)
-                        self.setup_bol_file(bol_data, filepath)
-                        self.leveldatatreeview.set_objects(bol_data)
-                        self.current_gen_path = filepath
-                        self.loaded_archive_file = coursename"""
                     except Exception as error:
                         print("Error appeared while loading:", error)
                         traceback.print_exc()
@@ -758,28 +748,12 @@ class LayoutEditor(QMainWindow):
                         self.loaded_archive = None
                         self.loaded_archive_file = None
                         return
-                    """
-                    try:
-                        additional_files = []
-                        bmdfile = get_file_safe(self.loaded_archive.root, "_course.bmd")
-                        collisionfile = get_file_safe(self.loaded_archive.root, "_course.bco")
-
-                        if bmdfile is not None:
-                            additional_files.append(os.path.basename(bmdfile.name) + " (3D Model)")
-                        if collisionfile is not None:
-                            additional_files.append(os.path.basename(collisionfile.name) + " (3D Collision)")
-
-                        if len(additional_files) > 0:
-                            additional_files.append("None")
-                            self.load_optional_3d_file_arc(additional_files, bmdfile, collisionfile, filepath)
-                    except Exception as error:
-                        print("Error appeared while loading:", error)
-                        traceback.print_exc()
-                        open_error_dialog(str(error), self)"""
 
             elif filepath.lower().endswith(".json"):
                 with open(filepath, "r", encoding="utf-8") as f:
                     try:
+                        self.loaded_archive_file = None
+                        self.loaded_archive = None
                         json_data = json.load(f)
                         blo_file = ScreenBlo.deserialize(json_data)
 
@@ -794,6 +768,8 @@ class LayoutEditor(QMainWindow):
             else:
                 with open(filepath, "rb") as f:
                     try:
+                        self.loaded_archive_file = None
+                        self.loaded_archive = None
                         blo_file = ScreenBlo.from_file(f)
 
                         self.setup_blo_file(blo_file, filepath)
@@ -806,25 +782,11 @@ class LayoutEditor(QMainWindow):
                         if os.path.exists(texture_path):
                             print("found TIMG folder at", texture_path)
                             self.texture_menu.texture_handler.init_from_folder(blo_file.root.textures.references, texture_path)
-                        """if filepath.endswith("_course.bol"):
-                            filepath_base = filepath[:-11]
-                            additional_files = []
-                            bmdfile = filepath_base+"_course.bmd"
-                            collisionfile = filepath_base+"_course.bco"
-                            if os.path.exists(bmdfile):
-                                additional_files.append(os.path.basename(bmdfile) + " (3D Model)")
-                            if os.path.exists(collisionfile):
-                                additional_files.append(os.path.basename(collisionfile) + " (3D Collision)")
-
-                            if len(additional_files) > 0:
-                                additional_files.append("None")
-                                self.load_optional_3d_file(additional_files, bmdfile, collisionfile)"""
 
                     except Exception as error:
                         print("Error appeared while loading:", error)
                         traceback.print_exc()
                         open_error_dialog(str(error), self)
-
 
     def setup_blo_file(self, blo_file:ScreenBlo, filepath):
         self.layout_file = blo_file
@@ -847,12 +809,18 @@ class LayoutEditor(QMainWindow):
                 assert self.loaded_archive_file is not None
                 root = self.loaded_archive.root
                 scrn = root["scrn"]
-                img = root["timg"]
+
                 blo_file = scrn[self.loaded_archive_file]
                 blo_file.seek(0)
 
                 self.layout_file.write(blo_file)
-                self.texture_menu.texture_handler.save_to_archive_folder(self.layout_file.root.textures.references, img)
+                try:
+                    img = root["timg"]
+                except FileNotFoundError:
+                    print("No timg folder found in destination archive")
+                else:
+                    self.texture_menu.texture_handler.save_to_archive_folder(self.layout_file.root.textures.references,
+                                                                             img)
 
                 with open(self.current_gen_path, "wb") as f:
                     if self.current_gen_path.endswith(".szs"):
