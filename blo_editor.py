@@ -810,10 +810,13 @@ class LayoutEditor(QMainWindow):
                 root = self.loaded_archive.root
                 scrn = root["scrn"]
 
+                tmp = BytesIO()
+                self.layout_file.write(tmp)
+
                 blo_file = scrn[self.loaded_archive_file]
                 blo_file.seek(0)
-
-                self.layout_file.write(blo_file)
+                blo_file.write(tmp.getvalue())
+                
                 try:
                     img = root["timg"]
                 except FileNotFoundError:
@@ -838,8 +841,10 @@ class LayoutEditor(QMainWindow):
                     with open(self.current_gen_path, "w", encoding="utf-8") as f:
                         f.write(json_data)
                 else:
+                    tmp = BytesIO()
+                    self.layout_file.write(tmp)
                     with open(self.current_gen_path, "wb") as f:
-                        self.layout_file.write(f)
+                        self.layout_file.write(tmp.getvalue())
                 self.set_has_unsaved_changes(False)
 
                 self.statusbar.showMessage("Saved to {0}".format(self.current_gen_path))
