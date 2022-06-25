@@ -132,7 +132,7 @@ class TextureHandler(object):
             return self.textures[name.lower()].bti
 
     def update_format(self, name):
-        self.textures[name.lower()].bti.dirty = True
+        self.textures[name.lower()].dirty = True
 
     def delete_texture(self, name):
         self.marked_for_deletion.append(name.lower())

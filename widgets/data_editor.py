@@ -681,6 +681,11 @@ class Texture(DataEditor):
         if bti is not None:
             self.alphasetting = self.add_integer_input(bti, "alpha_setting", "Alpha Setting", MIN_UNSIGNED_BYTE, MAX_UNSIGNED_BYTE)
             self.format = self.add_dropdown_input(bti, "image_format", "Image Format", FORMATS)
+            self.format.currentIndexChanged.connect(self.update_dirty_status)
+
+    def update_dirty_status(self):
+        texture = self.bound_to.bound_to
+        self.main_editor.parent.texture_menu.texture_handler.update_format(texture)
 
     def handle_load_texture(self):
         filepath, choosentype = QFileDialog.getOpenFileName(
