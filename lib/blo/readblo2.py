@@ -486,7 +486,7 @@ class Window(Pane):
 
         window.subdata = [{}, {}, {}, {}]
         for i in range(4):
-            window.subdata[i]["material"] = -1
+            window.subdata[i]["material"] = ""
             window.subdata[i]["sub_unk2"] = 0
             window.subdata[i]["sub_unk3"] = 0
 
