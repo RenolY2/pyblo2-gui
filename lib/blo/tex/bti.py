@@ -194,6 +194,12 @@ class BTIFile(BTI): # For standalone .bti files (as opposed to textures embedded
     self.dirty = True
 
   @classmethod
+  def create_placeholder(cls):
+    data = BytesIO(BASE_HEADER)
+    btifile = cls(data)
+    return btifile
+
+  @classmethod
   def create_from_image(cls, image):
     data = BytesIO(BASE_HEADER)
     btifile = cls(data)

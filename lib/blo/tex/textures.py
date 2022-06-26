@@ -119,7 +119,8 @@ class TextureHandler(object):
             exception.width = qimg.width()
             exception.height = qimg.height()
             raise exception
-        self.textures[name.lower()] = TextureBundle(img, qimg)
+        bti = BTIFile.create_placeholder()
+        self.textures[name.lower()] = TextureBundle(img, qimg, bti)
         if name.lower() in self.textures_render:
             self.textures_render[name.lower()].delete()
         self.textures_render[name.lower()] = GLTexture(qimg)
