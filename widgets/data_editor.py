@@ -1170,7 +1170,7 @@ class PictureEdit(PaneEdit):
     def setup_widgets(self):
         super().setup_widgets()
         #self.size = self.add_updater(self.add_integer_input, self.bound_to, "size", "Size", -MIN_UNSIGNED_SHORT, +MAX_UNSIGNED_SHORT)
-        self.unk_index = self.add_updater(self.add_decimal_input, self.bound_to, "unk_index", "Unk Index", -inf, +inf)
+        self.unk_index = self.add_updater(self.add_integer_input, self.bound_to, "unk_index", "Unk Index", -MIN_UNSIGNED_SHORT, +MAX_UNSIGNED_SHORT)
 
 
         #self.material = self.add_updater(self.add_text_input_unlimited, "material", "Material")
