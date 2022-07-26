@@ -1,0 +1,32 @@
+QWidget {
+  background-color: #382e1e;
+  border: 1px solid black;
+  padding: 0px;
+  color: #d28728;
+  selection-background-color: #346792;
+  selection-color: #E0E1E3;
+}
+QHeaderView::section {
+    background-color: #2a211c;
+    border: 1px solid black;
+}
+QTableView QTableCornerButton::section {
+    background: #382e1e;
+	border: 2px outset black;
+}
+QTableView {
+	gridline-color: black;
+}
+QTableView::item:hover {
+	background: #707070;
+}
+QPushButton {
+	border: 1px solid black;
+	color: #d28728;
+}
+QPushButton:disabled {
+	background: #2a2421;
+}	
+QPushButton:enabled {
+	background: #2a211c;
+}	

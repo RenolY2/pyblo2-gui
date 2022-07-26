@@ -193,14 +193,19 @@ class ObjectModels(object):
     def render_pane(self, root, pane, material, selected, texture_handler):
         self.pane_render.render_pane(root, pane, material, pane in selected, texture_handler)
 
-    def render_node(self, root, node, materials, selected, vismenu, texture_handler, highlight_pass):
+    def render_node(self, root, node, materials, selected, vismenu, texture_handler, transforms, highlight_pass):
         for child in node.children:
             if isinstance(child, Pane):
                 glPushMatrix()
-
-                glTranslatef(child.p_offset_x, -child.p_offset_y, 0)
-                glRotatef(child.p_rotation, 0, 0, 1)
-                glScalef(child.p_scale_x, child.p_scale_y, 1.0)
+                if child in transforms:
+                    offsetx, offsety, scalex, scaley, rotate = transforms[child]
+                    glTranslatef(offsetx, -offsety, 0)
+                    glRotatef(rotate, 0, 0, 1)
+                    glScalef(scalex, scaley, 1.0)
+                else:
+                    glTranslatef(child.p_offset_x, -child.p_offset_y, 0)
+                    glRotatef(child.p_rotation, 0, 0, 1)
+                    glScalef(child.p_scale_x, child.p_scale_y, 1.0)
 
                 if highlight_pass and child in selected:
                     self.render_pane(root, child, materials, selected, texture_handler)
@@ -214,19 +219,27 @@ class ObjectModels(object):
                         self.render_pane(root, child, materials, selected, texture_handler)
 
                 if child.child is not None:
-                    self.render_node(root, child.child, materials, selected, vismenu, texture_handler, highlight_pass)
+                    self.render_node(root, child.child, materials, selected, vismenu, texture_handler, transforms, highlight_pass)
 
                 glPopMatrix()
 
-    def precompute_transforms(self, node, transform=None, transforms=None):
+    def precompute_transforms(self, node, bck, frame_time, transform=None, transforms=None, anim_transforms=None):
         if transforms is None:
             transforms = {}
+        if anim_transforms is None:
+            anim_transforms = {}
 
         for child in node.children:
             if isinstance(child, Pane):
-                matrix = Matrix4x4.from_j2d_srt(child.p_offset_x, child.p_offset_y,
-                                                child.p_scale_x, child.p_scale_y,
-                                                radians(child.p_rotation))
+                if child.animated and bck is not None and child.p_bckindex < len(bck.animations):
+                    anim = bck.animations[child.p_bckindex]
+                    values = anim.interpolate(frame_time)
+                    matrix = Matrix4x4.from_j2d_srt(*values)
+                    anim_transforms[child] = values
+                else:
+                    matrix = Matrix4x4.from_j2d_srt(child.p_offset_x, child.p_offset_y,
+                                                    child.p_scale_x, child.p_scale_y,
+                                                    radians(child.p_rotation))
                 if transform is not None:
                     matrix = transform.multiply_mat4(matrix)
                 # print("Matrix for", child.p_panename, matrix)
@@ -234,13 +247,13 @@ class ObjectModels(object):
                 transforms[child] = matrix
 
                 if child.child is not None:
-                    self.precompute_transforms(child.child, matrix, transforms)
+                    self.precompute_transforms(child.child, bck, frame_time, matrix, transforms, anim_transforms)
 
-        return transforms
+        return transforms, anim_transforms
 
-    def render_hierarchy(self, screen: ScreenBlo, selected, vismenu, texture_handler):
-        self.render_node(screen, screen.root, None, selected, vismenu, texture_handler, highlight_pass=False)
-        self.render_node(screen, screen.root, None, selected, vismenu, texture_handler, highlight_pass=True)
+    def render_hierarchy(self, screen: ScreenBlo, selected, vismenu, texture_handler, transform):
+        self.render_node(screen, screen.root, None, selected, vismenu, texture_handler, transform, highlight_pass=False)
+        self.render_node(screen, screen.root, None, selected, vismenu, texture_handler, transform, highlight_pass=True)
 
     def collision_detect_node(self, node, point, vismenu, transforms):#transform: Matrix4x4 = None):
         results = []

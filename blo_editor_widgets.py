@@ -230,6 +230,10 @@ class BolMapViewer(QtWidgets.QOpenGLWidget):
 
         self.texture_handler = None
 
+        self.animation_time = 0.0
+        self.animation_duration = 1000.0
+        self.animation_running = False
+
     @catch_exception_with_dialog
     def initializeGL(self):
         self.rotation_visualizer = glGenLists(1)
@@ -304,7 +308,27 @@ class BolMapViewer(QtWidgets.QOpenGLWidget):
         else:
             self.handle_arrowkey_scroll_3d(timedelta)
 
+        if self.animation_running:
+            self.do_redraw()
+            self.animation_time += timedelta
+            bckmenu = self.main_program.animation_menu
+
+            if bckmenu.anim_editor is not None and bckmenu.anim_editor.animation is not None:
+                duration = bckmenu.anim_editor.animation.duration
+            else:
+                duration = 1000
+            fps = self.main_program.pik_control.bckcontrols.fps
+            if self.animation_time*fps > duration:
+                self.animation_time = 0.0
+                self.main_program.pik_control.bckcontrols.frame_count.setValue(0)
+
         if diff > 1 / 60.0:
+            if self.animation_running:
+                fps = self.main_program.pik_control.bckcontrols.fps
+                frameval = int(self.animation_time * fps)
+
+                self.main_program.pik_control.bckcontrols.frame_count.setValue(frameval)
+
             if self._frame_invalid:
                 self.update()
                 self._lastrendertime = now
@@ -606,9 +630,35 @@ class BolMapViewer(QtWidgets.QOpenGLWidget):
 
         #del self.transforms
         if self.layout_file is not None:
-            element_transforms = self.models.precompute_transforms(self.layout_file.root)
+            bckmenu = self.main_program.animation_menu
+            if bckmenu.anim_editor is not None and bckmenu.anim_editor.animation is not None:
+                bck = bckmenu.anim_editor.animation
+                fps = self.main_program.pik_control.bckcontrols.fps
+                if fps == 0:
+                    fps = 1
+                frame_time = int(self.animation_time * fps)
+                element_transforms, anim_transforms = self.models.precompute_transforms(self.layout_file.root,
+                                                                                        bck, frame_time)
+            else:
+                element_transforms, anim_transforms = self.models.precompute_transforms(self.layout_file.root,
+                                                                                        None, 0)
+
+
+
 
             self.transforms = element_transforms
+
+        """
+        bckmenu = self.main_program.animation_menu
+        if bckmenu.anim_editor is not None and bckmenu.anim_editor.animation is not None:
+
+            for pane in self.transforms.keys():
+                if pane.animated:
+                    if pane.p_bckindex < len(bck.animations):
+                        anim = bck.animations[pane.p_bckindex]
+                        values = anim.interpolate(frame_time)
+                        self.transforms[pane] = Matrix4x4.from_j2d_srt(*values)"""
+
 
         while len(self.selectionqueue) > 0:
             print(len(self.selectionqueue))
@@ -619,109 +669,12 @@ class BolMapViewer(QtWidgets.QOpenGLWidget):
             click_y = height - click_y
             hit = 0xFF
 
-            #print("received request", do_gizmo)
-
-            """if clickwidth == 1 and clickheight == 1:
-                self.gizmo.render_collision_check(gizmo_scale, is3d=self.mode == MODE_3D)
-                pixels = glReadPixels(click_x, click_y, clickwidth, clickheight, GL_RGB, GL_UNSIGNED_BYTE)
-                #print(pixels)
-                hit = pixels[2]
-                if do_gizmo and hit != 0xFF:
-                    self.gizmo.run_callback(hit)
-                    self.gizmo.was_hit_at_all = True
-                #if hit != 0xFF and do_:"""
 
             glClearColor(1.0, 1.0, 1.0, 1.0)
 
             if self.layout_file is not None:# and hit == 0xFF and not do_gizmo:
                 #objects = self.pikmin_generators.generators
                 glDisable(GL_TEXTURE_2D)
-                #for i, pikminobject in enumerate(objects):
-                #    self.models.render_object_coloredid(pikminobject, i)
-                """if self.minimap is not None and vismenu.minimap.is_selectable() and self.minimap.is_available():
-                    objlist.append((self.minimap, self.minimap.corner1, self.minimap.corner2, None))
-                    self.models.render_generic_position_colored_id(self.minimap.corner1, id + (offset) * 4)
-                    self.models.render_generic_position_colored_id(self.minimap.corner2, id + (offset) * 4 + 1)
-                    offset = 1
-
-                if vismenu.enemyroute.is_selectable():
-                    for i, obj in enumerate(self.level_file.enemypointgroups.points()):
-                        objlist.append((obj, obj.position, None, None))
-                        self.models.render_generic_position_colored_id(obj.position, id + (offset+i) * 4)
-
-                offset = len(objlist)
-
-                if vismenu.itemroutes.is_selectable():
-                    i = 0
-                    for route in self.level_file.routes:
-                        for obj in route.points:
-                            objlist.append((obj, obj.position, None, None))
-                            self.models.render_generic_position_colored_id(obj.position, id + (offset+i) * 4)
-                            i += 1
-
-                offset = len(objlist)
-
-                if vismenu.checkpoints.is_selectable():
-                    for i, obj in enumerate(self.level_file.objects_with_2positions()):
-                        objlist.append((obj, obj.start, obj.end, None))
-                        self.models.render_generic_position_colored_id(obj.start, id+(offset+i)*4)
-                        self.models.render_generic_position_colored_id(obj.end, id+(offset+i)*4 + 1)
-
-                for is_selectable, collection in (
-                        (vismenu.objects.is_selectable(), self.level_file.objects.objects),
-                        (vismenu.kartstartpoints.is_selectable(), self.level_file.kartpoints.positions),
-                        (vismenu.areas.is_selectable(), self.level_file.areas.areas),
-                        (vismenu.cameras.is_selectable(), self.level_file.cameras),
-                        (vismenu.respawnpoints.is_selectable(), self.level_file.respawnpoints)
-                        ):
-                    offset = len(objlist)
-                    if not is_selectable:
-                        continue
-
-                    for i, obj in enumerate(collection):
-                        objlist.append((obj, obj.position, None, obj.rotation))
-                        self.models.render_generic_position_rotation_colored_id(obj.position, obj.rotation,
-                                                                                id + (offset + i) * 4 + 2)
-                """
-
-                """pixels = glReadPixels(click_x, click_y, clickwidth, clickheight, GL_RGB, GL_UNSIGNED_BYTE)
-                #print(pixels, click_x, click_y, clickwidth, clickheight)
-                selected = {}
-                selected_positions = []
-                selected_rotations = []
-                #for i in range(0, clickwidth*clickheight, 4):
-                start = default_timer()
-
-                for i in range(0, clickwidth*clickheight, 13):
-                        # | (pixels[i*3+0] << 16)
-                        if pixels[i * 3] != 0xFF:
-                            upper = pixels[i * 3] & 0x0F
-                            index = (upper << 16)| (pixels[i*3 + 1] << 8) | pixels[i*3 + 2]
-                            if index & 0b1:
-                                # second position
-                                entry = objlist[index//4]
-                                if entry[0] not in selected:
-                                    selected[entry[0]] = 2
-
-                                    selected_positions.append(entry[2])
-                                elif selected[entry[0]] == 1:
-                                    selected[entry[0]] = 3
-                                    selected_positions.append(entry[2])
-                            else:
-                                entry = objlist[index // 4]
-                                if entry[0] not in selected:
-                                    selected[entry[0]] = 1
-
-                                    selected_positions.append(entry[1])
-
-                                    if index & 0b10:
-                                        print("found a rotation")
-                                        selected_rotations.append(entry[3])
-
-                                elif selected[entry[0]] == 2:
-                                    selected[entry[0]] = 3
-                                    selected_positions.append(entry[1])"""
-
                 #print("select time taken", default_timer() - start)
                 #print("result:", selected)
                 selected_candidates = self.models.collision_detect_node(
@@ -817,7 +770,8 @@ class BolMapViewer(QtWidgets.QOpenGLWidget):
 
             vismenu = self.visibility_menu
 
-            self.models.render_hierarchy(self.layout_file, select_optimize, vismenu, self.texture_handler)
+            self.models.render_hierarchy(self.layout_file, select_optimize, vismenu, self.texture_handler,
+                                         anim_transforms)
 
             #glDisable(GL_TEXTURE_2D)
 

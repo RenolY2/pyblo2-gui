@@ -6,6 +6,13 @@ import PyQt5.QtCore as QtCore
 from PyQt5.QtCore import QSize, pyqtSignal, QPoint, QRect
 from PyQt5.QtCore import Qt
 from widgets.data_editor import choose_data_editor, Texture
+from widgets.bckwidget.bckmenu import BCKControls
+from widgets import tree_view
+
+class SideHolder(QWidget):
+    def __init__(self, *args, **kwargs):
+        super().__init__()
+        self.side = None
 
 
 class PikminSideWidget(QWidget):
@@ -31,7 +38,7 @@ class PikminSideWidget(QWidget):
 
         self.verticalLayout.setObjectName("verticalLayout")
 
-        self.button_add_object = QPushButton(parent)
+        """self.button_add_object = QPushButton(parent)
 
         self.button_remove_object = QPushButton(parent)
 
@@ -46,21 +53,29 @@ class PikminSideWidget(QWidget):
         self.button_add_object.setCheckable(True)
 
         self.verticalLayout.addWidget(self.button_add_object)
-        self.verticalLayout.addWidget(self.button_remove_object)
-        self.verticalLayout.addStretch(20)
+        self.verticalLayout.addWidget(self.button_remove_object)"""
+        self.bckcontrols = BCKControls(self)
+        self.verticalLayout.addWidget(self.bckcontrols)
+        #self.verticalLayout.addStretch(20)
 
-        self.name_label = QLabel(parent)
+        self.name_label = QLabel(self)
         self.name_label.setFont(font)
         self.name_label.setWordWrap(True)
         self.name_label.setMinimumSize(self.name_label.width(), 30)
         self.verticalLayout.addWidget(self.name_label)
 
-        self.comment_label = QLabel(parent)
+        self.comment_label = QLabel(self)
         self.comment_label.setTextInteractionFlags(Qt.TextSelectableByMouse)
         self.comment_label.setWordWrap(True)
         self.comment_label.setFont(font)
         self.verticalLayout.addWidget(self.comment_label)
         #self.verticalLayout.addStretch(500)
+
+        self.side_widget_holder = SideHolder(self)
+        policy = QtWidgets.QSizePolicy()
+        policy.setVerticalStretch(2)
+        #self.side_widget_holder.setSizePolicy(policy)
+        self.verticalLayout.addWidget(self.side_widget_holder)
 
         self.objectlist = []
 
@@ -99,12 +114,14 @@ class PikminSideWidget(QWidget):
                 self.scrollarea = None
 
         self.objectlist = []
+        self.bckcontrols.reset_link_button()
 
     def update_info(self):
         if self.object_data_edit is not None:
             self.object_data_edit.update_data()
 
     def set_info(self, obj, update3d, usedby=[]):
+        self.bckcontrols.update_link_button()
         if usedby:
             self.name_label.setText("Selected: {}\nUsed by: {}".format(type(obj).__name__,
                                     ", ".join(usedby)))
@@ -126,13 +143,14 @@ class PikminSideWidget(QWidget):
 
         editor = choose_data_editor(obj)
         if editor is not None:
-            self.object_data_edit = editor(self, obj)
-            if isinstance(self.object_data_edit, Texture):
+
+            if isinstance(obj, tree_view.Texture):
+                self.object_data_edit = editor(self.side_widget_holder, obj, self)
                 self.verticalLayout.addWidget(self.object_data_edit)
             else:
 
-                self.scrollarea = QScrollArea(self)
-                self.scrollarea.setMinimumHeight(self.height() - 300)
+                self.scrollarea = QScrollArea(self.side_widget_holder)
+                self.object_data_edit = editor(self.scrollarea, obj, self)
 
                 #print(self.parent.height())
                 #self.scrollarea.setMinimumHeight(max(500, self.parent.height()-300))

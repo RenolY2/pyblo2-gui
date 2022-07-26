@@ -76,9 +76,9 @@ class NonScrollQComboBox(QComboBox):
 class DataEditor(QWidget):
     emit_3d_update = pyqtSignal()
 
-    def __init__(self, parent, bound_to):
+    def __init__(self, parent, bound_to, editor):
         super().__init__(parent)
-        self.main_editor = parent
+        self.main_editor = editor
         self.bound_to = bound_to
         self.vbox = QVBoxLayout(self)
         self.setLayout(self.vbox)
@@ -1012,7 +1012,7 @@ class PaneEdit(DataEditor):
         self.scale_y = self.add_updater(self.add_decimal_input, self.bound_to, "p_scale_y", "Y Scale", -inf, +inf)
 
         self.rotation = self.add_updater(self.add_decimal_input, self.bound_to, "p_rotation", "Rotation", -inf, +inf)
-        self.unk1 = self.add_updater(self.add_integer_input, self.bound_to, "p_unk1", "BCK Animation Index", -MIN_UNSIGNED_SHORT, +MAX_UNSIGNED_SHORT)
+        self.unk1 = self.add_updater(self.add_integer_input, self.bound_to, "p_bckindex", "BCK Animation Index", -MIN_UNSIGNED_SHORT, +MAX_UNSIGNED_SHORT)
         self.unk2 = self.add_updater(self.add_decimal_input, self.bound_to, "p_unk4", "Unknown 4", -inf, +inf)
 
     def update_data(self):

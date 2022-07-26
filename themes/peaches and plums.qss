@@ -1,0 +1,53 @@
+QMainWindow, QGridLayout::handle {
+	background: white;
+}
+QWidget {
+  background-color: #ffb19c; 
+  border: 0px solid white;
+  padding: 0px;
+  color: black;
+  selection-background-color: #bbf5ff;
+  selection-color: black;
+}
+QWidget#white_bg {
+	background-color: #ffdbbf;
+}
+QMenu, QMenuBar {
+	background-color: #9387ae;
+}
+QHeaderView::section {
+    background-color: #ffdbbf;
+    border: 1px solid black;
+	color: black;
+}
+QTableView QTableCornerButton::section {
+    background: #ffdbbf;
+}
+QTableView {
+	gridline-color: black;
+	background-color: #fff3f0;
+	selection-background-color: #bbf5ff;
+}
+QTableView::item {
+	background-color: #ffd6cb;
+}
+QTableView::item:hover, QTreeView::item:hover  {
+	background: #ebdff2;
+}
+QTableView::item:selected, QTreeView::item:selected {
+	background: #d8bfe5;
+}
+QPushButton {
+	border: 1px outside solid white;
+	color: white;
+}
+QPushButton:disabled {
+	background: #756c8b;
+}	
+QPushButton:enabled {
+	background: #9387ae;
+}	
+QTreeView {
+	background: #fff3f0;
+}
+

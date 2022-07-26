@@ -127,6 +127,9 @@ class PaneItem(NamedItemWithChildren):
         name = "{0}: {1}".format(self.bound_to.name, self.bound_to.p_panename)
         if self.bound_to.hide:
             name += " (H)"
+
+        if self.bound_to.animated:
+            name += " (A)"
         self.setText(0, name)
 
 

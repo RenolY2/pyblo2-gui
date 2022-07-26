@@ -1,0 +1,64 @@
+QMainWindow, QGridLayout::handle {
+	background: white;
+}
+QWidget {
+  background-color: #ff8fdb; 
+  border: 1px solid white;
+  padding: 0px;
+  color: black;
+  selection-background-color: #fffeb1;
+  selection-color: black;
+}
+QWidget#white_bg {
+	background-color: #ffb3e7;
+}
+QWidget#clear_bg {
+	background-color: white;
+}
+QMenu, QMenuBar {
+	background-color: white;
+}
+QHeaderView::section {
+    background-color: #ffb3e7;
+    border: 1px solid black;
+	color: black;
+}
+QTableView QTableCornerButton::section {
+    background: #ffb3e7;
+}
+QTableView {
+	gridline-color: black;
+	background-color: white;
+	selection-background-color: #fffeb1;
+}
+QTableView::item {
+	background-color: white;
+}
+QTableView::item:hover, QTreeView::item:hover, QListWidget::item:hover  {
+	background: #ffffe6;
+	color: black;
+}
+QTableView::item:selected, QTreeView::item:selected, QListWidget::item:selected {
+	background: #fffeb1;
+	color: black;
+}
+QPushButton {
+	border: 1px outside solid white;
+	color: white;
+}
+QPushButton:disabled {
+	background: #a6596b;
+}	
+QPushButton:enabled {
+	background: #c73a5a;
+}	
+QLineEdit::disabled, QComboBox::disabled, QLabel::disabled {
+	background: #F0F0F0
+}
+QTreeView, QListWidget, QLabel, QLineEdit, QComboBox::item {
+	background-color: #ffffff;
+}
+QComboBox, QListWidget::item {
+	background-color: #ffffff;
+}
+

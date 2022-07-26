@@ -209,6 +209,7 @@ class Item(object):
 class Pane(object):
     def __init__(self):
         self.hide = False  # Not a blo feature, hides element in editor only
+        self.animated = False
 
         self.name = "PAN2"
         self.p_name = "PAN2"
@@ -225,6 +226,7 @@ class Pane(object):
         self.p_rotation = None
         self.p_panename = None
         self.p_secondaryname = None
+        self.p_bckindex = None
 
     def add_child(self, child_pane):
         if self.child is not None:
@@ -263,7 +265,7 @@ class Pane(object):
         pane.p_rotation = 0.0
         pane.p_panename = "New_Pane"
         pane.p_secondaryname = "        "
-        pane.p_unk1 = 0
+        pane.p_bckindex = 0
         pane.p_unk4 = 0.0
 
         return pane
@@ -280,7 +282,7 @@ class Pane(object):
         unk = read_uint16(f)
         assert unk == 0x40
 
-        pane.p_unk1 = read_uint16(f)  # 0xA
+        pane.p_bckindex = read_uint16(f)  # 0xA
         pane.p_enabled = read_uint8(f)  # 0xC
         pane.p_anchor = read_uint8(f)  # 0xD
         
@@ -313,7 +315,7 @@ class Pane(object):
         write_uint32(f, 0x48)
         write_uint16(f, 0x40)
 
-        write_uint16(f, self.p_unk1)
+        write_uint16(f, self.p_bckindex)
         write_uint8(f, self.p_enabled)
         write_uint8(f, self.p_anchor)
         f.write(b"RE")
@@ -345,9 +347,10 @@ class Pane(object):
                 print(key)
                 continue
 
-            if key != "name" and key != "p_name" and key != "child" and key != "parent" and key != "widget" and key != "hide":
+            if (key != "name" and key != "p_name" and key != "child" and
+                    key != "parent" and key != "widget" and key != "hide" and key != "animated"):
                 if isinstance(val, bytes):
-                    raise RuntimeError("hhhe")
+                    raise RuntimeError("Not Intended To Happen")
                 result[key] = val
         return result
 
@@ -359,7 +362,7 @@ class Pane(object):
         assert "p_type" in obj and obj["p_type"] in ("PAN2", "pan2")
         pane = cls()
         pane.p_name = obj["p_type"]
-        pane.assign_value(obj, "p_unk1")
+        pane.assign_value(obj, "p_bckindex")
         pane.assign_value(obj, "p_enabled")
         pane.assign_value(obj, "p_anchor")
         pane.assign_value(obj, "p_panename")

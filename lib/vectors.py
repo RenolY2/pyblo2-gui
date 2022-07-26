@@ -317,6 +317,18 @@ class Matrix4x4(object):
                    row3[0], row3[1], row3[2], row3[3],
                    row4[0], row4[1], row4[2], row4[3])
 
+    """def to_opengl_matrix(self):
+        return [self.a1, self.a2, self.a3, self.a4,
+                self.b1, self.b2, self.b3, self.b4,
+                self.c1, self.c2, self.c3, self.c4,
+                self.d1, self.d2, self.d3, self.d4]"""
+
+    def to_opengl_matrix(self):
+        return [self.a1, self.b1, self.c1, self.d1,
+                self.a2, self.b2, self.c2, self.d2,
+                self.a3, self.b3, self.c3, self.d3,
+                self.a4, self.b4, self.c4, self.d4]
+
     def transpose(self):
         self.__init__(self.a1, self.a2, self.a3, self.a4,
                       self.b1, self.b2, self.b3, self.b4,

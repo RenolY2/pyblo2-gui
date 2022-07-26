@@ -42,6 +42,7 @@ from lib.bmd_render import clear_temp_folder, load_textured_bmd
 from lib.blo.readblo2 import ScreenBlo, Pane
 from widgets.texture_handler_widget import TextureHandlerMenu
 from lib.blo.tex.textures import ImageTooLarge
+from widgets.bckwidget.bckmenu import BCKAnimationMenu
 
 
 EDITOR_NAME = "BLO Layout Editor"
@@ -129,7 +130,6 @@ class LayoutEditor(QMainWindow):
 
         self.current_gen_path = None
         self.pik_control.reset_info()
-        self.pik_control.button_add_object.setChecked(False)
         #self.pik_control.button_move_object.setChecked(False)
         self._window_title = ""
         self._user_made_change = False
@@ -206,30 +206,6 @@ class LayoutEditor(QMainWindow):
         self.level_view.select_update.emit()
         return
 
-        if isinstance(item, (tree_view.CameraEntry, tree_view.RespawnEntry, tree_view.AreaEntry, tree_view.ObjectEntry,
-                             tree_view.KartpointEntry, tree_view.EnemyRoutePoint, tree_view.ObjectRoutePoint)):
-            bound_to = item.bound_to
-            self.level_view.selected = [bound_to]
-            self.level_view.selected_positions = [bound_to.position]
-
-            if hasattr(bound_to, "rotation"):
-                self.level_view.selected_rotations = [bound_to.rotation]
-
-        elif isinstance(item, tree_view.Checkpoint):
-            bound_to = item.bound_to
-            self.level_view.selected = [bound_to]
-            self.level_view.selected_positions = [bound_to.start, bound_to.end]
-        elif isinstance(item, (tree_view.EnemyPointGroup, tree_view.CheckpointGroup, tree_view.ObjectPointGroup)):
-            self.level_view.selected = [item.bound_to]
-        elif isinstance(item, tree_view.BolHeader) and self.level_file is not None:
-            self.level_view.selected = [self.level_file]
-        elif isinstance(item, (tree_view.LightParamEntry, tree_view.MGEntry)):
-            self.level_view.selected = [item.bound_to]
-
-        #self.level_view.gizmo.move_to_average(self.level_view.selected_positions)
-        self.level_view.do_redraw()
-        self.level_view.select_update.emit()
-
     def setup_ui(self):
         self.resize(1000, 800)
         self.set_base_window_title("")
@@ -298,254 +274,19 @@ class LayoutEditor(QMainWindow):
         self.visibility_menu.filter_update.connect(self.update_render)
 
         self.texture_menu = TextureHandlerMenu(self)
+        self.animation_menu = BCKAnimationMenu(self)
 
-
-
-        # ------ Collision Menu
-        """self.collision_menu = QMenu(self.menubar)
-        self.collision_menu.setTitle("Geometry")
-        self.collision_load_action = QAction("Load OBJ", self)
-        self.collision_load_action.triggered.connect(self.button_load_collision)
-        self.collision_menu.addAction(self.collision_load_action)
-        self.collision_load_grid_action = QAction("Load BCO", self)
-        self.collision_load_grid_action.triggered.connect(self.button_load_collision_bco)
-        self.collision_menu.addAction(self.collision_load_grid_action)
-        self.collision_load_bmd_action = QAction("Load BMD", self)
-        self.collision_load_bmd_action.triggered.connect(self.button_load_collision_bmd)
-        self.collision_menu.addAction(self.collision_load_bmd_action)"""
-
-        """self.minimap_menu = QMenu(self.menubar)
-        self.minimap_menu.setTitle("Minimap")
-        load_minimap = QAction("Load Minimap Image", self)
-        load_coordinates_dol = QAction("Load Data from DOL", self)
-        save_coordinates_dol = QAction("Save Data to DOL", self)
-        load_coordinates_json = QAction("Load Data from JSON", self)
-        save_coordinates_json = QAction("Save Data to JSON", self)"""
-
-
-        """load_minimap.triggered.connect(self.action_load_minimap_image)
-        load_coordinates_dol.triggered.connect(self.action_load_dol)
-        save_coordinates_dol.triggered.connect(self.action_save_to_dol)
-        load_coordinates_json.triggered.connect(self.action_load_coordinates_json)
-        save_coordinates_json.triggered.connect(self.action_save_coordinates_json)
-        self.minimap_menu.addAction(load_minimap)
-        self.minimap_menu.addAction(load_coordinates_dol)
-        self.minimap_menu.addAction(save_coordinates_dol)
-        self.minimap_menu.addAction(load_coordinates_json)
-        self.minimap_menu.addAction(save_coordinates_json)"""
-
-        # Misc
-        """self.misc_menu = QMenu(self.menubar)
-        self.misc_menu.setTitle("Misc")
-        #self.spawnpoint_action = QAction("Set startPos/Dir", self)
-        #self.spawnpoint_action.triggered.connect(self.action_open_rotationedit_window)
-        #self.misc_menu.addAction(self.spawnpoint_action)
-        self.rotation_mode = QAction("Rotate Positions around Pivot", self)
-        self.rotation_mode.setCheckable(True)
-        self.rotation_mode.setChecked(True)
-        #self.goto_action.triggered.connect(self.do_goto_action)
-        #self.goto_action.setShortcut("Ctrl+G")
-        self.misc_menu.addAction(self.rotation_mode)
-        self.analyze_action = QAction("Analyze for common mistakes", self)
-        self.analyze_action.triggered.connect(self.analyze_for_mistakes)
-        self.misc_menu.addAction(self.analyze_action)
-
-        self.change_to_topdownview_action = QAction("Topdown View", self)
-        self.change_to_topdownview_action.triggered.connect(self.change_to_topdownview)
-        self.misc_menu.addAction(self.change_to_topdownview_action)
-        self.change_to_topdownview_action.setCheckable(True)
-        self.change_to_topdownview_action.setChecked(True)
-        self.change_to_topdownview_action.setShortcut("Ctrl+1")
-
-        self.change_to_3dview_action = QAction("3D View", self)
-        self.change_to_3dview_action = QAction("3D View", self)
-        self.change_to_3dview_action.triggered.connect(self.change_to_3dview)
-        self.misc_menu.addAction(self.change_to_3dview_action)
-        self.change_to_3dview_action.setCheckable(True)
-        self.change_to_3dview_action.setShortcut("Ctrl+2")
-
-        self.choose_bco_area = QAction("Highlight Collision Area (BCO)")
-        self.choose_bco_area.triggered.connect(self.action_choose_bco_area)
-        self.misc_menu.addAction(self.choose_bco_area)
-        self.choose_bco_area.setShortcut("Ctrl+3")"""
 
         self.menubar.addAction(self.file_menu.menuAction())
         self.menubar.addAction(self.visibility_menu.menuAction())
         self.menubar.addAction(self.texture_menu.menuAction())
+        self.menubar.addAction(self.animation_menu.menuAction())
         #self.menubar.addAction(self.collision_menu.menuAction())
         #self.menubar.addAction(self.minimap_menu.menuAction())
         #self.menubar.addAction(self.misc_menu.menuAction())
         self.setMenuBar(self.menubar)
 
         self.last_obj_select_pos = 0
-
-    def action_load_minimap_image(self):
-        filepath, choosentype = QFileDialog.getOpenFileName(
-            self, "Open File",
-            self.pathsconfig["minimap_png"],
-            "Image (*.png);;All files (*)")
-
-        if filepath:
-            self.level_view.minimap.set_texture(filepath)
-
-            self.pathsconfig["minimap_png"] = filepath
-            save_cfg(self.configuration)
-
-    @catch_exception_with_dialog
-    def action_load_dol(self, val):
-        filepath, choosentype = QFileDialog.getOpenFileName(
-            self, "Open File",
-            self.pathsconfig["dol"],
-            "Game Executable (*.dol);;All files (*)")
-
-        if filepath:
-            with open("lib/minimap_locations.json", "r") as f:
-                addresses_json = json.load(f)
-
-            with open(filepath, "rb") as f:
-                dol = DolFile(f)
-                region = detect_dol_region(dol)
-
-            addresses = addresses_json[region]
-
-            item_list = ["None"]
-            item_list.extend(addresses.keys())
-            result, pos = FileSelect.open_file_list(self, item_list, "Select Track Slot")
-
-            if result == "None":
-                return
-
-            corner1x, corner1z, corner2x, corner2z, orientation = addresses[result]
-            with open(filepath, "rb") as f:
-                dol = DolFile(f)
-
-                dol.seek(int(orientation, 16))
-                orientation = read_load_immediate_r0(dol)
-                if orientation not in (0, 1, 2, 3):
-                    raise RuntimeError("Wrong Address, orientation value in DOL isn't in 0-3 range: {0}. Maybe you are using"
-                                       " a dol from a different version?".format(orientation))
-                self.level_view.minimap.orientation = orientation
-                dol.seek(int(corner1x, 16))
-                self.level_view.minimap.corner1.x = read_float(dol)
-                dol.seek(int(corner1z, 16))
-                self.level_view.minimap.corner1.z = read_float(dol)
-                dol.seek(int(corner2x, 16))
-                self.level_view.minimap.corner2.x = read_float(dol)
-                dol.seek(int(corner2z, 16))
-                self.level_view.minimap.corner2.z = read_float(dol)
-
-            self.pathsconfig["dol"] = filepath
-            save_cfg(self.configuration)
-
-    @catch_exception_with_dialog
-    def action_save_to_dol(self, val):
-        filepath, choosentype = QFileDialog.getSaveFileName(
-            self, "Save to File",
-            self.pathsconfig["dol"],
-            "Game Executable (*.dol);;All files (*)")
-
-        if filepath:
-            with open("lib/minimap_locations.json", "r") as f:
-                addresses_json = json.load(f)
-
-            with open(filepath, "rb") as f:
-                dol = DolFile(f)
-                region = detect_dol_region(dol)
-
-            addresses = addresses_json[region]
-
-            item_list = ["None"]
-            item_list.extend(addresses.keys())
-            result, pos = FileSelect.open_file_list(self, item_list, "Select Track Slot")
-
-            if result == "None":
-                return
-
-            corner1x, corner1z, corner2x, corner2z, orientation = addresses[result]
-            with open(filepath, "rb") as f:
-                dol = DolFile(f)
-
-            orientation_val = self.level_view.minimap.orientation
-            if orientation_val not in (0, 1, 2, 3):
-                raise RuntimeError(
-                    "Invalid Orientation value: Must be in the range 0-3 but is {0}".format(orientation_val))
-
-            dol.seek(int(orientation, 16))
-            orientation_val = read_load_immediate_r0(dol)
-            if orientation_val not in (0, 1, 2, 3):
-                raise RuntimeError(
-                    "Wrong Address, orientation value in DOL isn't in 0-3 range: {0}. Maybe you are using"
-                    " a dol from a different game version?".format(orientation_val))
-
-            dol.seek(int(orientation, 16))
-            write_load_immediate_r0(dol, self.level_view.minimap.orientation)
-            dol.seek(int(corner1x, 16))
-            write_float(dol, self.level_view.minimap.corner1.x)
-            dol.seek(int(corner1z, 16))
-            write_float(dol, self.level_view.minimap.corner1.z)
-            dol.seek(int(corner2x, 16))
-            write_float(dol, self.level_view.minimap.corner2.x)
-            dol.seek(int(corner2z, 16))
-            write_float(dol, self.level_view.minimap.corner2.z)
-
-            with open(filepath, "wb") as f:
-                dol.save(f)
-
-            self.pathsconfig["dol"] = filepath
-            save_cfg(self.configuration)
-
-    @catch_exception_with_dialog
-    def action_load_coordinates_json(self, val):
-        filepath, choosentype = QFileDialog.getOpenFileName(
-            self, "Open File",
-            self.pathsconfig["minimap_json"],
-            "Json File (*.json);;All files (*)")
-
-        if filepath:
-            with open(filepath, "r") as f:
-                data = json.load(f)
-                self.level_view.minimap.corner1.x = data["Top Left Corner X"]
-                self.level_view.minimap.corner1.z = data["Top Left Corner Z"]
-                self.level_view.minimap.corner2.x = data["Bottom Right Corner X"]
-                self.level_view.minimap.corner2.z = data["Bottom Right Corner Z"]
-                self.level_view.minimap.orientation = data["Orientation"]
-
-            self.pathsconfig["minimap_json"] = filepath
-            save_cfg(self.configuration)
-
-    @catch_exception_with_dialog
-    def action_save_coordinates_json(self, val):
-        filepath, choosentype = QFileDialog.getSaveFileName(
-            self, "Save File",
-            self.pathsconfig["minimap_json"],
-            "Json File (*.json);;All files (*)")
-
-        if filepath:
-            data = {"Top Left Corner X": self.level_view.minimap.corner1.x,
-                    "Top Left Corner Z": self.level_view.minimap.corner1.z,
-                    "Bottom Right Corner X": self.level_view.minimap.corner2.x,
-                    "Bottom Right Corner Z": self.level_view.minimap.corner2.z,
-                    "Orientation": self.level_view.minimap.orientation}
-
-            with open(filepath, "w") as f:
-                json.dump(data, f, indent=4)
-
-            self.pathsconfig["minimap_json"] = filepath
-            save_cfg(self.configuration)
-
-    def action_choose_bco_area(self):
-        areas = []
-        if isinstance(self.level_view.alternative_mesh, CollisionModel):
-            for area in self.level_view.alternative_mesh.meshes.keys():
-                areas.append(str(hex(area)))
-        areas.sort(key=lambda x: int(x, 16))
-        areas.insert(0, "None")
-
-        result, pos = FileSelect.open_file_list(self, areas, "Select Collision Area")
-        if result != "None":
-            self.level_view.highlight_colltype = int(result, 16)
-        else:
-            self.level_view.highlight_colltype = None
 
     def analyze_for_mistakes(self):
         if self.analyzer_window is not None:
@@ -570,42 +311,21 @@ class LayoutEditor(QMainWindow):
         self.statusbar.clearMessage()
 
     def setup_ui_toolbar(self):
-        # self.toolbar = QtWidgets.QToolBar("Test", self)
-        # self.toolbar.addAction(QAction("TestToolbar", self))
-        # self.toolbar.addAction(QAction("TestToolbar2", self))
-        # self.toolbar.addAction(QAction("TestToolbar3", self))
-
-        # self.toolbar2 = QtWidgets.QToolBar("Second Toolbar", self)
-        # self.toolbar2.addAction(QAction("I like cake", self))
-
-        # self.addToolBar(self.toolbar)
-        # self.addToolBarBreak()
-        # self.addToolBar(self.toolbar2)
         pass
 
     def connect_actions(self):
         self.level_view.select_update.connect(self.action_update_info)
         self.level_view.select_update.connect(self.select_from_3d_to_treeview)
-        #self.pik_control.lineedit_coordinatex.textChanged.connect(self.create_field_edit_action("coordinatex"))
-        #self.pik_control.lineedit_coordinatey.textChanged.connect(self.create_field_edit_action("coordinatey"))
-        #self.pik_control.lineedit_coordinatez.textChanged.connect(self.create_field_edit_action("coordinatez"))
-
-        #self.pik_control.lineedit_rotationx.textChanged.connect(self.create_field_edit_action("rotationx"))
-        #self.pik_control.lineedit_rotationy.textChanged.connect(self.create_field_edit_action("rotationy"))
-        #self.pik_control.lineedit_rotationz.textChanged.connect(self.create_field_edit_action("rotationz"))
 
         self.level_view.position_update.connect(self.action_update_position)
 
         self.level_view.customContextMenuRequested.connect(self.mapview_showcontextmenu)
 
-        self.pik_control.button_add_object.pressed.connect(self.button_open_add_item_window)
         #self.pik_control.button_move_object.pressed.connect(self.button_move_objects)
         self.level_view.move_points.connect(self.action_move_objects)
         self.level_view.height_update.connect(self.action_change_object_heights)
         self.level_view.create_waypoint.connect(self.action_add_object)
         self.level_view.create_waypoint_3d.connect(self.action_add_object_3d)
-        #self.pik_control.button_ground_object.pressed.connect(self.action_ground_objects)
-        self.pik_control.button_remove_object.pressed.connect(self.action_delete_objects)
 
         delete_shortcut = QtWidgets.QShortcut(QtGui.QKeySequence(Qt.Key_Delete), self)
         delete_shortcut.activated.connect(self.action_delete_objects)
@@ -628,6 +348,10 @@ class LayoutEditor(QMainWindow):
 
     def delete_texture(self, texture):
         self.texture_menu.texture_handler.delete_texture(texture.bound_to)
+
+    def get_selected(self) -> Pane:
+        if len(self.level_view.selected) > 0:
+            return self.level_view.selected[0]
 
     def dragEnterEvent(self, event: QDragEnterEvent):
         if event.mimeData().hasText():
@@ -721,7 +445,7 @@ class LayoutEditor(QMainWindow):
                             filepaths = list(filter(lambda x: x.endswith(".blo"), [x for x in scrn_dir.files.keys()]))
                             filepaths.sort()
                             file, lastpos = FileSelect.open_file_list(self, filepaths, title="Select file")
-                            print("Loaded")
+                            print("Loaded", file)
 
                             blo_file = ScreenBlo.from_file(BytesIO(scrn_dir[file].getvalue()))
 
@@ -1472,7 +1196,8 @@ class LayoutEditor(QMainWindow):
             # Normally resizing the main window should resize it already
             # but the widget isn't properly set up for that yet
             # so we force the minimum height manually.
-            self.pik_control.scrollarea.setMinimumHeight(self.height()-300)
+            pass
+            #self.pik_control.scrollarea.setMinimumHeight(self.height()-300)
 
 
     @catch_exception
@@ -1598,7 +1323,7 @@ if __name__ == "__main__":
 
     sys.excepthook = except_hook
 
-    parser = argparse.ArgumentParser()
+    """parser = argparse.ArgumentParser()
     parser.add_argument("--inputgen", default=None,
                         help="Path to generator file to be loaded.")
     parser.add_argument("--collision", default=None,
@@ -1606,7 +1331,7 @@ if __name__ == "__main__":
     parser.add_argument("--waterbox", default=None,
                         help="Path to waterbox file to be loaded.")
 
-    args = parser.parse_args()
+    args = parser.parse_args()"""
 
     app = QApplication(sys.argv)
 
@@ -1622,58 +1347,9 @@ if __name__ == "__main__":
         pikmin_gui = LayoutEditor()
         pikmin_gui.setWindowIcon(QtGui.QIcon('resources/icon.ico'))
 
-        if args.inputgen is not None:
-            with open(args.inputgen, "r", encoding="shift_jis-2004", errors="backslashreplace") as f:
-                pikmin_gen_file = PikminGenFile()
-                pikmin_gen_file.from_file(f)
-
-            pikmin_gui.setup_gen_file(pikmin_gen_file, args.inputgen)
-
         pikmin_gui.show()
 
-        if args.collision is not None:
-            if args.collision.endswith(".obj"):
-                with open(args.collision, "r") as f:
-                    verts, faces, normals = py_obj.read_obj(f)
 
-            elif args.collision.endswith(".bin"):
-                with open(args.collision, "rb") as f:
-                    collision = py_obj.PikminCollision(f)
-                verts = collision.vertices
-                faces = [face[0] for face in collision.faces]
-
-            elif args.collision.endswith(".szs") or args.collision.endswith(".arc"):
-                with open(args.collision, "rb") as f:
-                    archive = Archive.from_file(f)
-                f = archive["text/grid.bin"]
-                collision = py_obj.PikminCollision(f)
-
-                verts = collision.vertices
-                faces = [face[0] for face in collision.faces]
-
-            else:
-                raise RuntimeError("Unknown collision file type:", args.collision)
-
-            pikmin_gui.setup_collision(verts, faces, args.collision)
-
-        if args.waterbox is not None:
-            if args.waterbox.endswith(".txt"):
-                with open(args.waterbox, "r", encoding="shift_jis-2004", errors="backslashreplace") as f:
-                    waterboxfile = WaterboxTxt()
-                    waterboxfile.from_file(f)
-            elif args.waterbox.endswith(".szs") or args.waterbox.endwith(".arc"):
-                with open(args.waterbox, "rb") as f:
-                    archive = Archive.from_file(f)
-                    # try:
-                    f = archive["text/waterbox.txt"]
-                    # print(f.read())
-                    f.seek(0)
-                    waterboxfile = WaterboxTxt()
-                    waterboxfile.from_file(TextIOWrapper(f, encoding="shift_jis-2004", errors="backslashreplace"))
-            else:
-                raise RuntimeError("Unknown waterbox file type:", args.waterbox)
-
-            pikmin_gui.setup_waterboxes(waterboxfile)
 
         err_code = app.exec()
 
