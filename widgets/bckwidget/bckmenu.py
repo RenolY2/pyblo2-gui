@@ -124,10 +124,18 @@ class BCKControls(QWidget):
         element = self.main_editor.get_selected()
 
         if element is not None:
-            if element.animated:
-                self.apply_anim_button.setText("Unlink from BCK")
-            else:
-                self.apply_anim_button.setText("Link to BCK")
+            try:
+                if element.animated:
+                    self.apply_anim_button.setText("Unlink from BCK")
+                else:
+                    self.apply_anim_button.setText("Link to BCK")
+                self.apply_anim_button.setEnabled(True)
+                self.link_anim_hierarchy.setEnabled(True)
+                self.unlink_anim_hierarchy.setEnabled(True)
+            except:
+                self.apply_anim_button.setEnabled(False)
+                self.link_anim_hierarchy.setEnabled(False)
+                self.unlink_anim_hierarchy.setEnabled(False)
 
     def update_frame(self, value):
         if self.fps == 0:
