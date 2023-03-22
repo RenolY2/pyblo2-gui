@@ -77,14 +77,16 @@ class TextureHandlerMenu(QMenu):
             self, "Choose Texture Folder",
             "")
         if filepath:
-            self.texture_handler.save_to_folder(filepath)
+            self.texture_handler.save_to_folder(
+                self.editor.layout_file.root.textures.references,
+                filepath)
 
     def load_folder(self):
         filepath = QFileDialog.getExistingDirectory(
             self, "Choose Texture Folder",
             "")
         if filepath:
-            self.texture_handler.init_from_folder(self.editor.blo_file.root.textures.references,
+            self.texture_handler.init_from_folder(self.editor.layout_file.root.textures.references,
                                                   filepath)
 
     def load_archive(self):
