@@ -1090,9 +1090,9 @@ class TextboxEditor(PaneEdit):
         self.signedunk4 = self.add_updater(self.add_integer_input, self.bound_to, "signedunk4", "Unk 4", -MIN_SIGNED_SHORT,
                                            +MAX_SIGNED_SHORT)
 
-        self.unk5 = self.add_updater(self.add_integer_input, self.bound_to, "unk5", "Unk 5", -MIN_UNSIGNED_SHORT, +MAX_UNSIGNED_SHORT)
-        self.unk6 = self.add_updater(self.add_integer_input, self.bound_to, "unk6", "Font Width", -MIN_UNSIGNED_SHORT, +MAX_UNSIGNED_SHORT)
-        self.unk7 = self.add_updater(self.add_integer_input, self.bound_to, "unk7byte", "Font Height", -MIN_UNSIGNED_BYTE, +MAX_UNSIGNED_BYTE)
+        self.unk5 = self.add_updater(self.add_integer_input, self.bound_to, "unk5", "Font Width", -MIN_UNSIGNED_SHORT, +MAX_UNSIGNED_SHORT)
+        self.unk6 = self.add_updater(self.add_integer_input, self.bound_to, "unk6", "Font Height", -MIN_UNSIGNED_SHORT, +MAX_UNSIGNED_SHORT)
+        self.unk7 = self.add_updater(self.add_integer_input, self.bound_to, "unk7byte", "Unk 7", -MIN_UNSIGNED_BYTE, +MAX_UNSIGNED_BYTE)
         self.unk8 = self.add_updater(self.add_integer_input, self.bound_to, "unk8byte", "Unk 8", -MIN_UNSIGNED_BYTE, +MAX_UNSIGNED_BYTE)
 
         self.color_top = ColorEdit(self.bound_to.color_top)
