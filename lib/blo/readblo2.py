@@ -649,7 +649,7 @@ class Picture(Pane):
         color2["unk2"] = 0
 
         color1["unknowns"] = [0, 0, 256, 0]
-        color2["unknowns"] = [256, 256, 256, 256]
+        color2["unknowns"] = [0, 256, 256, 256]
         color1["col1"] = [255 for x in range(4)]
         color1["col2"] = [255 for x in range(4)]
         color2["col1"] = [255 for x in range(4)]
