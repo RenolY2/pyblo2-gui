@@ -784,8 +784,8 @@ class Textbox(Pane):
         textbox.unk6 = 0
         textbox.unk7byte = 0
         textbox.unk8byte = 0
-        textbox.color_top = Color(0, 0, 0, 0)
-        textbox.color_bottom = Color(0, 0, 0, 0)
+        textbox.color_top = Color(255, 255, 255, 255)
+        textbox.color_bottom = Color(255, 255, 255, 255)
         textbox.unk11 = 0
         textbox.text_cutoff = 0
         textbox.text = ""
