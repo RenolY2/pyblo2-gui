@@ -1200,6 +1200,9 @@ class PaneRender(object):
             if texture is not None and texture in texture_handler.textures_render:
                 gltex = texture_handler.textures_render[texture]
                 ID = gltex.ID
+                glEnable(GL_BLEND)
+                glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+                glDisable(GL_ALPHA_TEST)
                 glEnable(GL_TEXTURE_2D)
                 glBindTexture(GL_TEXTURE_2D, ID)
                 glBegin(GL_TRIANGLE_FAN)
@@ -1219,6 +1222,8 @@ class PaneRender(object):
                 glTexCoord2f(1.0, 0.0)
                 glVertex3f(w + offset_x, 0 - offset_y, 0)
                 glEnd()
+                glEnable(GL_ALPHA_TEST)
+                glDisable(GL_BLEND)
             else:
                 glBegin(GL_LINE_LOOP)
                 if is_selected:
