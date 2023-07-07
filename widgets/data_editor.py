@@ -1084,7 +1084,7 @@ class TextboxEditor(PaneEdit):
     def setup_widgets(self):
         super().setup_widgets()
         #self.size = self.add_updater(self.add_integer_input, self.bound_to, "size", "Size", -MIN_UNSIGNED_SHORT, +MAX_UNSIGNED_SHORT)
-        self.unk_1 = self.add_updater(self.add_decimal_input, self.bound_to, "unk1", "Unk 1", -inf, +inf)
+        self.unk_1 = self.add_updater(self.add_integer_input, self.bound_to, "unk1", "Unk 1", -MIN_UNSIGNED_SHORT, +MAX_UNSIGNED_SHORT)
         self.material, self.mat_dict = self.add_material_combobox()
         self.signedunk3 = self.add_updater(self.add_integer_input, self.bound_to, "signedunk3", "Unk 3", -MIN_SIGNED_SHORT, +MAX_SIGNED_SHORT)
         self.signedunk4 = self.add_updater(self.add_integer_input, self.bound_to, "signedunk4", "Unk 4", -MIN_SIGNED_SHORT,
