@@ -694,7 +694,7 @@ def dict_setter_int_list(var, field, i):
 
 def color_setter_int(var, field):
     def setter(x):
-        var.setattr(field, x)
+        setattr(var, field, x)
 
     return setter
 
@@ -928,13 +928,18 @@ class PictureColorEditor(SubEditor):
 
 
 class ColorEdit(SubEditor):
-    def __init__(self, color, *args, **kwargs):
+    def __init__(self, color, name, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.color = color
         self.color_input = self.add_multiple_integer_input_list(
             [color_setter_int(self.color, x) for x in ("r", "g", "b", "a")], 4,
-            "Color Top", -MIN_UNSIGNED_BYTE, MAX_UNSIGNED_BYTE)
+            name, MIN_UNSIGNED_BYTE, MAX_UNSIGNED_BYTE)
 
+    def update(self):
+        self.color_input[0].setText(str(self.color.r))
+        self.color_input[1].setText(str(self.color.g))
+        self.color_input[2].setText(str(self.color.b))
+        self.color_input[3].setText(str(self.color.a))
 
 class WindowSubSettingEdit(SubEditor):
     def __init__(self, subdata, parent, *args, **kwargs):
@@ -1095,8 +1100,10 @@ class TextboxEditor(PaneEdit):
         self.unk7 = self.add_updater(self.add_integer_input, self.bound_to, "unk7byte", "Unk 7", -MIN_UNSIGNED_BYTE, +MAX_UNSIGNED_BYTE)
         self.unk8 = self.add_updater(self.add_integer_input, self.bound_to, "unk8byte", "Unk 8", -MIN_UNSIGNED_BYTE, +MAX_UNSIGNED_BYTE)
 
-        self.color_top = ColorEdit(self.bound_to.color_top)
-        self.color_bottom = ColorEdit(self.bound_to.color_bottom)
+        self.color_top = self.add_widget(ColorEdit(self.bound_to.color_top, "Color Top"))
+        self.color_bottom = self.add_widget(ColorEdit(self.bound_to.color_bottom, "Color Bottom"))
+
+
 
         self.unk11 = self.add_updater(self.add_integer_input, self.bound_to, "unk11", "Unk 11", -MIN_UNSIGNED_SHORT, +MAX_UNSIGNED_SHORT)
         self.text_cutoff = self.add_updater(self.add_integer_input, self.bound_to, "text_cutoff", "Text Cutoff", -MIN_UNSIGNED_SHORT, +MAX_UNSIGNED_SHORT)
@@ -1104,6 +1111,9 @@ class TextboxEditor(PaneEdit):
 
     def update_data(self):
         super().update_data()
+
+        self.color_top.update()
+        self.color_bottom.update()
 
         self.text.setText(self.bound_to.text)
 
