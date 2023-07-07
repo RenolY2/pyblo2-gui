@@ -1086,9 +1086,9 @@ class TextboxEditor(PaneEdit):
         #self.size = self.add_updater(self.add_integer_input, self.bound_to, "size", "Size", -MIN_UNSIGNED_SHORT, +MAX_UNSIGNED_SHORT)
         self.unk_1 = self.add_updater(self.add_integer_input, self.bound_to, "unk1", "Unk 1", -MIN_UNSIGNED_SHORT, +MAX_UNSIGNED_SHORT)
         self.material, self.mat_dict = self.add_material_combobox()
-        self.signedunk3 = self.add_updater(self.add_integer_input, self.bound_to, "signedunk3", "Unk 3", -MIN_SIGNED_SHORT, +MAX_SIGNED_SHORT)
-        self.signedunk4 = self.add_updater(self.add_integer_input, self.bound_to, "signedunk4", "Unk 4", -MIN_SIGNED_SHORT,
-                                           +MAX_SIGNED_SHORT)
+        self.signedunk3 = self.add_updater(self.add_integer_input, self.bound_to, "signedunk3", "Unk 3", MIN_SIGNED_SHORT, +MAX_SIGNED_SHORT)
+        self.signedunk4 = self.add_updater(self.add_integer_input, self.bound_to, "signedunk4", "Unk 4", MIN_SIGNED_SHORT, +MAX_SIGNED_SHORT)
+
 
         self.unk5 = self.add_updater(self.add_integer_input, self.bound_to, "unk5", "Font Width", -MIN_UNSIGNED_SHORT, +MAX_UNSIGNED_SHORT)
         self.unk6 = self.add_updater(self.add_integer_input, self.bound_to, "unk6", "Font Height", -MIN_UNSIGNED_SHORT, +MAX_UNSIGNED_SHORT)
