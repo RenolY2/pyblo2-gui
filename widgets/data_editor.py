@@ -564,7 +564,7 @@ class TextureView(QWidget):
                 new_h = h
                 new_w = new_h*ratio
 
-            p.drawImage(QRect(0, 0, new_w, new_h), self.img)
+            p.drawImage(QRect(0, 0, int(new_w), int(new_h)), self.img)
         p.end()
 
 
@@ -677,6 +677,15 @@ anchor_dropdown["Bottom-Left"] = 6
 anchor_dropdown["Center-Bottom"] = 7
 anchor_dropdown["Bottom-Right"] = 8
 
+horizontalalign = OrderedDict()
+horizontalalign["Center"] = 0
+horizontalalign["Right"] = 1
+horizontalalign["Left"] = 2
+
+verticalalign = OrderedDict()
+verticalalign["Center"] = 0
+verticalalign["Bottom"] = 1
+verticalalign["Top"] = 2
 
 def dict_setter_int(var, field):
     def setter(x):
@@ -1092,14 +1101,19 @@ class TextboxEditor(PaneEdit):
         self.unk_1 = self.add_updater(self.add_integer_input, self.bound_to, "unk1", "Unk 1", -MIN_UNSIGNED_SHORT, +MAX_UNSIGNED_SHORT)
         self.material, self.mat_dict = self.add_material_combobox()
         self.signedunk3 = self.add_updater(self.add_integer_input, self.bound_to, "signedunk3", "Unk 3", MIN_SIGNED_SHORT, +MAX_SIGNED_SHORT)
-        self.signedunk4 = self.add_updater(self.add_integer_input, self.bound_to, "signedunk4", "Unk 4", MIN_SIGNED_SHORT, +MAX_SIGNED_SHORT)
+        self.signedunk4 = self.add_updater(self.add_integer_input, self.bound_to, "signedunk4", "Leading", MIN_SIGNED_SHORT, +MAX_SIGNED_SHORT)
 
 
         self.unk5 = self.add_updater(self.add_integer_input, self.bound_to, "unk5", "Font Width", -MIN_UNSIGNED_SHORT, +MAX_UNSIGNED_SHORT)
         self.unk6 = self.add_updater(self.add_integer_input, self.bound_to, "unk6", "Font Height", -MIN_UNSIGNED_SHORT, +MAX_UNSIGNED_SHORT)
-        self.unk7 = self.add_updater(self.add_integer_input, self.bound_to, "unk7byte", "Unk 7", -MIN_UNSIGNED_BYTE, +MAX_UNSIGNED_BYTE)
-        self.unk8 = self.add_updater(self.add_integer_input, self.bound_to, "unk8byte", "Unk 8", -MIN_UNSIGNED_BYTE, +MAX_UNSIGNED_BYTE)
-
+        #self.unk7 = self.add_updater(self.add_integer_input, self.bound_to, "unk7byte", "Unk 7", -MIN_UNSIGNED_BYTE, +MAX_UNSIGNED_BYTE)
+        #self.unk8 = self.add_updater(self.add_integer_input, self.bound_to, "unk8byte", "Unk 8", -MIN_UNSIGNED_BYTE, +MAX_UNSIGNED_BYTE)
+        
+        self.horizontalalignment = self.add_combobox_updater(self.add_dropdown_input, self.bound_to,
+                                                            "unk7byte", "Horizontal Align", keyval_dict=horizontalalign)
+        self.verticalalignment = self.add_combobox_updater(self.add_dropdown_input, self.bound_to,
+                                                            "unk8byte", "Vertical Align", keyval_dict=verticalalign)
+        
         self.color_top = self.add_widget(ColorEdit(self.bound_to.color_top, "Color Top"))
         self.color_bottom = self.add_widget(ColorEdit(self.bound_to.color_bottom, "Color Bottom"))
 
