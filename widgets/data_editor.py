@@ -703,7 +703,7 @@ def dict_setter_int_list(var, field, i):
 
 def color_setter_int(var, field):
     def setter(x):
-        setattr(var, field, x)
+        setattr(var, field, int(x))
 
     return setter
 
