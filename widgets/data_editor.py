@@ -849,7 +849,10 @@ class MaterialEditor(DataEditor):
             elif text in [x.name for x in materials]:
                 open_error_dialog("Cannot use name, name already in use!", self)
             else:
+                oldname = mat.name
                 mat.name = text
+
+                self.main_editor.parent.layout_file.rename_material(oldname, mat.name)
             #setattr(self.bound_to, attribute, text)
 
         self.line_edit.editingFinished.connect(input_edited)
