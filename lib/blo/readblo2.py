@@ -566,6 +566,10 @@ class Window(Pane):
         f.write(unhexlify(self.padding))
         assert len(unhexlify(self.padding)) == 8
         for i in range(4):
+            if mat1.get_mat_index(self.subdata[i]["material"]) == -1:
+                raise RuntimeError(
+                    "Window {0} cannot find its material {1} for subdata {2}".format(
+                        self.name, self.subdata[i]["material"], i))
             index = mat1.get_mat_index(self.subdata[i]["material"])
             write_int16(f, index)
 
@@ -576,7 +580,11 @@ class Window(Pane):
         write_uint16(f, self.unk5)
         write_uint16(f, self.unk6)
         write_uint16(f, self.unk7)
-        index = mat1.get_mat_index(self.subdata[i]["material"])
+        if mat1.get_mat_index(self.subdata[i]["material"]) == -1:
+            raise RuntimeError(
+                "Window {0} cannot find its material {1}".format(
+                    self.name, self.materia, i))
+        index = mat1.get_mat_index(self.material)
         write_int16(f, index)
 
         f.write(b"RE")
@@ -712,6 +720,9 @@ class Picture(Pane):
         super().write(f, mat1)  # Write pane
         write_uint16(f, 48)
         write_uint16(f, self.unk_index)
+
+        if mat1.get_mat_index(self.material) == -1:
+            raise RuntimeError("Picture {0} cannot find its material {1}".format(self.name, self.material))
         write_int16(f, mat1.get_mat_index(self.material))
         f.write(b"RE")
         write_uint16(f, self.color1["unk1"])
@@ -838,6 +849,8 @@ class Textbox(Pane):
         sub_size_ref = f.tell()
         write_uint16(f, self.size)
         write_uint16(f, self.unk1)
+        if mat1.get_mat_index(self.material) == -1:
+            raise RuntimeError("Textbox {0} cannot find its material {1}".format(self.name, self.material))
         write_uint16(f, mat1.get_mat_index(self.material))
         write_int16(f, self.signedunk3)
         write_int16(f, self.signedunk4)
@@ -1090,7 +1103,33 @@ class ScreenBlo(object):
 
         return elements
 
+    def rename_material(self, oldname, newname, node=None):
+        if node is None:
+            node = self.root
 
+        elements = []
+
+        for child in node.children:
+            if isinstance(child, (Window, )):
+                if child.material == oldname:
+                    child.material = newname
+
+                for i in range(4):
+                    if child.subdata[i]["material"] == oldname:
+                        child.subdata[i]["material"] = newname
+
+            elif isinstance(child, (Picture, )):
+                if child.material == oldname:
+                    child.material = newname
+
+            elif isinstance(child, (Textbox, )):
+                if child.material == oldname:
+                    child.material = newname
+
+            if isinstance(child, (Window, Picture, Textbox, Pane)) and child.child is not None:
+                self.rename_material(oldname, newname, child.child)
+
+        return elements
 
 
     @classmethod 
