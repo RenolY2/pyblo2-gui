@@ -479,7 +479,10 @@ class Window(Pane):
         copied.parent = parent
         copied.subdata = deepcopy(self.subdata)
         if children and self.child is not None:
-            copied.child = self.child.copy(children, copied)
+            copied.child = copy(self.child)
+            copied.child.children = [child.copy(children, copied) for child in self.child.children]
+        else:
+            copied.child = None
         return copied
 
     @classmethod
@@ -636,7 +639,10 @@ class Picture(Pane):
         copied.color2 = deepcopy(self.color2)
 
         if children and self.child is not None:
-            copied.child = self.child.copy(children, copied)
+            copied.child = copy(self.child)
+            copied.child.children = [child.copy(children, copied) for child in self.child.children]
+        else:
+            copied.child = None
         return copied
 
     @classmethod
@@ -779,8 +785,10 @@ class Textbox(Pane):
         copied.color_bottom = deepcopy(self.color_bottom)
 
         if children and self.child is not None:
-            copied.child = self.child.copy(children, copied)
-
+            copied.child = copy(self.child)
+            copied.child.children = [child.copy(children, copied) for child in self.child.children]
+        else:
+            copied.child = None
         return copied
 
     @classmethod
