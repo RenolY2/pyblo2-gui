@@ -75,9 +75,9 @@ class BCKControls(QWidget):
         self.button_pos_keyframe = QtWidgets.QPushButton("Pos Key")
         self.button_scale_keyframe = QtWidgets.QPushButton("Scale Key")
         self.button_rotation_keyframe = QtWidgets.QPushButton("Rotation Key")
-        keyframe_more_layout.addWidget(self.button_pos_keyframe)
-        keyframe_more_layout.addWidget(self.button_scale_keyframe)
-        keyframe_more_layout.addWidget(self.button_rotation_keyframe)
+        #keyframe_more_layout.addWidget(self.button_pos_keyframe)
+        #keyframe_more_layout.addWidget(self.button_scale_keyframe)
+        #keyframe_more_layout.addWidget(self.button_rotation_keyframe)
         self.vbox.addLayout(keyframe_more_layout)
 
         restorekeyframe_layout = QHBoxLayout(self)
