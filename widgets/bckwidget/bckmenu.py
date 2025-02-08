@@ -103,6 +103,7 @@ class BCKControls(QWidget):
                 element.p_scale_x, element.p_scale_y,
                 element.p_rotation
             )
+            self.main_editor.animation_menu.anim_editor.refresh_bck()
 
     def restore_from_frame(self):
         element = self.main_editor.get_selected()
