@@ -1,7 +1,6 @@
 from io import BytesIO
 from enum import Enum
 from binascii import unhexlify
-from PyQt5 import QtCore
 
 from .fs_helpers import *
 from .texture_utils import *
